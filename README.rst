@@ -6,24 +6,26 @@ Bot matching you with a random person on Telegram. Chat with anonymous strangers
 Deployment
 ----------
 
+::
+
     $ virtualenv --python=/usr/bin/python3 randtalkbotenv
     $ source randtalkbotenv/bin/activate
     (randtalkbotenv) $ pip install git+git://github.com/quasiyoke/RandTalkBot.git#egg=randtalkbot
 
-After that write `randtalkbotenv/configuration.json` file:
+After that write ``randtalkbotenv/configuration.json`` file::
 
     {
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
     }
 
-Now you may run `randtalkbot`:
+Now you may run ``randtalkbot``::
 
     (randtalkbotenv) $ randtalkbot randtalkbotenv/configuration.json
 
 List of supported commands
 --------------------------
 
-In @BotFather compatible format:
+In @BotFather compatible format::
 
     begin - Start looking for next stranger
     end - Stop talking
