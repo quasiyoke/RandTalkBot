@@ -10,7 +10,7 @@ Deployment
 
     $ virtualenv --python=/usr/bin/python3 randtalkbotenv
     $ source randtalkbotenv/bin/activate
-    (randtalkbotenv) $ pip install git+git://github.com/quasiyoke/RandTalkBot.git#egg=randtalkbot
+    (randtalkbotenv) $ pip install https://github.com/quasiyoke/RandTalkBot/zipball/master
 
 After that write ``randtalkbotenv/configuration.json`` file::
 

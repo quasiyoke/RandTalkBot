@@ -25,7 +25,7 @@ class Stranger:
         if self._is_chatting:
             yield from self._partner.kick()
             yield from self._handler.send_notification('Chat was finished. Feel free to /begin a new one.')
-        else:
+        elif self.is_looking_for_partner:
             yield from self._handler.send_notification('Looking for partner was stopped.')
         self._is_chatting = False
         self._partner = None
