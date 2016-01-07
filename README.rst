@@ -27,6 +27,6 @@ List of supported commands
 
 In @BotFather compatible format::
 
-    begin - Start looking for next stranger
-    end - Stop talking
-    help - About RandTalk
+    begin - Begin looking for next stranger
+    end - End talking
+    help - Help for Rand Talk

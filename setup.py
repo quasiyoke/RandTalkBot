@@ -8,11 +8,12 @@ import re
 from setuptools import setup
 
 # Looking for version number at randtalkbot/randtalkbot.py file.
-version = re.search(
-    '^__version__\s*=\s*\'(.*)\'',
-    open('randtalkbot/randtalkbot.py').read(),
-    re.M
-    ).group(1)
+with open('randtalkbot/randtalkbot.py') as f:
+    version = re.search(
+        '^__version__\s*=\s*\'(.*)\'',
+        f.read(),
+        re.M
+        ).group(1)
 
 with open('README.rst', 'rb') as f:
     long_description = f.read().decode('utf-8')
