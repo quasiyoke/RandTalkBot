@@ -12,7 +12,7 @@ with open('randtalkbot/randtalkbot.py') as f:
     version = re.search(
         '^__version__\s*=\s*\'(.*)\'',
         f.read(),
-        re.M
+        re.M,
         ).group(1)
 
 with open('README.rst', 'rb') as f:
@@ -43,12 +43,12 @@ setup(
         'Topic :: Communications :: Chat',
         ],
     install_requires=[
-        'asyncio>=3.4.3, <4.0',
-        'docopt>=0.6.2, <0.7',
-        'telepot>=5.0, <6.0',
+        'asyncio>=3.4.3,<4.0',
+        'docopt>=0.6.2,<0.7',
+        'telepot>=5.0,<6.0',
         ],
     test_suite='tests',
     tests_require=[
-        'asynctest>=0.5, <0.6',
+        'asynctest',
         ],
     )
