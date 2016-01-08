@@ -1,6 +1,9 @@
 Rand Talk
 =========
 
+.. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
+    :target: https://travis-ci.org/quasiyoke/RandTalkBot
+
 Bot matching you with a random person on Telegram. Chat with anonymous strangers here: https://telegram.me/RandTalkBot
 
 Deployment
