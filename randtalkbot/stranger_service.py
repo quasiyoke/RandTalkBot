@@ -31,12 +31,6 @@ class StrangerService:
         yield from stranger.set_partner(partner)
         yield from partner.set_partner(stranger)
 
-    def get_stranger(self, telegram_id):
-        try:
-            return self._strangers[telegram_id]
-        except KeyError:
-            raise StrangerObtainingError('Stranger with such telegram_id wasn\'t found')
-
     def get_or_create_stranger(self, telegram_id, stranger_handler):
         try:
             return self._strangers[telegram_id]
