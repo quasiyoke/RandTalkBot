@@ -7,6 +7,10 @@
 import asyncio
 import logging
 from .stranger import Stranger
+from peewee import *
+
+class StrangerServiceError(Exception):
+    pass
 
 class StrangerObtainingError(Exception):
     pass
@@ -15,8 +19,21 @@ class PartnerObtainingError(Exception):
     pass
 
 class StrangerService:
-    def __init__(self):
+    def __init__(self, configuration):
         self._strangers = {}
+        self._db = MySQLDatabase(
+            configuration.database_name,
+            host=configuration.database_host,
+            user=configuration.database_user,
+            password=configuration.database_password,
+            )
+        # Connect to database just to check if configuration has errors.
+        try:
+            self._db.connect()
+        except DatabaseError as e:
+            logging.error('Troubles with connecting to database.')
+            raise StrangerServiceError()
+        self._db.close()
 
     @asyncio.coroutine
     def set_partner(self, stranger):

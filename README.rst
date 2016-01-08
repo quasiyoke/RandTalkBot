@@ -18,6 +18,12 @@ Deployment
 After that write ``randtalkbotenv/configuration.json`` file::
 
     {
+        "database": {
+            "host": "localhost",
+            "name": "randtalk",
+            "user": "randtalkbot",
+            "password": "xwBUr3oobCXjqSvz4t"
+            },
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
     }
 

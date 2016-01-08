@@ -16,7 +16,7 @@ can use /end to end the conversation.'''
 
 HELP_PATTERN = MANUAL + '''
 
-If you have any suggestions or require help, please contact @quasiyoke When asking questions, please \
+If you have any suggestions or require help, please contact @quasiyoke. When asking questions, please \
 provide this number: {0}
 
 You're welcome to inspect and improve [Rand Talk's source code.](https://github.com/quasiyoke/RandTalkBot)
@@ -88,7 +88,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         elif command == 'end':
             yield from self._stranger.end_chatting()
         elif command == 'help':
-            yield from self.send_notification(('*Help*\n\n' + HELP_PATTERN).format(self.chat_id))
+            yield from self.send_notification('*Help*\n\n' + HELP_PATTERN.format(self.chat_id))
         elif command == 'start':
             yield from self.send_notification('*Manual*\n\n' + MANUAL)
 

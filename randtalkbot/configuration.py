@@ -25,6 +25,10 @@ class Configuration:
             raise ConfigurationObtainingError('Troubles with parsing \"{0}\"'.format(path))
 
         try:
+            self.database_host = configuration_json['database']['host']
+            self.database_name = configuration_json['database']['name']
+            self.database_user = configuration_json['database']['user']
+            self.database_password = configuration_json['database']['password']
             self.token = configuration_json['token']
         except KeyError as e:
             logging.error('Troubles with obtaining parameters: %s', e)

@@ -12,7 +12,7 @@ import logging
 import sys
 from .bot import Bot
 from .configuration import Configuration, ConfigurationObtainingError
-from .stranger_service import StrangerService
+from .stranger_service import StrangerService, StrangerServiceError
 from docopt import docopt
 
 doc = '''RandTalkBot
@@ -36,7 +36,11 @@ def main():
         logging.error('Can\'t obtain configuration: %s', e)
         sys.exit('Can\'t obtain configuration: {0}'.format(e))
 
-    stranger_service = StrangerService()
+    try:
+        stranger_service = StrangerService(configuration)
+    except StrangerServiceError as e:
+        logging.error('Can\'t construct StrangerService: %s', e)
+        sys.exit('Can\'t construct StrangerService: {0}'.format(e))
 
     bot = Bot(configuration, stranger_service)
     try:

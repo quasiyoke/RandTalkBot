@@ -150,7 +150,6 @@ class TestStrangerHandler(asynctest.TestCase):
         yield from self.stranger_handler._handle_command('start')
         self.stranger_handler.send_notification.assert_called_once_with('*Manual*\n\nsome_manual')
 
-    @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0}')
     @asyncio.coroutine
     def test_send_notification(self):
         self.stranger_handler.sender.sendMessage = CoroutineMock()

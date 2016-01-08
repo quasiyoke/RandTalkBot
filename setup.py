@@ -45,6 +45,8 @@ setup(
     install_requires=[
         'asyncio>=3.4.3,<4.0',
         'docopt>=0.6.2,<0.7',
+        'peewee>=2.7.4,<3.0',
+        'pymysql>=0.6.7,<0.7',
         'telepot>=5.0,<6.0',
         ],
     test_suite='tests',

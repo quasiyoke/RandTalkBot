@@ -7,14 +7,21 @@
 import asyncio
 import asynctest
 import datetime
-from randtalkbot.stranger_service import StrangerService, StrangerObtainingError, PartnerObtainingError
+from randtalkbot.stranger_service import StrangerService, StrangerServiceError, \
+    StrangerObtainingError, PartnerObtainingError
 from asynctest.mock import patch, Mock, CoroutineMock
 
 class TestStrangerService(asynctest.TestCase):
+    @patch('randtalkbot.stranger_service.MySQLDatabase', Mock())
     @patch('randtalkbot.stranger_service.Stranger', CoroutineMock)
     def setUp(self):
-        self.stranger_service = StrangerService()
-        self.full_stranger_service = StrangerService()
+        self.configuration = Mock()
+        self.configuration.database_host = 'foo_host'
+        self.configuration.database_name = 'foo_name'
+        self.configuration.database_user = 'foo_user'
+        self.configuration.database_password = 'foo_password'
+        self.stranger_service = StrangerService(self.configuration)
+        self.full_stranger_service = StrangerService(self.configuration)
         self.stranger_0 = self.full_stranger_service.get_or_create_stranger(27183, Mock())
         self.stranger_0.is_looking_for_partner = False
         self.stranger_0.looking_for_partner_from = None
@@ -27,6 +34,35 @@ class TestStrangerService(asynctest.TestCase):
         self.stranger_2.is_looking_for_partner = False
         self.stranger_2.looking_for_partner_from = None
         self.stranger_2.set_partner = CoroutineMock()
+
+    @patch('randtalkbot.stranger_service.MySQLDatabase', Mock())
+    @asynctest.ignore_loop
+    def test_init__ok(self):
+        from randtalkbot.stranger_service import MySQLDatabase
+        database = Mock()
+        MySQLDatabase.return_value = database
+        stranger_service = StrangerService(self.configuration)
+        self.assertEqual(stranger_service._db, database)
+        MySQLDatabase.assert_called_once_with(
+            'foo_name',
+            host='foo_host',
+            user='foo_user',
+            password='foo_password',
+            )
+
+    @patch('randtalkbot.stranger_service.MySQLDatabase', Mock())
+    @asynctest.ignore_loop
+    def test_init__database_troubles(self):
+        from randtalkbot.stranger_service import MySQLDatabase
+        MySQLDatabase.return_value.connect.side_effect = StrangerServiceError()
+        with self.assertRaises(StrangerServiceError):
+            StrangerService(self.configuration)
+        MySQLDatabase.assert_called_once_with(
+            'foo_name',
+            host='foo_host',
+            user='foo_user',
+            password='foo_password',
+            )
 
     def test_set_partner__ok(self):
         self.stranger_1.is_looking_for_partner = True
