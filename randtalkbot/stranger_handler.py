@@ -11,13 +11,16 @@ import telepot
 from .stranger import MissingPartnerError
 from .stranger_service import PartnerObtainingError
 
-HELP_PATTERN = '''*Manual*
+MANUAL = '''Use /begin to start looking for a conversational partner, once you're matched you \
+can use /end to end the conversation.'''
 
-Use /begin to start looking for a conversational partner, once you're matched you can use /end to end the conversation.
+HELP_PATTERN = MANUAL + '''
 
-You're welcome to inspect and improve [Rand Talk's source code.](https://github.com/quasiyoke/RandTalkBot) If you have any suggestions or require help, please contact @quasiyoke
+If you have any suggestions or require help, please contact @quasiyoke When asking questions, please \
+provide this number: {0}
 
-When asking questions, please provide this number: {0}'''
+You're welcome to inspect and improve [Rand Talk's source code.](https://github.com/quasiyoke/RandTalkBot)
+'''
 
 class MissingCommandError(Exception):
     pass
@@ -84,8 +87,10 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 pass
         elif command == 'end':
             yield from self._stranger.end_chatting()
-        elif command == 'help' or command == 'start':
-            yield from self.send_notification(HELP_PATTERN.format(self.chat_id))
+        elif command == 'help':
+            yield from self.send_notification(('*Help*\n\n' + HELP_PATTERN).format(self.chat_id))
+        elif command == 'start':
+            yield from self.send_notification('*Manual*\n\n' + MANUAL)
 
     @asyncio.coroutine
     def send_notification(self, message):

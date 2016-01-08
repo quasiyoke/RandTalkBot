@@ -141,14 +141,14 @@ class TestStrangerHandler(asynctest.TestCase):
     def test_handle_command__help(self):
         self.stranger_handler.send_notification = CoroutineMock()
         yield from self.stranger_handler._handle_command('help')
-        self.stranger_handler.send_notification.assert_called_once_with('help 31416')
+        self.stranger_handler.send_notification.assert_called_once_with('*Help*\n\nhelp 31416')
 
-    @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0}')
+    @patch('randtalkbot.stranger_handler.MANUAL', 'some_manual')
     @asyncio.coroutine
     def test_handle_command__start(self):
         self.stranger_handler.send_notification = CoroutineMock()
         yield from self.stranger_handler._handle_command('start')
-        self.stranger_handler.send_notification.assert_called_once_with('help 31416')
+        self.stranger_handler.send_notification.assert_called_once_with('*Manual*\n\nsome_manual')
 
     @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0}')
     @asyncio.coroutine
