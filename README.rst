@@ -22,6 +22,13 @@ Now you may run ``randtalkbot``::
 
     (randtalkbotenv) $ randtalkbot randtalkbotenv/configuration.json
 
+Testing
+-------
+
+::
+
+    $ python3 setup.py test
+
 List of supported commands
 --------------------------
 

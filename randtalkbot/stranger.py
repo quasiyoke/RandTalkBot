@@ -5,8 +5,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import datetime
 import logging
-from datetime import datetime
 
 class MissingPartnerError(Exception):
     pass
@@ -67,5 +67,5 @@ class Stranger:
         self._is_chatting = False
         self._partner = None
         self.is_looking_for_partner = True
-        self.looking_for_partner_from = datetime.now()
+        self.looking_for_partner_from = datetime.datetime.now()
         yield from self._handler.send_notification('Looking for a stranger for you.')
