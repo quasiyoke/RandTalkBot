@@ -49,20 +49,31 @@ class StrangerHandler(telepot.helper.ChatHandler):
     @classmethod
     def _get_content_kwargs(cls, message, content_type):
         if content_type == 'text':
-            content_kwargs = {
-                'text': message['text'],
-                }
+            try:
+                content_kwargs = {
+                    'text': message['text'],
+                    }
+            except KeyError:
+                raise UnsupportedContentError()
             if 'reply_to_message' in message:
                 raise UnsupportedContentError()
             return content_kwargs
         elif content_type == 'photo':
-            content_kwargs = {
-                'photo': message['photo'][-1]['file_id'],
-                'caption': message.get('caption'),
-                }
+            try:
+                content_kwargs = {
+                    'photo': message['photo'][-1]['file_id'],
+                    }
+            except KeyError:
+                raise UnsupportedContentError()
+            try:
+                content_kwargs['caption'] = message['caption']
+            except KeyError:
+                pass
             if 'reply_to_message' in message:
                 raise UnsupportedContentError()
             return content_kwargs
+        else:
+            raise UnsupportedContentError()
 
     @asyncio.coroutine
     def _handle_command(self, command):
