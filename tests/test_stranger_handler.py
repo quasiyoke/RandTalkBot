@@ -7,25 +7,33 @@
 import asyncio
 import asynctest
 from randtalkbot.stranger_handler import StrangerHandler, MissingCommandError, UnsupportedContentError
+from randtalkbot.stranger_sender_service import StrangerSenderService
+from randtalkbot.stranger_service import StrangerServiceError
 from asynctest.mock import patch, Mock, MagicMock, CoroutineMock
 
 class TestStrangerHandler(asynctest.TestCase):
-    def setUp(self):
+    @patch('randtalkbot.stranger_sender_service.StrangerSenderService._instance')
+    def setUp(self, stranger_sender_service):
         self.stranger = CoroutineMock()
         self.stranger_service = Mock()
         self.stranger_service.get_or_create_stranger.return_value = self.stranger
-        initial_msg = {
+        self.initial_msg = {
             'chat': {
                 'id': 31416,
                 }
             }
-        self.stranger_handler = StrangerHandler((Mock(), initial_msg, 31416), self.stranger_service)
+        self.sender = stranger_sender_service.get_or_create_stranger_sender.return_value
+        self.stranger_handler = StrangerHandler((Mock(), self.initial_msg, 31416), self.stranger_service)
+        stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(31416)
+        self.stranger_sender_service = stranger_sender_service
 
     @asynctest.ignore_loop
     def test_init(self):
-        self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
+        self.assertEqual(self.stranger_handler._chat_id, 31416)
         self.assertEqual(self.stranger_handler._stranger, self.stranger)
-        self.stranger_service.get_or_create_stranger.assert_called_once_with(31416, self.stranger_handler)
+        self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
+        self.stranger_service.get_or_create_stranger.assert_called_once_with(31416)
+        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(31416)
 
     @asynctest.ignore_loop
     def test_get_command(self):
@@ -122,15 +130,20 @@ class TestStrangerHandler(asynctest.TestCase):
             StrangerHandler._get_content_kwargs({}, 'video')
 
     def test_handle_command__begin(self):
-        self.stranger_service.set_partner = CoroutineMock()
+        partner = CoroutineMock()
+        self.stranger_service.get_partner.return_value = partner
         yield from self.stranger_handler._handle_command('begin')
-        self.stranger_service.set_partner.assert_called_once_with(self.stranger)
+        self.stranger_service.get_partner.assert_called_once_with(self.stranger)
+        self.stranger.set_partner.assert_called_once_with(partner)
+        partner.set_partner.assert_called_once_with(self.stranger)
 
-    def test_handle_command__begin_error(self):
+    def test_handle_command__begin_partner_obtaining_error(self):
         from randtalkbot.stranger_service import PartnerObtainingError
-        self.stranger_service.set_partner = CoroutineMock(side_effect=PartnerObtainingError())
+        partner = CoroutineMock()
+        self.stranger_service.get_partner.side_effect = PartnerObtainingError()
         yield from self.stranger_handler._handle_command('begin')
-        self.stranger_service.set_partner.assert_not_called()
+        self.stranger_service.get_partner.assert_called_once_with(self.stranger)
+        self.stranger.set_looking_for_partner.assert_called_once_with()
 
     def test_handle_command__end(self):
         yield from self.stranger_handler._handle_command('end')
@@ -139,26 +152,14 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0}')
     @asyncio.coroutine
     def test_handle_command__help(self):
-        self.stranger_handler.send_notification = CoroutineMock()
         yield from self.stranger_handler._handle_command('help')
-        self.stranger_handler.send_notification.assert_called_once_with('help 31416')
+        self.sender.send_notification.assert_called_once_with('*Help*\n\nhelp 31416')
 
-    @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0}')
+    @patch('randtalkbot.stranger_handler.MANUAL', 'some_manual')
     @asyncio.coroutine
     def test_handle_command__start(self):
-        self.stranger_handler.send_notification = CoroutineMock()
         yield from self.stranger_handler._handle_command('start')
-        self.stranger_handler.send_notification.assert_called_once_with('help 31416')
-
-    @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0}')
-    @asyncio.coroutine
-    def test_send_notification(self):
-        self.stranger_handler.sender.sendMessage = CoroutineMock()
-        yield from self.stranger_handler.send_notification('foo')
-        self.stranger_handler.sender.sendMessage.assert_called_once_with(
-            '*Rand Talk:* foo',
-            parse_mode='Markdown',
-            )
+        self.sender.send_notification.assert_called_once_with('*Manual*\n\nsome_manual')
 
     @patch('randtalkbot.stranger_handler.telepot', Mock())
     @asyncio.coroutine
@@ -183,7 +184,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger_handler.send_notification = CoroutineMock()
         yield from self.stranger_handler.on_message('message')
         telepot.glance2.assert_called_once_with('message')
-        self.stranger_handler.send_notification.assert_called_once_with(
+        self.sender.send_notification.assert_called_once_with(
             'Messages of this type weren\'t supported.',
             )
         self.stranger.send_to_partner.assert_not_called()
@@ -315,14 +316,3 @@ class TestStrangerHandler(asynctest.TestCase):
         StrangerHandler._get_command.assert_not_called()
         StrangerHandler._get_content_kwargs.assert_called_once_with(message, 'photo')
         handle_command_mock.assert_not_called()
-
-    def test_send__text(self):
-        self.stranger_handler.sender.sendMessage = CoroutineMock()
-        content_kwargs = {'foo': 'bar'}
-        yield from self.stranger_handler.send('text', content_kwargs)
-        self.stranger_handler.sender.sendMessage.assert_called_once_with(**content_kwargs)
-
-    def test_send__video(self):
-        content_kwargs = {'foo': 'bar'}
-        with self.assertRaises(UnsupportedContentError):
-            yield from self.stranger_handler.send('video', content_kwargs)
