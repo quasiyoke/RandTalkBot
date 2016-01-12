@@ -7,8 +7,8 @@
 import re
 from setuptools import setup
 
-# Looking for version number at randtalkbot/randtalkbot.py file.
-with open('randtalkbot/randtalkbot.py') as f:
+# Looking for version number at randtalkbot/utils.py file.
+with open('randtalkbot/utils.py') as f:
     version = re.search(
         '^__version__\s*=\s*\'(.*)\'',
         f.read(),
