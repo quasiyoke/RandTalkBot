@@ -7,6 +7,7 @@
 import logging
 from .stranger import Stranger
 from peewee import *
+from playhouse.shortcuts import RetryOperationalError
 from randtalkbot import stranger
 
 class PartnerObtainingError(Exception):
@@ -15,10 +16,17 @@ class PartnerObtainingError(Exception):
 class StrangerServiceError(Exception):
     pass
 
+class RetryingMySQLDatabase(RetryOperationalError, MySQLDatabase):
+    '''
+    Automatically reconnecting database class.
+    @see http://docs.peewee-orm.com/en/latest/peewee/database.html#automatic-reconnect
+    '''
+    pass
+
 class StrangerService:
     def __init__(self, configuration):
         self._strangers_cache = {}
-        self._database = MySQLDatabase(
+        self._database = RetryingMySQLDatabase(
             configuration.database_name,
             host=configuration.database_host,
             user=configuration.database_user,

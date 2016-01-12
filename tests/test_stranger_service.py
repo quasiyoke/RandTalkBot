@@ -8,16 +8,17 @@ import asyncio
 import datetime
 import unittest
 from asynctest.mock import CoroutineMock
-from peewee import DatabaseError, DoesNotExist, MySQLDatabase
+from peewee import DatabaseError, DoesNotExist
 from randtalkbot.stranger import Stranger
-from randtalkbot.stranger_service import StrangerService, StrangerServiceError, PartnerObtainingError
+from randtalkbot.stranger_service import \
+    StrangerService, StrangerServiceError, PartnerObtainingError, RetryingMySQLDatabase
 from unittest.mock import call, create_autospec, patch, Mock
 
 class TestStrangerService(unittest.TestCase):
-    @patch('randtalkbot.stranger_service.MySQLDatabase', create_autospec(MySQLDatabase))
+    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', create_autospec(RetryingMySQLDatabase))
     @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
     def setUp(self):
-        from randtalkbot.stranger_service import MySQLDatabase
+        from randtalkbot.stranger_service import RetryingMySQLDatabase
         from randtalkbot.stranger_service import Stranger as stranger_cls_mock
         stranger_mock = Mock()
         stranger_mock.id = 1
@@ -28,7 +29,7 @@ class TestStrangerService(unittest.TestCase):
         self.configuration.database_user = 'foo_user'
         self.configuration.database_password = 'foo_password'
         self.database = Mock()
-        MySQLDatabase.return_value = self.database
+        RetryingMySQLDatabase.return_value = self.database
         self.stranger_service = StrangerService(self.configuration)
         self.stranger_0 = Mock()
         self.stranger_0.telegram_id = 27183
@@ -46,16 +47,16 @@ class TestStrangerService(unittest.TestCase):
         self.stranger_2.looking_for_partner_from = None
         self.stranger_2.set_partner = CoroutineMock()
 
-    @patch('randtalkbot.stranger_service.MySQLDatabase', Mock())
+    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', Mock())
     @patch('randtalkbot.stranger.database_proxy', Mock())
     def test_init__ok(self):
-        from randtalkbot.stranger_service import MySQLDatabase
+        from randtalkbot.stranger_service import RetryingMySQLDatabase
         from randtalkbot.stranger import database_proxy
         database = Mock()
-        MySQLDatabase.return_value = database
+        RetryingMySQLDatabase.return_value = database
         stranger_service = StrangerService(self.configuration)
         self.assertEqual(stranger_service._database, database)
-        MySQLDatabase.assert_called_once_with(
+        RetryingMySQLDatabase.assert_called_once_with(
             'foo_name',
             host='foo_host',
             user='foo_user',
@@ -63,13 +64,13 @@ class TestStrangerService(unittest.TestCase):
             )
         database_proxy.initialize.assert_called_once_with(database)
 
-    @patch('randtalkbot.stranger_service.MySQLDatabase', Mock())
+    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', Mock())
     def test_init__database_troubles(self):
-        from randtalkbot.stranger_service import MySQLDatabase
-        MySQLDatabase.return_value.connect.side_effect = StrangerServiceError()
+        from randtalkbot.stranger_service import RetryingMySQLDatabase
+        RetryingMySQLDatabase.return_value.connect.side_effect = StrangerServiceError()
         with self.assertRaises(StrangerServiceError):
             StrangerService(self.configuration)
-        MySQLDatabase.assert_called_once_with(
+        RetryingMySQLDatabase.assert_called_once_with(
             'foo_name',
             host='foo_host',
             user='foo_user',
