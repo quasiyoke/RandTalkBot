@@ -4,7 +4,7 @@ Rand Talk
 .. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
 
-Bot matching you with a random person on Telegram. Chat with anonymous strangers here: https://telegram.me/RandTalkBot
+Bot matching you with a random person on Telegram. Chat with anonymous strangers `here <https://telegram.me/RandTalkBot>`_.
 
 Deployment
 ----------
@@ -56,3 +56,17 @@ In @BotFather compatible format::
     begin - Begin looking for next stranger
     end - End talking
     help - Help for Rand Talk
+
+Roadmap
+-------
+
+* 0.1 Simplest functionality was implemented
+* 0.2 Use MySQL
+* 0.3 Implement partner's sex, language choosing
+* 0.4 Translate interface to different languages
+* 1.0 Stickers
+* 1.1 Customizable greetings message
+* 1.2 /oops - return last partner!
+* 1.3 don't talk with recent partners
+* 1.4 instant bots messages
+* 1.5 Replies
