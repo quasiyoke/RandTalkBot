@@ -6,14 +6,13 @@
 
 '''randtalkbot.randtalkbot: provides entry point main().'''
 
-__version__ = '0.1'
-
 import logging
 import sys
 from .bot import Bot
 from .configuration import Configuration, ConfigurationObtainingError
 from .stranger_sender_service import StrangerSenderService
 from .stranger_service import StrangerService, StrangerServiceError
+from .utils import __version__
 from docopt import docopt
 from randtalkbot import stranger, stranger_service
 

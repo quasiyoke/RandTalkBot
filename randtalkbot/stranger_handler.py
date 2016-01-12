@@ -13,6 +13,7 @@ from .stranger import MissingPartnerError
 from .stranger_sender import StrangerSender
 from .stranger_sender_service import StrangerSenderService
 from .stranger_service import PartnerObtainingError, StrangerServiceError
+from .utils import __version__
 
 MANUAL = '''Use /begin to start looking for a conversational partner, once you're matched you \
 can use /end to end the conversation.'''
@@ -23,6 +24,8 @@ If you have any suggestions or require help, please contact @quasiyoke. When ask
 provide this number: {0}
 
 You're welcome to inspect and improve [Rand Talk's source code.](https://github.com/quasiyoke/RandTalkBot)
+
+version {1}
 '''
 
 class MissingCommandError(Exception):
@@ -107,7 +110,9 @@ class StrangerHandler(telepot.helper.ChatHandler):
         elif command == 'end':
             yield from self._stranger.end_chatting()
         elif command == 'help':
-            yield from self._sender.send_notification('*Help*\n\n' + HELP_PATTERN.format(self.chat_id))
+            yield from self._sender.send_notification(
+                '*Help*\n\n' + HELP_PATTERN.format(self.chat_id, __version__),
+                )
         elif command == 'start':
             yield from self._sender.send_notification('*Manual*\n\n' + MANUAL)
 

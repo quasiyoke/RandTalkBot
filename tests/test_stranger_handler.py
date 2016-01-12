@@ -149,11 +149,12 @@ class TestStrangerHandler(asynctest.TestCase):
         yield from self.stranger_handler._handle_command('end')
         self.stranger.end_chatting.assert_called_once_with()
 
-    @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0}')
+    @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0} {1}')
+    @patch('randtalkbot.stranger_handler.__version__', '0.0.0')
     @asyncio.coroutine
     def test_handle_command__help(self):
         yield from self.stranger_handler._handle_command('help')
-        self.sender.send_notification.assert_called_once_with('*Help*\n\nhelp 31416')
+        self.sender.send_notification.assert_called_once_with('*Help*\n\nhelp 31416 0.0.0')
 
     @patch('randtalkbot.stranger_handler.MANUAL', 'some_manual')
     @asyncio.coroutine
