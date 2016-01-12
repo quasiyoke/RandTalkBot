@@ -7,9 +7,12 @@
 import asyncio
 import logging
 import re
+import sys
 import telepot
 from .stranger import MissingPartnerError
-from .stranger_service import PartnerObtainingError
+from .stranger_sender import StrangerSender
+from .stranger_sender_service import StrangerSenderService
+from .stranger_service import PartnerObtainingError, StrangerServiceError
 
 MANUAL = '''Use /begin to start looking for a conversational partner, once you're matched you \
 can use /end to end the conversation.'''
@@ -25,21 +28,31 @@ You're welcome to inspect and improve [Rand Talk's source code.](https://github.
 class MissingCommandError(Exception):
     pass
 
+class StrangerHandlerError(Exception):
+    pass
+
 class UnsupportedContentError(Exception):
     pass
 
 class StrangerHandler(telepot.helper.ChatHandler):
     COMMAND_RE_PATTERN = re.compile('^/(begin|end|help|start)\\b')
 
-    CONTENT_TYPE_TO_METHOD_NAME = {
-        'text': 'sendMessage',
-        'photo': 'sendPhoto',
-        }
-
     def __init__(self, seed_tuple, stranger_service):
-        super(StrangerHandler, self).__init__(seed_tuple, None)
+        '''Most of this constructor's code were copied from telepot.helper.ChatHandler and
+            its superclasses to inject stranger_sender_service.'''
+        bot, initial_msg, seed = seed_tuple
+        telepot.helper.ListenerContext.__init__(self, bot, seed)
+        chat_id = initial_msg['chat']['id']
+        self._chat_id = chat_id
+        self._sender = StrangerSenderService.get_instance(bot).get_or_create_stranger_sender(chat_id)
+        self.listener.set_options()
+        self.listener.capture(chat__id=chat_id)
         self._stranger_service = stranger_service
-        self._stranger = self._stranger_service.get_or_create_stranger(self.chat_id, self)
+        try:
+            self._stranger = self._stranger_service.get_or_create_stranger(self.chat_id)
+        except StrangerServiceError as e:
+            logging.error('Problems with StrangerHandler construction: %s', e)
+            sys.exit('Problems with StrangerHandler construction: %s' % e)
 
     @classmethod
     def _get_command(cls, message):
@@ -82,19 +95,21 @@ class StrangerHandler(telepot.helper.ChatHandler):
     def _handle_command(self, command):
         if command == 'begin':
             try:
-                yield from self._stranger_service.set_partner(self._stranger)
+                partner = self._stranger_service.get_partner(self._stranger)
             except PartnerObtainingError:
-                pass
+                yield from self._stranger.set_looking_for_partner()
+            except StrangerServiceError as e:
+                logging.error('Problems with handling /begin command: %s', e)
+                sys.exit('Problems with handling /begin command: %s' % e)
+            else:
+                yield from self._stranger.set_partner(partner)
+                yield from partner.set_partner(self._stranger)
         elif command == 'end':
             yield from self._stranger.end_chatting()
         elif command == 'help':
-            yield from self.send_notification('*Help*\n\n' + HELP_PATTERN.format(self.chat_id))
+            yield from self._sender.send_notification('*Help*\n\n' + HELP_PATTERN.format(self.chat_id))
         elif command == 'start':
-            yield from self.send_notification('*Manual*\n\n' + MANUAL)
-
-    @asyncio.coroutine
-    def send_notification(self, message):
-        yield from self.sender.sendMessage('*Rand Talk:* {0}'.format(message), parse_mode='Markdown')
+            yield from self._sender.send_notification('*Manual*\n\n' + MANUAL)
 
     @asyncio.coroutine
     def on_message(self, message):
@@ -106,7 +121,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         try:
             content_kwargs = StrangerHandler._get_content_kwargs(message, content_type)
         except UnsupportedContentError:
-            yield from self.send_notification('Messages of this type weren\'t supported.')
+            yield from self._sender.send_notification('Messages of this type weren\'t supported.')
             return
         if content_type == 'text':
             try:
@@ -122,13 +137,4 @@ class StrangerHandler(telepot.helper.ChatHandler):
             except MissingPartnerError:
                 pass
             except UnsupportedContentError:
-                yield from self.send_notification('Messages of this type weren\'t supported.')
-
-    @asyncio.coroutine
-    def send(self, content_type, content_kwargs):
-        try:
-            method_name = StrangerHandler.CONTENT_TYPE_TO_METHOD_NAME[content_type]
-        except KeyError:
-            raise UnsupportedContentError()
-        else:
-            yield from getattr(self.sender, method_name)(**content_kwargs)
+                yield from self._sender.send_notification('Messages of this type weren\'t supported.')

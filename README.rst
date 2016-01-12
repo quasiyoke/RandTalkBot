@@ -27,6 +27,16 @@ After that write ``randtalkbotenv/configuration.json`` file::
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
     }
 
+Create MySQL DB::
+
+    CREATE DATABASE IF NOT EXISTS randtalk CHARACTER SET utf8 COLLATE utf8_general_ci;
+    CREATE USER randtalkbot@localhost IDENTIFIED BY 'xwBUr3oobCXjqSvz4t';
+    GRANT ALL ON randtalk.* TO randtalkbot@localhost;
+
+Create necessary DB tables::
+
+    (randtalkbotenv) $ randtalkbot install randtalkbotenv/configuration.json
+
 Now you may run ``randtalkbot``::
 
     (randtalkbotenv) $ randtalkbot randtalkbotenv/configuration.json
@@ -36,7 +46,7 @@ Testing
 
 ::
 
-    $ python3 setup.py test
+    $ python3 -m unittest
 
 List of supported commands
 --------------------------

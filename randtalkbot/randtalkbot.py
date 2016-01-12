@@ -12,13 +12,16 @@ import logging
 import sys
 from .bot import Bot
 from .configuration import Configuration, ConfigurationObtainingError
+from .stranger_sender_service import StrangerSenderService
 from .stranger_service import StrangerService, StrangerServiceError
 from docopt import docopt
+from randtalkbot import stranger, stranger_service
 
-doc = '''RandTalkBot
+DOC = '''RandTalkBot
 
 Usage:
   randtalkbot CONFIGURATION
+  randtalkbot install CONFIGURATION
   randtalkbot -h | --help | --version
 
 Arguments:
@@ -26,24 +29,32 @@ Arguments:
 '''
 
 def main():
-    arguments = docopt(doc, version=__version__)
+    arguments = docopt(DOC, version=__version__)
     logging.basicConfig(level=logging.INFO)
-    logging.info('Executing RandTalkBot v. {0}'.format(__version__))
 
     try:
         configuration = Configuration(arguments['CONFIGURATION'])
     except ConfigurationObtainingError as e:
         logging.error('Can\'t obtain configuration: %s', e)
-        sys.exit('Can\'t obtain configuration: {0}'.format(e))
+        sys.exit('Can\'t obtain configuration: %s' % e)
 
     try:
         stranger_service = StrangerService(configuration)
     except StrangerServiceError as e:
         logging.error('Can\'t construct StrangerService: %s', e)
-        sys.exit('Can\'t construct StrangerService: {0}'.format(e))
+        sys.exit('Can\'t construct StrangerService: %s' % e)
 
-    bot = Bot(configuration, stranger_service)
-    try:
-        bot.start_listening()
-    except KeyboardInterrupt:
-        logging.info('Execution was finished by keyboard interrupt.')
+    if arguments['install']:
+        logging.info('Installing RandTalkBot.')
+        try:
+            stranger_service.install()
+        except StrangerServiceError as e:
+            logging.error('Can\'t install StrangerService: %s', e)
+            sys.exit('Can\'t install StrangerService: %s' % e)
+    else:
+        logging.info('Executing RandTalkBot.')
+        bot = Bot(configuration, stranger_service)
+        try:
+            bot.start_listening()
+        except KeyboardInterrupt:
+            logging.info('Execution was finished by keyboard interrupt.')
