@@ -83,11 +83,18 @@ class StrangerSetupWizard:
 
     @asyncio.coroutine
     def handle(self, text):
+        '''
+        @returns `True` if message was interpreted in this method. `False` if message still needs
+            interpretation.
+        '''
         if self._stranger.wizard_mode == 'none':
-            if self._stranger.is_empty() or self._ensure_stranger_is_full():
+            if self._ensure_stranger_is_full():
                 return False
-            else:
-                self._send_invitation(missing=True)
+            if self._stranger.is_empty():
+                yield from self.activate()
+                return True
+            else: # If only a few Stranger's fields aren't set up.
+                yield from self._send_invitation(missing=True)
                 self._stranger.save()
                 return True
         if self._stranger.wizard_mode != 'setup_full' and self._stranger.wizard_mode != 'setup_missing':
@@ -100,7 +107,7 @@ class StrangerSetupWizard:
             elif self._stranger.wizard_mode == 'setup_missing':
                 if (yield from self._setup_languages(text)):
                     self._ensure_stranger_is_full()
-                    self._send_invitation(missing=True)
+                    yield from self._send_invitation(missing=True)
                 else:
                     yield from self._send_invitation()
         elif self._stranger.wizard_step == 'sex':
@@ -128,7 +135,7 @@ class StrangerSetupWizard:
             elif self._stranger.wizard_mode == 'setup_missing':
                 if (yield from self._setup_partner_sex(text)):
                     self._ensure_stranger_is_full()
-                    self._send_invitation(missing=True)
+                    yield from self._send_invitation(missing=True)
                 else:
                     yield from self._send_invitation()
         else:
@@ -141,11 +148,12 @@ class StrangerSetupWizard:
         wizard_step = self._stranger.wizard_step
         if wizard_step == 'languages':
             if missing:
-                invitation = 'To continue your work you need to specify languages you speak. ' + \
-                    'Enumerate them like this: \"English, Italian\" or just pick one at special keyboard.'
+                invitation = 'To continue chatting you need to specify languages you speak. ' + \
+                    'Enumerate them like this: \"English, Italian\" -- in order of your speaking ' + \
+                    'convenience or just pick one at special keyboard.'
             else:
-                invitation = 'Enumerate the languages you speak like this: \"English, Italian\" or ' + \
-                    'just pick one at special keyboard.'
+                invitation = 'Enumerate the languages you speak like this: \"English, Italian\" -- ' + \
+                    'in order of your speaking convenience or just pick one at special keyboard.'
             yield from self._sender.send_notification(
                 invitation,
                 reply_markup={
@@ -154,21 +162,21 @@ class StrangerSetupWizard:
                 )
         elif wizard_step == 'sex':
             if missing:
-                invitation = 'To continue your work you need to set up your sex. If you pick ' + \
-                    '\"Not Specified\" you can\'t choose your partners\' sex.'
+                invitation = 'To continue chatting you need to set up your sex. If you pick ' + \
+                    '\"Not Specified\" you can\'t choose your partner\'s sex.'
             else:
-                invitation = 'Set up your sex. If you pick  \"Not Specified\" you can\'t choose ' + \
-                    'your partners\' sex.'
+                invitation = 'Set up your sex. If you pick \"Not Specified\" you can\'t choose ' + \
+                    'your partner\'s sex.'
             yield from self._sender.send_notification(invitation, reply_markup=SEX_KEYBOARD)
         elif wizard_step == 'partner_sex':
             if missing:
-                invitation = 'To continue your work you need to choose your partners\' sex.'
+                invitation = 'To continue chatting you need to choose your partners\' sex.'
             else:
-                invitation = 'Choose your partners\' sex'
+                invitation = 'Choose your partner\'s sex'
             yield from self._sender.send_notification(invitation, reply_markup=SEX_KEYBOARD)
         elif wizard_step == 'stop':
             if missing:
-                invitation = 'Thank you. Now you can /begin chatting again.'
+                invitation = 'Thank you. Now you can continue chatting.'
             else:
                 invitation = 'Thank you. Use /begin to start looking for a conversational partner, ' + \
                     'once you\'re matched you can use /end to end the conversation.'

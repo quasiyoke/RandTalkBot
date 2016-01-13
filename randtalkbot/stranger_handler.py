@@ -100,15 +100,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
     @asyncio.coroutine
     def _handle_command(self, command):
         if command == 'start':
-            if self._stranger.is_full():
-                yield from self._sender.send_notification('*Manual*\n\n' + MANUAL)
-            else:
-                yield from self._stranger_setup_wizard.activate()
-        else:
-            if self._stranger.is_empty():
-                yield from self._stranger_setup_wizard.activate()
-            else:
-                self._stranger_setup_wizard.deactivate()
+            yield from self._sender.send_notification('*Manual*\n\n' + MANUAL)
         if command == 'begin':
             try:
                 partner = self._stranger_service.get_partner(self._stranger)
