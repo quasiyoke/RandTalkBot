@@ -17,9 +17,10 @@ SEX_KEYBOARD = {
     }
 
 class StrangerSetupWizard:
-    def __init__(self, stranger, sender):
+    def __init__(self, stranger):
         self._stranger = stranger
-        self._sender = sender
+        self._sender = StrangerSenderService.get_instance() \
+            .get_or_create_stranger_sender(stranger.telegram_id)
 
     @asyncio.coroutine
     def activate(self):

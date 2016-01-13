@@ -43,8 +43,10 @@ class StrangerHandler(telepot.helper.ChatHandler):
     COMMAND_RE_PATTERN = re.compile('^/(begin|end|help|setup|start)\\b')
 
     def __init__(self, seed_tuple, stranger_service):
-        '''Most of this constructor's code were copied from telepot.helper.ChatHandler and
-            its superclasses to inject stranger_sender_service.'''
+        '''
+        Most of this constructor's code were copied from telepot.helper.ChatHandler and
+        its superclasses to inject stranger_sender_service.
+        '''
         bot, initial_msg, seed = seed_tuple
         telepot.helper.ListenerContext.__init__(self, bot, seed)
         chat_id = initial_msg['chat']['id']
@@ -58,7 +60,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         except StrangerServiceError as e:
             logging.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
-        self._stranger_setup_wizard = StrangerSetupWizard(self._stranger, self._sender)
+        self._stranger_setup_wizard = StrangerSetupWizard(self._stranger)
 
     @classmethod
     def _get_command(cls, message):

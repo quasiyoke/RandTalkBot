@@ -15,11 +15,20 @@ class TestStrangerSender(asynctest.TestCase):
         self.sender = StrangerSender(self.bot, 31416)
         self.sender.sendMessage = CoroutineMock()
 
-    def test_send_notification(self):
+    def test_send_notification__no_reply_markup(self):
         yield from self.sender.send_notification('foo')
         self.sender.sendMessage.assert_called_once_with(
             '*Rand Talk:* foo',
             parse_mode='Markdown',
+            reply_markup=None,
+            )
+
+    def test_send_notification__with_reply_markup(self):
+        yield from self.sender.send_notification('foo', reply_markup='foo_reply_markup')
+        self.sender.sendMessage.assert_called_once_with(
+            '*Rand Talk:* foo',
+            parse_mode='Markdown',
+            reply_markup='foo_reply_markup'
             )
 
     def test_send__text(self):
