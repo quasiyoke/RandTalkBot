@@ -6,7 +6,7 @@
 
 import gettext
 import pycountry
-import re
+from collections import OrderedDict
 
 SUPPORTED_LANGUAGES_NAMES_CHOICES = (
     ('en', 'English'),
@@ -24,6 +24,15 @@ class LanguageNotFoundError(Exception):
     def __init__(self, name):
         super(LanguageNotFoundError, self).__init__('Language \"{0}\" wasn\'t found.'.format(name))
         self.name = name
+
+def _get_deduplicated(a):
+    '''
+    Removes duplicates keeping list order.
+
+    >>> _get_deduplicated(['ru', 'en', 'ru', ])
+    ['ru', 'en', ]
+    '''
+    return list(OrderedDict.fromkeys(a))
 
 def get_language_code(name):
     '''
@@ -74,4 +83,5 @@ def get_languages_codes(names):
     names = [name.strip() for name in names.split(',')]
     names = filter(bool, names)
     names = map(get_language_code, names)
-    return list(names)
+    names = _get_deduplicated(names)
+    return names
