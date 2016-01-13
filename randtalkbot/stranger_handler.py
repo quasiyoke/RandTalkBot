@@ -9,10 +9,12 @@ import logging
 import re
 import sys
 import telepot
-from .stranger import MissingPartnerError
+from .i18n import get_languages_codes, LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
+from .stranger import MissingPartnerError, SEX_NAMES
 from .stranger_sender import StrangerSender
 from .stranger_sender_service import StrangerSenderService
 from .stranger_service import PartnerObtainingError, StrangerServiceError
+from .stranger_setup_wizard import StrangerSetupWizard
 from .utils import __version__
 
 MANUAL = '''Use /begin to start looking for a conversational partner, once you're matched you \
@@ -38,7 +40,7 @@ class UnsupportedContentError(Exception):
     pass
 
 class StrangerHandler(telepot.helper.ChatHandler):
-    COMMAND_RE_PATTERN = re.compile('^/(begin|end|help|start)\\b')
+    COMMAND_RE_PATTERN = re.compile('^/(begin|end|help|setup|start)\\b')
 
     def __init__(self, seed_tuple, stranger_service):
         '''Most of this constructor's code were copied from telepot.helper.ChatHandler and
@@ -56,6 +58,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         except StrangerServiceError as e:
             logging.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
+        self._stranger_setup_wizard = StrangerSetupWizard(self._stranger, self._sender)
 
     @classmethod
     def _get_command(cls, message):
@@ -96,6 +99,16 @@ class StrangerHandler(telepot.helper.ChatHandler):
 
     @asyncio.coroutine
     def _handle_command(self, command):
+        if command == 'start':
+            if self._stranger.is_full():
+                yield from self._sender.send_notification('*Manual*\n\n' + MANUAL)
+            else:
+                yield from self._stranger_setup_wizard.activate()
+        else:
+            if self._stranger.is_empty():
+                yield from self._stranger_setup_wizard.activate()
+            else:
+                self._stranger_setup_wizard.deactivate()
         if command == 'begin':
             try:
                 partner = self._stranger_service.get_partner(self._stranger)
@@ -113,8 +126,8 @@ class StrangerHandler(telepot.helper.ChatHandler):
             yield from self._sender.send_notification(
                 '*Help*\n\n' + HELP_PATTERN.format(self.chat_id, __version__),
                 )
-        elif command == 'start':
-            yield from self._sender.send_notification('*Manual*\n\n' + MANUAL)
+        elif command == 'setup':
+            yield from self._stranger_setup_wizard.activate()
 
     @asyncio.coroutine
     def on_message(self, message):
@@ -126,20 +139,21 @@ class StrangerHandler(telepot.helper.ChatHandler):
         try:
             content_kwargs = StrangerHandler._get_content_kwargs(message, content_type)
         except UnsupportedContentError:
-            yield from self._sender.send_notification('Messages of this type weren\'t supported.')
+            yield from self._sender.send_notification('Messages of this type aren\'t supported.')
             return
         if content_type == 'text':
-            try:
-                yield from self._handle_command(StrangerHandler._get_command(message['text']))
-            except MissingCommandError:
+            if not (yield from self._stranger_setup_wizard.handle(message['text'])):
                 try:
-                    yield from self._stranger.send_to_partner(content_type, content_kwargs)
-                except MissingPartnerError:
-                    pass
+                    yield from self._handle_command(StrangerHandler._get_command(message['text']))
+                except MissingCommandError:
+                    try:
+                        yield from self._stranger.send_to_partner(content_type, content_kwargs)
+                    except MissingPartnerError:
+                        pass
         else:
             try:
                 yield from self._stranger.send_to_partner(content_type, content_kwargs)
             except MissingPartnerError:
                 pass
             except UnsupportedContentError:
-                yield from self._sender.send_notification('Messages of this type weren\'t supported.')
+                yield from self._sender.send_notification('Messages of this type aren\'t supported.')

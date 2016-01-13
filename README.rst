@@ -55,18 +55,19 @@ In @BotFather compatible format::
 
     begin - Begin looking for next stranger
     end - End talking
+    setup - Choose sex and language
     help - Help for Rand Talk
 
 Roadmap
 -------
 
-* 0.1 Simplest functionality was implemented
-* 0.2 Use MySQL
-* 0.3 Implement partner's sex, language choosing
+* 0.1 Simplest functionality
+* 0.2 Storing data at MySQL
+* 0.3 Partner's sex, language choosing
 * 0.4 Translate interface to different languages
 * 1.0 Stickers
 * 1.1 Customizable greetings message
-* 1.2 /oops - return last partner!
-* 1.3 don't talk with recent partners
-* 1.4 instant bots messages
+* 1.2 /oops -- return last partner!
+* 1.3 Don't talk with recent partners
+* 1.4 Instant bots messages
 * 1.5 Replies

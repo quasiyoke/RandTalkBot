@@ -27,5 +27,9 @@ class StrangerSender(telepot.helper.Sender):
             yield from getattr(self, method_name)(**content_kwargs)
 
     @asyncio.coroutine
-    def send_notification(self, message):
-        yield from self.sendMessage('*Rand Talk:* {0}'.format(message), parse_mode='Markdown')
+    def send_notification(self, message, reply_markup=None):
+        yield from self.sendMessage(
+            '*Rand Talk:* {0}'.format(message),
+            parse_mode='Markdown',
+            reply_markup=reply_markup,
+            )
