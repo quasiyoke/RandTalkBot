@@ -10,7 +10,7 @@ import re
 import sys
 import telepot
 from .i18n import get_languages_codes, LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
-from .stranger import MissingPartnerError, SexError, SEX_NAMES
+from .stranger import EmptyLanguagesError, MissingPartnerError, SexError, SEX_NAMES
 from .stranger_sender_service import StrangerSenderService
 from .wizard import Wizard
 
@@ -67,6 +67,8 @@ class StrangerSetupWizard(Wizard):
                 self._stranger.set_languages(get_languages_codes(text))
             except LanguageNotFoundError as e:
                 yield from self._sender.send_notification(str(e))
+            except EmptyLanguagesError as e:
+                yield from self._sender.send_notification('Please specify at least one language.')
             else:
                 self._stranger.wizard_step = 'sex'
                 self._stranger.save()
@@ -76,22 +78,23 @@ class StrangerSetupWizard(Wizard):
                 self._stranger.set_sex(text)
             except SexError as e:
                 yield from self._sender.send_notification(str(e))
+                yield from self._send_invitation()
             else:
                 if self._stranger.sex == 'not_specified':
                     self._stranger.partner_sex = 'not_specified'
-                    self.deactivate()
+                    yield from self.deactivate()
                 else:
                     self._stranger.wizard_step = 'partner_sex'
                     self._stranger.save()
-            yield from self._send_invitation()
+                    yield from self._send_invitation()
         elif self._stranger.wizard_step == 'partner_sex':
             try:
                 self._stranger.set_partner_sex(text)
             except SexError as e:
                 yield from self._sender.send_notification(str(e))
+                yield from self._send_invitation()
             else:
-                self.deactivate()
-            yield from self._send_invitation()
+                yield from self.deactivate()
         else:
             logging.warning('Undknown wizard_step value was found: \"%s\"', self._stranger.wizard_step)
         return True

@@ -27,12 +27,15 @@ WIZARD_CHOICES = (
 
 database_proxy = Proxy()
 
+class EmptyLanguagesError(Exception):
+    pass
+
 class MissingPartnerError(Exception):
     pass
 
 class SexError(Exception):
     def __init__(self, sex):
-        super(SexError, self).__init__('Unknown sex: \"{0}\"'.format(sex))
+        super(SexError, self).__init__('Unknown sex: \"{0}\" -- is not a valid sex name.'.format(sex))
         self.sex = sex
 
 class StrangerError(Exception):
@@ -121,6 +124,8 @@ class Stranger(Model):
             raise MissingPartnerError()
 
     def set_languages(self, languages):
+        if not len(languages):
+            raise EmptyLanguagesError()
         languages = json.dumps(languages)
         self.languages = languages
         self.save()
@@ -152,7 +157,7 @@ class Stranger(Model):
         try:
             sex = SEX_NAMES_TO_CODES[sex]
         except KeyError:
-            raise SexError('\"{0}\" is not a valid sex name.'.format(sex))
+            raise SexError(sex)
         self.sex = sex
         self.save()
 
@@ -161,7 +166,7 @@ class Stranger(Model):
         try:
             partner_sex = SEX_NAMES_TO_CODES[partner_sex]
         except KeyError:
-            raise SexError('\"{0}\" is not a valid sex name.'.format(partner_sex))
+            raise SexError(partner_sex)
         self.partner_sex = partner_sex
         self.save()
 

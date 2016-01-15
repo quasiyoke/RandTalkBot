@@ -178,11 +178,19 @@ class TestStranger(asynctest.TestCase):
         sender.send.assert_not_called()
 
     @asynctest.ignore_loop
-    def test_set_languages(self):
+    def test_set_languages__ok(self):
         self.stranger.save = Mock()
         self.stranger.set_languages(["foo", "bar", "baz"])
         self.assertEqual(self.stranger.languages, '["foo", "bar", "baz"]')
         self.stranger.save.assert_called_once_with()
+
+    @asynctest.ignore_loop
+    def test_set_languages__empty(self):
+        from randtalkbot.stranger import EmptyLanguagesError
+        self.stranger.save = Mock()
+        with self.assertRaises(EmptyLanguagesError):
+            self.stranger.set_languages([])
+        self.stranger.save.assert_not_called()
 
     @patch('randtalkbot.stranger.datetime')
     @asyncio.coroutine
