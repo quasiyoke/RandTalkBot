@@ -34,7 +34,7 @@ def _get_deduplicated(a):
     '''
     return list(OrderedDict.fromkeys(a))
 
-def get_language_code(name):
+def _get_language_code(name):
     '''
     @throws LanguageNotFoundError
     '''
@@ -82,6 +82,6 @@ def get_languages_codes(names):
     '''
     names = [name.strip() for name in names.split(',')]
     names = filter(bool, names)
-    names = map(get_language_code, names)
+    names = map(_get_language_code, names)
     names = _get_deduplicated(names)
     return names

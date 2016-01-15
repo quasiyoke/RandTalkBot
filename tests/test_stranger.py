@@ -101,18 +101,18 @@ class TestStranger(asynctest.TestCase):
             .assert_called_once_with(31416)
 
     @asynctest.ignore_loop
-    def test_is_empty__empty(self):
+    def test_is_novice__novice(self):
         self.stranger.languages = None
         self.stranger.sex = None
         self.stranger.partner_sex = None
-        self.assertTrue(self.stranger.is_empty())
+        self.assertTrue(self.stranger.is_novice())
 
     @asynctest.ignore_loop
-    def test_is_empty__not_empty(self):
+    def test_is_novice__not_novice(self):
         self.stranger.languages = 'foo'
         self.stranger.sex = None
         self.stranger.partner_sex = None
-        self.assertFalse(self.stranger.is_empty())
+        self.assertFalse(self.stranger.is_novice())
 
     @asynctest.ignore_loop
     def test_is_full__full(self):
@@ -281,7 +281,7 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(self.stranger.partner_sex, 'foo')
 
     @asynctest.ignore_loop
-    def test_speaks_on_language__empty(self):
+    def test_speaks_on_language__novice(self):
         self.stranger.languages = None
         self.assertFalse(self.stranger.speaks_on_language('foo'))
 

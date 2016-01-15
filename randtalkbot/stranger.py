@@ -19,10 +19,10 @@ SEX_CHOICES = (
     )
 SEX_NAMES = list(zip(*SEX_CHOICES))[1]
 SEX_NAMES_TO_CODES = {item[1].lower(): item[0] for item in SEX_CHOICES}
-WIZARD_MODE_CHOICES = (
+WIZARD_CHOICES = (
     ('none', 'None'),
-    ('setup_full', 'Setup full'),
-    ('setup_missing', 'Setup missing'),
+    ('setup', 'Setup'),
+    ('completion', 'Completion'),
     )
 
 database_proxy = Proxy()
@@ -31,7 +31,9 @@ class MissingPartnerError(Exception):
     pass
 
 class SexError(Exception):
-    pass
+    def __init__(self, sex):
+        super(SexError, self).__init__('Unknown sex: \"{0}\"'.format(sex))
+        self.sex = sex
 
 class StrangerError(Exception):
     pass
@@ -43,7 +45,7 @@ class Stranger(Model):
     partner_sex = CharField(choices=SEX_CHOICES, max_length=20, null=True)
     sex = CharField(choices=SEX_CHOICES, max_length=20, null=True)
     telegram_id = IntegerField(unique=True)
-    wizard_mode = CharField(choices=WIZARD_MODE_CHOICES, default='none', max_length=20)
+    wizard = CharField(choices=WIZARD_CHOICES, default='none', max_length=20)
     wizard_step = CharField(max_length=20, null=True)
 
     class Meta:
@@ -77,7 +79,7 @@ class Stranger(Model):
     def get_sender(self):
         return StrangerSenderService.get_instance().get_or_create_stranger_sender(self.telegram_id)
 
-    def is_empty(self):
+    def is_novice(self):
         return self.languages is None and \
             self.sex is None and \
             self.partner_sex is None
