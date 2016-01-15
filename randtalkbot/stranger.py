@@ -72,12 +72,11 @@ class Stranger(Model):
         self.looking_for_partner_from = None
         self.save()
 
-    def get_languages_enumeration(self):
+    def get_languages(self):
         if self.languages:
-            languages = json.loads(self.languages)
+            return json.loads(self.languages)
         else:
-            return '(none)'
-        return ', '.join(languages)
+            return []
 
     def get_sender(self):
         return StrangerSenderService.get_instance().get_or_create_stranger_sender(self.telegram_id)

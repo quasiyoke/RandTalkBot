@@ -81,14 +81,14 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.looking_for_partner_from, None)
 
     @asynctest.ignore_loop
-    def test_get_languages_enumeration__has_languages(self):
+    def test_get_languages__has_languages(self):
         self.stranger.languages = '["foo", "bar", "baz"]'
-        self.assertEqual(self.stranger.get_languages_enumeration(), 'foo, bar, baz')
+        self.assertEqual(self.stranger.get_languages(), ["foo", "bar", "baz"])
 
     @asynctest.ignore_loop
-    def test_get_languages_enumeration__no_languages(self):
+    def test_get_languages__no_languages(self):
         self.stranger.languages = None
-        self.assertEqual(self.stranger.get_languages_enumeration(), '(none)')
+        self.assertEqual(self.stranger.get_languages(), [])
 
     @asynctest.ignore_loop
     @patch('randtalkbot.stranger.StrangerSenderService', create_autospec(StrangerSenderService))
