@@ -11,3 +11,5 @@ install:
 
 script:
     - python setup.py test
+
+after_success: python setup.py coverage

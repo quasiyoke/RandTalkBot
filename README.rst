@@ -1,6 +1,9 @@
 Rand Talk
 =========
 
+.. image:: https://coveralls.io/repos/quasiyoke/RandTalkBot/badge.svg?branch=dev&service=github
+    :target: https://coveralls.io/github/quasiyoke/RandTalkBot?branch=dev
+
 .. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
 
@@ -41,13 +44,6 @@ Now you may run ``randtalkbot``::
 
     (randtalkbotenv) $ randtalkbot randtalkbotenv/configuration.json
 
-Testing
--------
-
-::
-
-    $ python3 -m unittest
-
 List of supported commands
 --------------------------
 
@@ -71,3 +67,13 @@ Roadmap
 * 1.3 Don't talk with recent partners
 * 1.4 Instant bots messages
 * 1.5 Replies
+
+Contributing
+------------
+
+Launch tests and observe code coverage.
+
+::
+
+    $ coverage run --source=randtalkbot -m unittest
+    $ coverage report -m

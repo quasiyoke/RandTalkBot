@@ -5,7 +5,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from setuptools import setup
+from setuptools import setup, Command
+from setuptools.command.test import test as SetuptoolsTestCommand
 
 # Looking for version number at randtalkbot/utils.py file.
 with open('randtalkbot/utils.py') as f:
@@ -17,6 +18,30 @@ with open('randtalkbot/utils.py') as f:
 
 with open('README.rst', 'rb') as f:
     long_description = f.read().decode('utf-8')
+
+class TestCommand(SetuptoolsTestCommand):
+    def finalize_options(self):
+        super(TestCommand, self).finalize_options()
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import coverage.cmdline
+        coverage.cmdline.main(argv=['run', '--source=randtalkbot', '-m', 'unittest'])
+
+class CoverageCommand(Command):
+    user_options = []
+
+    def initialize_options(self):
+        self.coveralls_args = []
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        self.distribution.fetch_build_eggs(self.distribution.tests_require)
+        from coveralls import cli
+        cli.main(self.coveralls_args)
 
 setup(
     name='RandTalkBot',
@@ -50,8 +75,12 @@ setup(
         'pymysql>=0.6.7,<0.7',
         'telepot>=5.0,<6.0',
         ],
-    test_suite='tests',
     tests_require=[
         'asynctest',
+        'coveralls',
         ],
+    cmdclass={
+        'test': TestCommand,
+        'coverage': CoverageCommand,
+        },
     )
