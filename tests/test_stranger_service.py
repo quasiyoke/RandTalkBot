@@ -47,7 +47,7 @@ class TestStrangerService(unittest.TestCase):
         self.stranger_2.looking_for_partner_from = None
         self.stranger_2.set_partner = CoroutineMock()
 
-    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', Mock())
+    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', create_autospec(RetryingMySQLDatabase))
     @patch('randtalkbot.stranger.database_proxy', Mock())
     def test_init__ok(self):
         from randtalkbot.stranger_service import RetryingMySQLDatabase
@@ -64,10 +64,10 @@ class TestStrangerService(unittest.TestCase):
             )
         database_proxy.initialize.assert_called_once_with(database)
 
-    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', Mock())
+    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', create_autospec(RetryingMySQLDatabase))
     def test_init__database_troubles(self):
         from randtalkbot.stranger_service import RetryingMySQLDatabase
-        RetryingMySQLDatabase.return_value.connect.side_effect = StrangerServiceError()
+        RetryingMySQLDatabase.return_value.connect.side_effect = DatabaseError()
         with self.assertRaises(StrangerServiceError):
             StrangerService(self.configuration)
         RetryingMySQLDatabase.assert_called_once_with(
@@ -88,10 +88,12 @@ class TestStrangerService(unittest.TestCase):
         self.database.create_tables.assert_called_once_with([Stranger])
 
     def test_get_cached_stranger__cached(self):
+        cached_stranger = Mock()
+        cached_stranger.id = 31416
+        self.stranger_service._strangers_cache[31416] = cached_stranger
         stranger = Mock()
         stranger.id = 31416
-        self.stranger_service._strangers_cache[31416] = stranger
-        self.assertEqual(self.stranger_service.get_cached_stranger(stranger), stranger)
+        self.assertEqual(self.stranger_service.get_cached_stranger(stranger), cached_stranger)
 
     def test_get_cached_stranger__not_cached_no_partner(self):
         stranger = Mock()
@@ -99,6 +101,19 @@ class TestStrangerService(unittest.TestCase):
         stranger.partner = None
         self.assertEqual(self.stranger_service.get_cached_stranger(stranger), stranger)
         self.assertEqual(self.stranger_service._strangers_cache[31416], stranger)
+
+    def test_get_cached_stranger__not_cached_with_partner(self):
+        stranger = Mock()
+        stranger.id = 31416
+        partner = Mock()
+        partner.id = 27183
+        partner.partner = None
+        stranger.partner = partner
+        self.stranger_service.get_cached_stranger = Mock(wraps=self.stranger_service.get_cached_stranger)
+        self.assertEqual(self.stranger_service.get_cached_stranger(stranger), stranger)
+        self.assertEqual(self.stranger_service._strangers_cache[31416], stranger)
+        self.assertEqual(self.stranger_service.get_cached_stranger.call_count, 2)
+        self.stranger_service.get_cached_stranger.assert_called_with(partner)
 
     @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
     def test_get_partner__ok(self):
