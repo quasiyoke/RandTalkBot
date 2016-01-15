@@ -159,7 +159,7 @@ class Stranger(Model):
         try:
             partner_sex = SEX_NAMES_TO_CODES[partner_sex]
         except KeyError:
-            raise SexError('\"{0}\" is not a valid sex name.'.format(sex))
+            raise SexError('\"{0}\" is not a valid sex name.'.format(partner_sex))
         self.partner_sex = partner_sex
         self.save()
 

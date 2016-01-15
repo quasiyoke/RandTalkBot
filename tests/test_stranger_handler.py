@@ -35,7 +35,25 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger_sender_service = stranger_sender_service
 
     @asynctest.ignore_loop
-    def test_init(self):
+    def test_init__ok(self):
+        self.assertEqual(self.stranger_handler._chat_id, 31416)
+        self.assertEqual(self.stranger_handler._stranger, self.stranger)
+        self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
+        self.assertEqual(self.stranger_handler._stranger_setup_wizard, self.stranger_setup_wizard)
+        self.stranger_service.get_or_create_stranger.assert_called_once_with(31416)
+        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(31416)
+        self.StrangerSetupWizard.assert_called_once_with(self.stranger)
+
+    @patch('randtalkbot.stranger_handler.logging', Mock())
+    @asynctest.ignore_loop
+    def test_init__stranger_service_error(self):
+        self.stranger_service.reset_mock()
+        self.stranger_service.get_or_create_stranger.side_effect = StrangerServiceError()
+        with self.assertRaises(SystemExit):
+            self.stranger_handler = StrangerHandler(
+                (Mock(), self.initial_msg, 31416),
+                self.stranger_service,
+                )
         self.assertEqual(self.stranger_handler._chat_id, 31416)
         self.assertEqual(self.stranger_handler._stranger, self.stranger)
         self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
@@ -153,6 +171,16 @@ class TestStrangerHandler(asynctest.TestCase):
         yield from self.stranger_handler._handle_command('begin')
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
         self.stranger.set_looking_for_partner.assert_called_once_with()
+
+    @patch('randtalkbot.stranger_handler.logging', Mock())
+    @asyncio.coroutine
+    def test_handle_command__begin_stranger_service_error(self):
+        from randtalkbot.stranger_service import StrangerServiceError
+        partner = CoroutineMock()
+        self.stranger_service.get_partner.side_effect = StrangerServiceError()
+        with self.assertRaises(SystemExit):
+            yield from self.stranger_handler._handle_command('begin')
+        self.stranger_service.get_partner.assert_called_once_with(self.stranger)
 
     def test_handle_command__end(self):
         yield from self.stranger_handler._handle_command('end')
@@ -337,6 +365,37 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger.send_to_partner.assert_called_once_with('photo', 'content_kwargs')
         StrangerHandler._get_command.assert_not_called()
         StrangerHandler._get_content_kwargs.assert_called_once_with(message, 'photo')
+        handle_command_mock.assert_not_called()
+
+    @patch('randtalkbot.stranger_handler.telepot', Mock())
+    @patch(
+        'randtalkbot.stranger_handler.StrangerHandler._get_command',
+        Mock(side_effect=MissingCommandError()),
+        )
+    @patch('randtalkbot.stranger_handler.StrangerHandler._get_content_kwargs', Mock())
+    @patch('randtalkbot.stranger_handler.StrangerHandler._handle_command')
+    @asyncio.coroutine
+    def test_on_message__unsupported_content(self, handle_command_mock):
+        from randtalkbot.stranger_handler import telepot
+        from randtalkbot.stranger_handler import UnsupportedContentError
+        telepot.glance2.return_value = 'unsupported_content', 'private', 31416
+        self.stranger_handler.send_notification = CoroutineMock()
+        message = {
+            'unsupported_content': [
+                {'file_id': 'foo'},
+                {'file_id': 'bar'},
+                ],
+            }
+        self.stranger.send_to_partner = CoroutineMock(side_effect=UnsupportedContentError())
+        StrangerHandler._get_content_kwargs.return_value = 'content_kwargs'
+        yield from self.stranger_handler.on_message(message)
+        telepot.glance2.assert_called_once_with(message)
+        self.stranger.send_to_partner.assert_called_once_with('unsupported_content', 'content_kwargs')
+        self.sender.send_notification.assert_called_once_with(
+            'Messages of this type aren\'t supported.',
+            )
+        StrangerHandler._get_command.assert_not_called()
+        StrangerHandler._get_content_kwargs.assert_called_once_with(message, 'unsupported_content')
         handle_command_mock.assert_not_called()
 
     @patch('randtalkbot.stranger_handler.telepot', Mock())
