@@ -41,3 +41,15 @@ class TestStrangerSenderService(unittest.TestCase):
             stranger_sender,
             )
         self.assertFalse(StrangerSender.called)
+
+    @patch('randtalkbot.stranger_sender_service.StrangerSender', create_autospec(StrangerSender))
+    def test_get_or_create_stranger_sender__not_cached(self):
+        from randtalkbot.stranger_sender_service import StrangerSender
+        stranger_sender = Mock()
+        StrangerSender.return_value = stranger_sender
+        self.assertEqual(
+            self.stranger_sender_service.get_or_create_stranger_sender(31416),
+            stranger_sender,
+            )
+        StrangerSender.assert_called_once_with(self.bot, 31416)
+        self.assertEqual(self.stranger_sender_service._stranger_senders[31416], stranger_sender)
