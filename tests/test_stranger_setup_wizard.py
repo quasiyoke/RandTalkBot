@@ -190,8 +190,8 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard_step = 'languages'
         yield from self.stranger_setup_wizard._send_invitation()
         self.sender.send_notification.assert_called_once_with(
-            'Enumerate the languages you speak like this: \"English, Italian\" -- ' + \
-                'in order of your speaking convenience or just pick one at special keyboard.',
+            'Enumerate the languages you speak like this: "English, Italian" -- in descending ' + \
+                'order of your speaking convenience or just pick one at special keyboard.',
             reply_markup={'keyboard': [('English', 'Português'), ('Italiano', 'Русский')]},
             )
 

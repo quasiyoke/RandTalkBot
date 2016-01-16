@@ -58,6 +58,14 @@ class Stranger(Model):
             (('partner', 'sex', 'partner_sex', 'looking_for_partner_from'), False),
             )
 
+    @classmethod
+    def _get_sex_code(self, sex_name):
+        sex = sex_name.strip().lower()
+        try:
+            return SEX_NAMES_TO_CODES[sex]
+        except KeyError:
+            raise SexError(sex_name)
+
     @asyncio.coroutine
     def end_chatting(self):
         sender = self.get_sender()
@@ -151,22 +159,18 @@ class Stranger(Model):
         self.looking_for_partner_from = None
         self.save()
 
-    def set_sex(self, sex):
-        sex = sex.strip().lower()
-        try:
-            sex = SEX_NAMES_TO_CODES[sex]
-        except KeyError:
-            raise SexError(sex)
-        self.sex = sex
+    def set_sex(self, sex_name):
+        '''
+        @throws SexError
+        '''
+        self.sex = Stranger._get_sex_code(sex_name)
         self.save()
 
-    def set_partner_sex(self, partner_sex):
-        partner_sex = partner_sex.strip().lower()
-        try:
-            partner_sex = SEX_NAMES_TO_CODES[partner_sex]
-        except KeyError:
-            raise SexError(partner_sex)
-        self.partner_sex = partner_sex
+    def set_partner_sex(self, partner_sex_name):
+        '''
+        @throws SexError
+        '''
+        self.partner_sex = Stranger._get_sex_code(partner_sex_name)
         self.save()
 
     def speaks_on_language(self, language):

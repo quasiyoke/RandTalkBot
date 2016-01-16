@@ -121,6 +121,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 '*Help*\n\n' + HELP_PATTERN.format(self.chat_id, __version__),
                 )
         elif command == 'setup':
+            yield from self._stranger.end_chatting()
             yield from self._stranger_setup_wizard.activate()
 
     @asyncio.coroutine
@@ -135,6 +136,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         except UnsupportedContentError:
             yield from self._sender.send_notification('Messages of this type aren\'t supported.')
             return
+
         if content_type == 'text':
             if not (yield from self._stranger_setup_wizard.handle(message['text'])):
                 try:

@@ -20,8 +20,8 @@ SEX_KEYBOARD = {
 
 class StrangerSetupWizard(Wizard):
     '''
-    Wizard which guides user through process of customizing his parameters. Activates automatically for
-    novices.
+    Wizard which guides stranger through process of customizing her parameters. Activates automatically
+    for novices.
     '''
 
     def __init__(self, stranger):
@@ -105,7 +105,8 @@ class StrangerSetupWizard(Wizard):
         if wizard_step == 'languages':
             yield from self._sender.send_notification(
                 'Enumerate the languages you speak like this: \"English, Italian\" -- ' + \
-                    'in order of your speaking convenience or just pick one at special keyboard.',
+                    'in descending order of your speaking convenience or just pick one ' + \
+                    'at special keyboard.',
                 reply_markup={
                     'keyboard': [SUPPORTED_LANGUAGES_NAMES[:2], SUPPORTED_LANGUAGES_NAMES[2:], ],
                     },
