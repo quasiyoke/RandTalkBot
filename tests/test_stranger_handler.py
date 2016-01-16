@@ -31,7 +31,6 @@ class TestStrangerHandler(asynctest.TestCase):
             }
         self.sender = stranger_sender_service.get_or_create_stranger_sender.return_value
         self.stranger_handler = StrangerHandler((Mock(), self.initial_msg, 31416), self.stranger_service)
-        stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(31416)
         self.stranger_sender_service = stranger_sender_service
 
     @asynctest.ignore_loop
@@ -41,7 +40,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
         self.assertEqual(self.stranger_handler._stranger_setup_wizard, self.stranger_setup_wizard)
         self.stranger_service.get_or_create_stranger.assert_called_once_with(31416)
-        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(31416)
+        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(self.stranger)
         self.StrangerSetupWizard.assert_called_once_with(self.stranger)
 
     @patch('randtalkbot.stranger_handler.logging', Mock())
@@ -59,7 +58,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
         self.assertEqual(self.stranger_handler._stranger_setup_wizard, self.stranger_setup_wizard)
         self.stranger_service.get_or_create_stranger.assert_called_once_with(31416)
-        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(31416)
+        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(self.stranger)
         self.StrangerSetupWizard.assert_called_once_with(self.stranger)
 
     @asynctest.ignore_loop
@@ -186,22 +185,31 @@ class TestStrangerHandler(asynctest.TestCase):
         yield from self.stranger_handler._handle_command('end')
         self.stranger.end_chatting.assert_called_once_with()
 
-    @patch('randtalkbot.stranger_handler.HELP_PATTERN', 'help {0} {1}')
     @patch('randtalkbot.stranger_handler.__version__', '0.0.0')
     @asyncio.coroutine
     def test_handle_command__help(self):
         yield from self.stranger_handler._handle_command('help')
-        self.sender.send_notification.assert_called_once_with('*Help*\n\nhelp 31416 0.0.0')
+        self.sender.send_notification.assert_called_once_with(
+            '*Help*\n\nUse /begin to start looking for a conversational partner, once '
+                'you\'re matched you can use /end to end the conversation.\n\nIf you have any '
+                'suggestions or require help, please contact @quasiyoke. When asking questions, '
+                'please provide this number: {0}\n\nYou\'re welcome to inspect and improve '
+                '[Rand Talk\'s source code.](https://github.com/quasiyoke/RandTalkBot)\n\n'
+                'version {1}',
+            31416,
+            '0.0.0',
+            )
 
     def test_handle_command__setup(self):
         yield from self.stranger_handler._handle_command('setup')
         self.stranger_setup_wizard.activate.assert_called_once_with()
 
-    @patch('randtalkbot.stranger_handler.MANUAL', 'some_manual')
-    @asyncio.coroutine
     def test_handle_command__start(self):
         yield from self.stranger_handler._handle_command('start')
-        self.sender.send_notification.assert_called_once_with('*Manual*\n\nsome_manual')
+        self.sender.send_notification.assert_called_once_with(
+            '*Manual*\n\nUse /begin to start looking for a conversational partner, once '
+                'you\'re matched you can use /end to end the conversation.'
+            )
 
     @patch('randtalkbot.stranger_handler.telepot', Mock())
     @asyncio.coroutine

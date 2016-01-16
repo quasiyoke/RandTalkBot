@@ -28,10 +28,10 @@ class StrangerSenderService:
                 cls._instance = cls(bot)
         return cls._instance
 
-    def get_or_create_stranger_sender(self, telegram_id):
+    def get_or_create_stranger_sender(self, stranger):
         try:
-            return self._stranger_senders[telegram_id]
+            return self._stranger_senders[stranger.telegram_id]
         except KeyError:
-            stranger_sender = StrangerSender(self._bot, telegram_id)
-            self._stranger_senders[telegram_id] = stranger_sender
+            stranger_sender = StrangerSender(self._bot, stranger)
+            self._stranger_senders[stranger.telegram_id] = stranger_sender
             return stranger_sender

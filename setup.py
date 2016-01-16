@@ -4,30 +4,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import re
+from randtalkbot.utils import __version__
 from setuptools import setup, Command
 from setuptools.command.test import test as SetuptoolsTestCommand
 
-# Looking for version number at randtalkbot/utils.py file.
-with open('randtalkbot/utils.py') as f:
-    version = re.search(
-        '^__version__\s*=\s*\'(.*)\'',
-        f.read(),
-        re.M,
-        ).group(1)
-
 with open('README.rst', 'rb') as f:
     long_description = f.read().decode('utf-8')
-
-class TestCommand(SetuptoolsTestCommand):
-    def finalize_options(self):
-        super(TestCommand, self).finalize_options()
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import coverage.cmdline
-        coverage.cmdline.main(argv=['run', '--source=randtalkbot', '-m', 'unittest'])
 
 class CoverageCommand(Command):
     user_options = []
@@ -43,9 +27,19 @@ class CoverageCommand(Command):
         from coveralls import cli
         cli.main(self.coveralls_args)
 
+class TestCommand(SetuptoolsTestCommand):
+    def finalize_options(self):
+        super(TestCommand, self).finalize_options()
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import coverage.cmdline
+        coverage.cmdline.main(argv=['run', '--source=randtalkbot', '-m', 'unittest'])
+
 setup(
     name='RandTalkBot',
-    version=version,
+    version=__version__,
     description='Bot matching you with a random person on Telegram.',
     long_description=long_description,
     keywords=['telegram', 'bot', 'anonymous', 'chat'],
@@ -54,6 +48,9 @@ setup(
     author_email='quasiyoke@gmail.com',
     url='https://github.com/quasiyoke/RandTalkBot',
     packages=['randtalkbot'],
+    package_data={
+        'randtalkbot': ['locale/*/LC_MESSAGES/*.mo']
+        },
     entry_points={
         'console_scripts': ['randtalkbot = randtalkbot.randtalkbot:main'],
         },
@@ -73,14 +70,14 @@ setup(
         'peewee>=2.7.4,<3.0',
         'pycountry>=1.19,<2.0',
         'pymysql>=0.6.7,<0.7',
-        'telepot>=5.0,<6.0',
+        'telepot>=6.1,<7.0',
         ],
     tests_require=[
         'asynctest',
         'coveralls',
         ],
     cmdclass={
-        'test': TestCommand,
         'coverage': CoverageCommand,
+        'test': TestCommand,
         },
     )

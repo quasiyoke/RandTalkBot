@@ -17,18 +17,7 @@ from .stranger_service import PartnerObtainingError, StrangerServiceError
 from .stranger_setup_wizard import StrangerSetupWizard
 from .utils import __version__
 
-MANUAL = '''Use /begin to start looking for a conversational partner, once you're matched you \
-can use /end to end the conversation.'''
-
-HELP_PATTERN = MANUAL + '''
-
-If you have any suggestions or require help, please contact @quasiyoke. When asking questions, please \
-provide this number: {0}
-
-You're welcome to inspect and improve [Rand Talk's source code.](https://github.com/quasiyoke/RandTalkBot)
-
-version {1}
-'''
+def _(s): return s
 
 class MissingCommandError(Exception):
     pass
@@ -51,7 +40,6 @@ class StrangerHandler(telepot.helper.ChatHandler):
         telepot.helper.ListenerContext.__init__(self, bot, seed)
         chat_id = initial_msg['chat']['id']
         self._chat_id = chat_id
-        self._sender = StrangerSenderService.get_instance(bot).get_or_create_stranger_sender(chat_id)
         self.listener.set_options()
         self.listener.capture(chat__id=chat_id)
         self._stranger_service = stranger_service
@@ -60,6 +48,8 @@ class StrangerHandler(telepot.helper.ChatHandler):
         except StrangerServiceError as e:
             logging.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
+        self._sender = StrangerSenderService.get_instance(bot) \
+            .get_or_create_stranger_sender(self._stranger)
         self._stranger_setup_wizard = StrangerSetupWizard(self._stranger)
 
     @classmethod
@@ -102,7 +92,10 @@ class StrangerHandler(telepot.helper.ChatHandler):
     @asyncio.coroutine
     def _handle_command(self, command):
         if command == 'start':
-            yield from self._sender.send_notification('*Manual*\n\n' + MANUAL)
+            yield from self._sender.send_notification(
+                _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
+                    'you\'re matched you can use /end to end the conversation.')
+                )
         if command == 'begin':
             try:
                 partner = self._stranger_service.get_partner(self._stranger)
@@ -118,9 +111,17 @@ class StrangerHandler(telepot.helper.ChatHandler):
             yield from self._stranger.end_chatting()
         elif command == 'help':
             yield from self._sender.send_notification(
-                '*Help*\n\n' + HELP_PATTERN.format(self.chat_id, __version__),
+                _('*Help*\n\nUse /begin to start looking for a conversational partner, once '
+                    'you\'re matched you can use /end to end the conversation.\n\nIf you have any '
+                    'suggestions or require help, please contact @quasiyoke. When asking questions, '
+                    'please provide this number: {0}\n\nYou\'re welcome to inspect and improve '
+                    '[Rand Talk\'s source code.](https://github.com/quasiyoke/RandTalkBot)\n\n'
+                    'version {1}'),
+                    self.chat_id,
+                    __version__,
                 )
         elif command == 'setup':
+            yield from self._stranger.end_chatting()
             yield from self._stranger_setup_wizard.activate()
 
     @asyncio.coroutine
@@ -133,8 +134,9 @@ class StrangerHandler(telepot.helper.ChatHandler):
         try:
             content_kwargs = StrangerHandler._get_content_kwargs(message, content_type)
         except UnsupportedContentError:
-            yield from self._sender.send_notification('Messages of this type aren\'t supported.')
+            yield from self._sender.send_notification(_('Messages of this type aren\'t supported.'))
             return
+
         if content_type == 'text':
             if not (yield from self._stranger_setup_wizard.handle(message['text'])):
                 try:
@@ -150,4 +152,6 @@ class StrangerHandler(telepot.helper.ChatHandler):
             except MissingPartnerError:
                 pass
             except UnsupportedContentError:
-                yield from self._sender.send_notification('Messages of this type aren\'t supported.')
+                yield from self._sender.send_notification(
+                    _('Messages of this type aren\'t supported.')
+                    )

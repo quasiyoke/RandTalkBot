@@ -23,7 +23,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_init(self):
-        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(31416)
+        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(self.stranger)
 
     def test_activate(self):
         self.stranger_setup_wizard._send_invitation = CoroutineMock()
@@ -80,6 +80,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger_setup_wizard._send_invitation.assert_called_once_with()
         self.assertEqual(self.stranger.wizard_step, 'sex')
         self.stranger.save.assert_called_once_with()
+        self.sender.update_translation.assert_called_once_with()
 
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     @asyncio.coroutine
@@ -94,7 +95,10 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         get_languages_codes.assert_called_once_with('foo_text')
         self.stranger.set_languages.assert_not_called()
         self.stranger_setup_wizard._send_invitation.assert_called_once_with()
-        self.sender.send_notification.assert_called_once_with('Language "foo_lang" wasn\'t found.')
+        self.sender.send_notification.assert_called_once_with(
+            'Language "{0}" wasn\'t found.',
+            'foo_lang',
+            )
 
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     @asyncio.coroutine
@@ -144,7 +148,8 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.set_sex.assert_called_once_with('foo_text')
         self.stranger_setup_wizard._send_invitation.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with(
-            'Unknown sex: "foo_sex" -- is not a valid sex name.',
+            'Unknown sex: "{0}" -- is not a valid sex name.',
+            'foo_sex',
             )
 
     def test_handle__partner_sex_ok(self):
@@ -170,7 +175,8 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.set_partner_sex.assert_called_once_with('foo_text')
         self.stranger_setup_wizard._send_invitation.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with(
-            'Unknown sex: "foo_sex" -- is not a valid sex name.',
+            'Unknown sex: "{0}" -- is not a valid sex name.',
+            'foo_sex',
             )
 
     @patch('randtalkbot.stranger_setup_wizard.logging', Mock())
@@ -190,8 +196,8 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard_step = 'languages'
         yield from self.stranger_setup_wizard._send_invitation()
         self.sender.send_notification.assert_called_once_with(
-            'Enumerate the languages you speak like this: \"English, Italian\" -- ' + \
-                'in order of your speaking convenience or just pick one at special keyboard.',
+            'Enumerate the languages you speak like this: "English, Italian" -- in descending ' + \
+                'order of your speaking convenience or just pick one at special keyboard.',
             reply_markup={'keyboard': [('English', 'Português'), ('Italiano', 'Русский')]},
             )
 

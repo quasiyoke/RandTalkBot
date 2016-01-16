@@ -98,7 +98,7 @@ class TestStranger(asynctest.TestCase):
             .return_value = 'foo_sender'
         self.assertEqual(self.stranger.get_sender(), 'foo_sender')
         StrangerSenderService.get_instance.return_value.get_or_create_stranger_sender \
-            .assert_called_once_with(31416)
+            .assert_called_once_with(self.stranger)
 
     @asynctest.ignore_loop
     def test_is_novice__novice(self):
@@ -260,6 +260,13 @@ class TestStranger(asynctest.TestCase):
     def test_set_sex__correct(self):
         self.stranger.save = Mock()
         self.stranger.set_sex('  mALe ')
+        self.assertEqual(self.stranger.sex, 'male')
+        self.stranger.save.assert_called_once_with()
+
+    @asynctest.ignore_loop
+    def test_set_sex__translated(self):
+        self.stranger.save = Mock()
+        self.stranger.set_sex('  МУЖСКОЙ ')
         self.assertEqual(self.stranger.sex, 'male')
         self.stranger.save.assert_called_once_with()
 
