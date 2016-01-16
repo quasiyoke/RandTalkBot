@@ -1,8 +1,8 @@
 Rand Talk
 =========
 
-.. image:: https://coveralls.io/repos/quasiyoke/RandTalkBot/badge.svg?branch=dev&service=github
-    :target: https://coveralls.io/github/quasiyoke/RandTalkBot?branch=dev
+.. image:: https://coveralls.io/repos/quasiyoke/RandTalkBot/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/quasiyoke/RandTalkBot?branch=master
 
 .. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
