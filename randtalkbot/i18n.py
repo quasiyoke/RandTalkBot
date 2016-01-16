@@ -6,8 +6,11 @@
 
 import gettext
 import logging
+import os
 import pycountry
+from .utils import LOCALE_DIR
 from collections import OrderedDict
+from os import path
 
 SUPPORTED_LANGUAGES_NAMES_CHOICES = (
     ('en', 'English'),
@@ -74,10 +77,28 @@ def get_languages_codes(names_str):
     '''
     names = [name.strip() for name in names_str.split(',')]
     names = filter(bool, names)
-    try:
-        names = map(_get_language_code, names)
-        names = _get_deduplicated(names)
-    except LanguageNotFoundError as e:
-        logging.info('Languages weren\'t parsed: \"%s\"', names_str)
-        raise e
+    names = map(_get_language_code, names)
+    names = _get_deduplicated(names)
     return names
+
+def get_translation(languages):
+    if not languages:
+        languages = ['en']
+    try:
+        translation = gettext.translation(
+            'randtalkbot',
+            localedir=LOCALE_DIR,
+            languages=languages,
+            )
+    except (IOError, OSError):
+        translation = gettext.translation(
+            'randtalkbot',
+            localedir=LOCALE_DIR,
+            languages=['en'],
+            )
+    return translation.gettext
+
+def get_translations():
+    for filename in os.listdir(LOCALE_DIR):
+        if os.path.isdir(os.path.join(LOCALE_DIR, filename)):
+            yield get_translation([filename])

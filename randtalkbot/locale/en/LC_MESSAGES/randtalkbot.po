@@ -1,0 +1,159 @@
+# RandTalkBot Bot matching you with a random person on Telegram.
+# Copyright (C) 2016 quasiyoke
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: randtalkbot\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-01-16 19:04+0300\n"
+"PO-Revision-Date: 2016-01-16 10:10+0300\n"
+"Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: build/lib/randtalkbot/stranger.py:19 randtalkbot/stranger.py:19
+msgid "Female"
+msgstr "Female"
+
+#: build/lib/randtalkbot/stranger.py:20 randtalkbot/stranger.py:20
+msgid "Male"
+msgstr "Male"
+
+#: build/lib/randtalkbot/stranger.py:21 randtalkbot/stranger.py:21
+msgid "Not specified"
+msgstr "Not specified"
+
+#: build/lib/randtalkbot/stranger.py:82 randtalkbot/stranger.py:82
+msgid "Chat was finished. Feel free to /begin a new one."
+msgstr "Chat was finished. Feel free to /begin a new one."
+
+#: build/lib/randtalkbot/stranger.py:87 randtalkbot/stranger.py:87
+msgid "Looking for partner was stopped."
+msgstr "Looking for partner was stopped"
+
+#: build/lib/randtalkbot/stranger.py:117 randtalkbot/stranger.py:117
+msgid "Your partner has left chat. Feel free to /begin a new conversation."
+msgstr "Your partner has left chat. 😿 Feel free to /begin a new conversation."
+
+#: build/lib/randtalkbot/stranger.py:160 randtalkbot/stranger.py:160
+msgid "Looking for a stranger for you."
+msgstr "Looking for a stranger for you 🤔"
+
+#: build/lib/randtalkbot/stranger.py:169 randtalkbot/stranger.py:169
+msgid "Here's another stranger. Have fun!"
+msgstr ""
+
+#: build/lib/randtalkbot/stranger.py:173 randtalkbot/stranger.py:173
+msgid "Your partner is here. Have a nice chat!"
+msgstr "Your partner is here. Have a nice chat 🤗"
+
+#: build/lib/randtalkbot/stranger_handler.py:96
+#: randtalkbot/stranger_handler.py:96
+msgid ""
+"*Manual*\n"
+"\n"
+"Use /begin to start looking for a conversational partner, once you're "
+"matched you can use /end to end the conversation."
+msgstr ""
+"*Manual*\n"
+"\n"
+"Use /begin to start looking for a conversational partner, once you're "
+"matched you can use /end to finish the conversation."
+
+#: build/lib/randtalkbot/stranger_handler.py:114
+#: randtalkbot/stranger_handler.py:114
+#, python-brace-format
+msgid ""
+"*Help*\n"
+"\n"
+"Use /begin to start looking for a conversational partner, once you're "
+"matched you can use /end to end the conversation.\n"
+"\n"
+"If you have any suggestions or require help, please contact @quasiyoke. When "
+"asking questions, please provide this number: {0}\n"
+"\n"
+"You're welcome to inspect and improve [Rand Talk's source code.](https://"
+"github.com/quasiyoke/RandTalkBot)\n"
+"\n"
+"version {1}"
+msgstr ""
+"*Help*\n"
+"\n"
+"Use /begin to start looking for a conversational partner, once you're "
+"matched you can use /end to finish the conversation. To choose your "
+"settings, apply /setup.\n"
+"\n"
+"If you have any suggestions or require help, please contact @quasiyoke. When "
+"asking questions, please provide this number: {0}\n"
+"\n"
+"You're welcome to inspect and improve [Rand Talk's source code.](https://"
+"github.com/quasiyoke/RandTalkBot)\n"
+"\n"
+"version {1}"
+
+#: build/lib/randtalkbot/stranger_handler.py:137
+#: build/lib/randtalkbot/stranger_handler.py:156
+#: randtalkbot/stranger_handler.py:137 randtalkbot/stranger_handler.py:156
+msgid "Messages of this type aren't supported."
+msgstr "Messages of this type aren't supported 😞"
+
+#: build/lib/randtalkbot/stranger_setup_wizard.py:48
+#: randtalkbot/stranger_setup_wizard.py:48
+msgid ""
+"Thank you. Use /begin to start looking for a conversational partner, once "
+"you're matched you can use /end to end the conversation."
+msgstr ""
+"Thanks for info. 😋 Use /begin to start looking for a conversational partner, "
+"once you're matched you can use /end to finish the conversation."
+
+#: build/lib/randtalkbot/stranger_setup_wizard.py:73
+#: randtalkbot/stranger_setup_wizard.py:73
+#, python-brace-format
+msgid "Language \"{0}\" wasn't found."
+msgstr "Language “{0}” wasn't found. 😳 Try to specify language in English."
+
+#: build/lib/randtalkbot/stranger_setup_wizard.py:78
+#: randtalkbot/stranger_setup_wizard.py:78
+msgid "Please specify at least one language."
+msgstr "Please specify at least one language"
+
+#: build/lib/randtalkbot/stranger_setup_wizard.py:91
+#: build/lib/randtalkbot/stranger_setup_wizard.py:109
+#: randtalkbot/stranger_setup_wizard.py:91
+#: randtalkbot/stranger_setup_wizard.py:109
+#, python-brace-format
+msgid "Unknown sex: \"{0}\" -- is not a valid sex name."
+msgstr ""
+"Unknown sex: “{0}” — is not a valid sex name. Are you sure you aren't "
+"mistaken? 😉"
+
+#: build/lib/randtalkbot/stranger_setup_wizard.py:124
+#: randtalkbot/stranger_setup_wizard.py:124
+msgid ""
+"Enumerate the languages you speak like this: \"English, Italian\" -- in "
+"descending order of your speaking convenience or just pick one at special "
+"keyboard."
+msgstr ""
+"Enumerate the languages you speak like this: “English, Italian” — in "
+"descending order of your speaking convenience or just pick one at special "
+"keyboard."
+
+#: build/lib/randtalkbot/stranger_setup_wizard.py:133
+#: randtalkbot/stranger_setup_wizard.py:133
+msgid ""
+"Set up your sex. If you pick \"Not Specified\" you can't choose your "
+"partner's sex."
+msgstr ""
+"Set up your sex. If you pick “Not Specified” you can't choose your partner's "
+"sex."
+
+#: build/lib/randtalkbot/stranger_setup_wizard.py:139
+#: randtalkbot/stranger_setup_wizard.py:139
+msgid "Choose your partner's sex"
+msgstr "Choose your partner's sex"

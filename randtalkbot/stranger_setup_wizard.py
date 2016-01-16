@@ -14,6 +14,8 @@ from .stranger import EmptyLanguagesError, MissingPartnerError, SexError, SEX_NA
 from .stranger_sender_service import StrangerSenderService
 from .wizard import Wizard
 
+def _(s): return s
+
 SEX_KEYBOARD = {
     'keyboard': [SEX_NAMES[:2], SEX_NAMES[2:], ],
     }
@@ -28,7 +30,7 @@ class StrangerSetupWizard(Wizard):
         super(StrangerSetupWizard, self).__init__()
         self._stranger = stranger
         self._sender = StrangerSenderService.get_instance() \
-            .get_or_create_stranger_sender(stranger.telegram_id)
+            .get_or_create_stranger_sender(stranger)
 
     @asyncio.coroutine
     def activate(self):
@@ -43,8 +45,8 @@ class StrangerSetupWizard(Wizard):
         self._stranger.wizard_step = None
         self._stranger.save()
         yield from self._sender.send_notification(
-            'Thank you. Use /begin to start looking for a conversational partner, ' + \
-                'once you\'re matched you can use /end to end the conversation.',
+            _('Thank you. Use /begin to start looking for a conversational partner, '
+                'once you\'re matched you can use /end to end the conversation.'),
             reply_markup={'hide_keyboard': True},
             )
 
@@ -66,10 +68,17 @@ class StrangerSetupWizard(Wizard):
             try:
                 self._stranger.set_languages(get_languages_codes(text))
             except LanguageNotFoundError as e:
-                yield from self._sender.send_notification(str(e))
+                logging.info('Languages weren\'t parsed: \"%s\"', text)
+                yield from self._sender.send_notification(
+                    _('Language \"{0}\" wasn\'t found.'),
+                    e.name,
+                    )
             except EmptyLanguagesError as e:
-                yield from self._sender.send_notification('Please specify at least one language.')
+                yield from self._sender.send_notification(
+                    _('Please specify at least one language.'),
+                    )
             else:
+                self._sender.update_translation()
                 self._stranger.wizard_step = 'sex'
                 self._stranger.save()
             yield from self._send_invitation()
@@ -77,7 +86,11 @@ class StrangerSetupWizard(Wizard):
             try:
                 self._stranger.set_sex(text)
             except SexError as e:
-                yield from self._sender.send_notification(str(e))
+                logging.info('Stranger\'s sex wasn\'t parsed: \"%s\"', text)
+                yield from self._sender.send_notification(
+                    _('Unknown sex: \"{0}\" -- is not a valid sex name.'),
+                    e.name,
+                    )
                 yield from self._send_invitation()
             else:
                 if self._stranger.sex == 'not_specified':
@@ -91,7 +104,11 @@ class StrangerSetupWizard(Wizard):
             try:
                 self._stranger.set_partner_sex(text)
             except SexError as e:
-                yield from self._sender.send_notification(str(e))
+                logging.info('Stranger partner\'s sex wasn\'t parsed: \"%s\"', text)
+                yield from self._sender.send_notification(
+                    _('Unknown sex: \"{0}\" -- is not a valid sex name.'),
+                    e.name,
+                    )
                 yield from self._send_invitation()
             else:
                 yield from self.deactivate()
@@ -104,21 +121,21 @@ class StrangerSetupWizard(Wizard):
         wizard_step = self._stranger.wizard_step
         if wizard_step == 'languages':
             yield from self._sender.send_notification(
-                'Enumerate the languages you speak like this: \"English, Italian\" -- ' + \
-                    'in descending order of your speaking convenience or just pick one ' + \
-                    'at special keyboard.',
+                _('Enumerate the languages you speak like this: \"English, Italian\" -- '
+                    'in descending order of your speaking convenience or just pick one '
+                    'at special keyboard.'),
                 reply_markup={
                     'keyboard': [SUPPORTED_LANGUAGES_NAMES[:2], SUPPORTED_LANGUAGES_NAMES[2:], ],
                     },
                 )
         elif wizard_step == 'sex':
             yield from self._sender.send_notification(
-                'Set up your sex. If you pick \"Not Specified\" you can\'t choose ' + \
-                    'your partner\'s sex.',
+                _('Set up your sex. If you pick \"Not Specified\" you can\'t choose '
+                    'your partner\'s sex.'),
                 reply_markup=SEX_KEYBOARD,
                 )
         elif wizard_step == 'partner_sex':
             yield from self._sender.send_notification(
-                'Choose your partner\'s sex',
+                _('Choose your partner\'s sex'),
                 reply_markup=SEX_KEYBOARD,
                 )

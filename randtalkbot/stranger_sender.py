@@ -7,6 +7,7 @@
 import asyncio
 import logging
 import telepot
+from .i18n import get_translation
 
 class StrangerSenderError(Exception):
     pass
@@ -16,6 +17,11 @@ class StrangerSender(telepot.helper.Sender):
         'text': 'sendMessage',
         'photo': 'sendPhoto',
         }
+
+    def __init__(self, bot, stranger):
+        super(StrangerSender, self).__init__(bot, stranger.telegram_id)
+        self._stranger = stranger
+        self.update_translation()
 
     @asyncio.coroutine
     def send(self, content_type, content_kwargs):
@@ -27,9 +33,20 @@ class StrangerSender(telepot.helper.Sender):
             yield from getattr(self, method_name)(**content_kwargs)
 
     @asyncio.coroutine
-    def send_notification(self, message, reply_markup=None):
+    def send_notification(self, message, *args, reply_markup=None):
+        message = self._(message).format(*args)
+        if reply_markup and 'keyboard' in reply_markup:
+            reply_markup = {
+                'keyboard': [
+                    [self._(key) for key in row]
+                    for row in reply_markup['keyboard']
+                    ],
+                }
         yield from self.sendMessage(
             '*Rand Talk:* {0}'.format(message),
             parse_mode='Markdown',
             reply_markup=reply_markup,
             )
+
+    def update_translation(self):
+        self._ = get_translation(self._stranger.get_languages())

@@ -5,8 +5,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from randtalkbot.i18n import get_language_name, get_languages_codes, LanguageNotFoundError
-from unittest.mock import patch, Mock
+from randtalkbot.i18n import get_language_name, get_languages_codes, get_translation, \
+    LanguageNotFoundError
+from unittest.mock import call, patch, Mock
 
 class TestI18n(unittest.TestCase):
     def test_get_language_name__supported(self):
@@ -28,14 +29,52 @@ class TestI18n(unittest.TestCase):
     def test_get_languages_codes__empty(self):
         self.assertEqual(get_languages_codes(''), [])
 
-    @patch('randtalkbot.i18n.logging')
-    def test_get_languages_codes__unknown(self, logging):
+    def test_get_languages_codes__unknown(self):
         with self.assertRaises(LanguageNotFoundError):
             get_languages_codes('Foo language')
-        logging.info.assert_called_once()
 
-    @patch('randtalkbot.i18n.logging')
-    def test_get_languages_codes__has_no_iso639_1_code(self, logging):
+    def test_get_languages_codes__has_no_iso639_1_code(self):
         with self.assertRaises(LanguageNotFoundError):
             get_languages_codes('zza')
-        logging.info.assert_called_once()
+
+    @patch('randtalkbot.i18n.gettext')
+    @patch('randtalkbot.i18n.LOCALE_DIR', 'foo_locale_dir')
+    def test_get_translation__no_languages(self, gettext):
+        self.assertEqual(get_translation([]), gettext.translation.return_value.gettext)
+        gettext.translation.assert_called_once_with(
+            'randtalkbot',
+            localedir='foo_locale_dir',
+            languages=['en'],
+            )
+
+    @patch('randtalkbot.i18n.gettext')
+    @patch('randtalkbot.i18n.LOCALE_DIR', 'foo_locale_dir')
+    def test_get_translation__ok(self, gettext):
+        self.assertEqual(get_translation(['foo']), gettext.translation.return_value.gettext)
+        gettext.translation.assert_called_once_with(
+            'randtalkbot',
+            localedir='foo_locale_dir',
+            languages=['foo'],
+            )
+
+    @patch('randtalkbot.i18n.gettext')
+    @patch('randtalkbot.i18n.LOCALE_DIR', 'foo_locale_dir')
+    def test_get_translation__not_supported_language(self, gettext):
+        gettext.translation.side_effect = OSError
+        with self.assertRaises(OSError):
+            get_translation(['foo'])
+        self.assertEqual(
+            gettext.translation.call_args_list,
+            [
+                call(
+                    'randtalkbot',
+                    localedir='foo_locale_dir',
+                    languages=['foo'],
+                    ),
+                call(
+                    'randtalkbot',
+                    localedir='foo_locale_dir',
+                    languages=['en'],
+                    ),
+                ],
+            )

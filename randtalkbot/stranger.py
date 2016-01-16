@@ -8,17 +8,23 @@ import asyncio
 import datetime
 import json
 import logging
+from .i18n import get_translations
 from .stranger_sender import StrangerSenderError
 from .stranger_sender_service import StrangerSenderService
 from peewee import *
 
+def _(s): return s
+
 SEX_CHOICES = (
-    ('female', 'Female'),
-    ('male', 'Male'),
-    ('not_specified', 'Not specified'),
+    ('female', _('Female')),
+    ('male', _('Male')),
+    ('not_specified', _('Not specified')),
     )
 SEX_NAMES = list(zip(*SEX_CHOICES))[1]
 SEX_NAMES_TO_CODES = {item[1].lower(): item[0] for item in SEX_CHOICES}
+for translation in get_translations():
+    for sex, name in SEX_CHOICES:
+        SEX_NAMES_TO_CODES[translation(name).lower()] = sex
 WIZARD_CHOICES = (
     ('none', 'None'),
     ('setup', 'Setup'),
@@ -36,7 +42,7 @@ class MissingPartnerError(Exception):
 class SexError(Exception):
     def __init__(self, sex):
         super(SexError, self).__init__('Unknown sex: \"{0}\" -- is not a valid sex name.'.format(sex))
-        self.sex = sex
+        self.name = sex
 
 class StrangerError(Exception):
     pass
@@ -72,10 +78,14 @@ class Stranger(Model):
         # If stranger is chatting now
         if self.partner:
             yield from self.partner.kick()
-            yield from sender.send_notification('Chat was finished. Feel free to /begin a new one.')
+            yield from sender.send_notification(
+                _('Chat was finished. Feel free to /begin a new one.'),
+                )
         # If stranger is looking for partner
         elif self.looking_for_partner_from:
-            yield from sender.send_notification('Looking for partner was stopped.')
+            yield from sender.send_notification(
+                _('Looking for partner was stopped.'),
+                )
         self.partner = None
         self.looking_for_partner_from = None
         self.save()
@@ -87,7 +97,7 @@ class Stranger(Model):
             return []
 
     def get_sender(self):
-        return StrangerSenderService.get_instance().get_or_create_stranger_sender(self.telegram_id)
+        return StrangerSenderService.get_instance().get_or_create_stranger_sender(self)
 
     def is_novice(self):
         return self.languages is None and \
@@ -104,7 +114,7 @@ class Stranger(Model):
         self.partner = None
         sender = self.get_sender()
         yield from sender.send_notification(
-            'Your partner has left chat. Feel free to /begin a new conversation.',
+            _('Your partner has left chat. Feel free to /begin a new conversation.'),
             )
         self.save()
 
@@ -142,19 +152,26 @@ class Stranger(Model):
         if self.partner:
             yield from self.partner.kick()
         self.partner = None
-        # Before setting `looking_for_partner_from`, check if it's already set to prevent lowering priority.
+        # Before setting `looking_for_partner_from`, check if it's already set to prevent lowering
+        # priority.
         if not self.looking_for_partner_from:
             self.looking_for_partner_from = datetime.datetime.utcnow()
-        yield from self.get_sender().send_notification('Looking for a stranger for you.')
+        yield from self.get_sender().send_notification(
+            _('Looking for a stranger for you.'),
+            )
         self.save()
 
     @asyncio.coroutine
     def set_partner(self, partner):
         sender = self.get_sender()
         if self.partner:
-            yield from sender.send_notification('Here\'s another stranger. Have fun!')
+            yield from sender.send_notification(
+                _('Here\'s another stranger. Have fun!'),
+                )
         else:
-            yield from sender.send_notification('Your partner is here. Have a nice chat!')
+            yield from sender.send_notification(
+                _('Your partner is here. Have a nice chat!'),
+                )
         self.partner = partner
         self.looking_for_partner_from = None
         self.save()
