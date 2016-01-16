@@ -74,7 +74,7 @@ Contributing
 Translations
 ^^^^^^^^^^^^
 
-We are interested in growing the number of Rand Talk's translations. You can help in doing that by translating some of ``.po`` files in ``locale`` directory on your language. Feel free to send this files to quasiyoke@gmail.com
+We are interested in growing the number of Rand Talk's translations. You can help in doing that by translating some of ``.po`` files in ``randtalkbot/locale`` directory on your language. Feel free to send this files to quasiyoke@gmail.com
 
 Building gettext files
 ^^^^^^^^^^^^^^^^^^^^^^

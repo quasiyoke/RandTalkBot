@@ -6,6 +6,7 @@
 
 import asyncio
 import logging
+import re
 import telepot
 from .i18n import get_translation
 
@@ -17,11 +18,20 @@ class StrangerSender(telepot.helper.Sender):
         'text': 'sendMessage',
         'photo': 'sendPhoto',
         }
+    MARKDOWN_RE = re.compile('([\[*_`])')
 
     def __init__(self, bot, stranger):
         super(StrangerSender, self).__init__(bot, stranger.telegram_id)
         self._stranger = stranger
         self.update_translation()
+
+    @classmethod
+    def _escape_markdown(cls, s):
+        '''
+        Escapes string to prevent injecting Markdown into notifications.
+        @see https://core.telegram.org/bots/api#using-markdown
+        '''
+        return cls.MARKDOWN_RE.sub(r'\\\1', s)
 
     @asyncio.coroutine
     def send(self, content_type, content_kwargs):
@@ -34,6 +44,7 @@ class StrangerSender(telepot.helper.Sender):
 
     @asyncio.coroutine
     def send_notification(self, message, *args, reply_markup=None):
+        args = map(StrangerSender._escape_markdown, args)
         message = self._(message).format(*args)
         if reply_markup and 'keyboard' in reply_markup:
             reply_markup = {

@@ -52,6 +52,20 @@ class TestStrangerSender(asynctest.TestCase):
             reply_markup=None,
             )
 
+    def test_send_notification__escapes_markdown(self):
+        self.translation.return_value = '{0} {1}'
+        yield from self.sender.send_notification(
+            'foo',
+            '*foo* _bar_ [baz](http://boo.com)',
+            'foo\\\\` `bar baz\\\\boo foo``',
+            )
+        self.sender.sendMessage.assert_called_once_with(
+            '*Rand Talk:* \\*foo\\* \\_bar\\_ \\[baz](http://boo.com) '
+                'foo\\\\\\` \\`bar baz\\\\boo foo\\`\\`',
+            parse_mode='Markdown',
+            reply_markup=None,
+            )
+
     def test_send_notification__with_reply_markup_no_keyboard(self):
         self.translation.return_value = 'foo_translation'
         yield from self.sender.send_notification(
