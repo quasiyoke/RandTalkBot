@@ -41,7 +41,9 @@ class MissingPartnerError(Exception):
 
 class SexError(Exception):
     def __init__(self, sex):
-        super(SexError, self).__init__('Unknown sex: \"{0}\" -- is not a valid sex name.'.format(sex))
+        super(SexError, self).__init__(
+            'Unknown sex: \"{0}\" -- is not a valid sex name.'.format(sex),
+            )
         self.name = sex
 
 class StrangerError(Exception):

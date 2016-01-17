@@ -15,9 +15,14 @@ class StrangerSenderError(Exception):
 
 class StrangerSender(telepot.helper.Sender):
     MESSAGE_TYPE_TO_METHOD_NAME = {
+        'audio': 'sendAudio',
+        'document': 'sendDocument',
+        'location': 'sendLocation',
         'photo': 'sendPhoto',
-        'text': 'sendMessage',
         'sticker': 'sendSticker',
+        'text': 'sendMessage',
+        'video': 'sendVideo',
+        'voice': 'sendVoice',
         }
     MARKDOWN_RE = re.compile('([\[*_`])')
 
