@@ -141,6 +141,8 @@ class Stranger(Model):
             raise MissingPartnerError()
 
     def set_languages(self, languages):
+        if languages == ['same']:
+            languages = self.get_languages()
         if not len(languages):
             raise EmptyLanguagesError()
         languages = json.dumps(languages)

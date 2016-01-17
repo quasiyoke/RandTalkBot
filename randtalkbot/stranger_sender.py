@@ -31,7 +31,10 @@ class StrangerSender(telepot.helper.Sender):
         Escapes string to prevent injecting Markdown into notifications.
         @see https://core.telegram.org/bots/api#using-markdown
         '''
-        return cls.MARKDOWN_RE.sub(r'\\\1', s)
+        if s is not str:
+            s = str(s)
+        s = cls.MARKDOWN_RE.sub(r'\\\1', s)
+        return s
 
     @asyncio.coroutine
     def send(self, content_type, content_kwargs):
@@ -44,7 +47,7 @@ class StrangerSender(telepot.helper.Sender):
 
     @asyncio.coroutine
     def send_notification(self, message, *args, reply_markup=None):
-        args = map(StrangerSender._escape_markdown, args)
+        args = [StrangerSender._escape_markdown(arg) for arg in args]
         message = self._(message).format(*args)
         if reply_markup and 'keyboard' in reply_markup:
             reply_markup = {

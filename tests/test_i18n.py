@@ -5,26 +5,32 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from randtalkbot.i18n import get_language_name, get_languages_codes, get_translation, \
+from randtalkbot.i18n import get_languages_names, get_languages_codes, get_translation, \
     LanguageNotFoundError
 from unittest.mock import call, patch, Mock
 
 class TestI18n(unittest.TestCase):
-    def test_get_language_name__supported(self):
-        self.assertEqual(get_language_name('ru'), 'Русский')
+    def test_get_languages_names__supported(self):
+        self.assertEqual(get_languages_names(['ru']), 'Русский')
 
-    def test_get_language_name__not_supported(self):
-        self.assertEqual(get_language_name('de'), 'German')
+    def test_get_languages_names__not_supported(self):
+        self.assertEqual(get_languages_names(['de', 'ru']), 'German, Русский')
 
-    def test_get_language_name__unknown(self):
+    def test_get_languages_names__unknown(self):
         with self.assertRaises(LanguageNotFoundError):
-            get_language_name('foo')
+            get_languages_names('foo')
 
     def test_get_languages_codes__ok(self):
         self.assertEqual(get_languages_codes('   Русский  ,GERMAN,, enGLIsh,  '), ['ru', 'de', 'en'])
 
     def test_get_languages_codes__duplicates(self):
-        self.assertEqual(get_languages_codes('enGLIsh, English, de, rus'), ['en', 'de', 'ru'])
+        self.assertEqual(
+            get_languages_codes('enGLIsh, German, English, de, rus'),
+            ['en', 'de', 'ru'],
+            )
+
+    def test_get_languages_codes__same(self):
+        self.assertEqual(get_languages_codes('Не менять языки'), ['same'])
 
     def test_get_languages_codes__empty(self):
         self.assertEqual(get_languages_codes(''), [])

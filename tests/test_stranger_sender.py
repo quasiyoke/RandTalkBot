@@ -39,15 +39,16 @@ class TestStrangerSender(asynctest.TestCase):
             )
 
     def test_send_notification__format(self):
-        self.translation.return_value = '{0} foo_translation {1}'
+        self.translation.return_value = '{0} {2} foo_translation {1}'
         yield from self.sender.send_notification(
             'foo',
             'zero',
             'one',
+            2,
             )
         self.translation.assert_called_once_with('foo')
         self.sender.sendMessage.assert_called_once_with(
-            '*Rand Talk:* zero foo_translation one',
+            '*Rand Talk:* zero 2 foo_translation one',
             parse_mode='Markdown',
             reply_markup=None,
             )

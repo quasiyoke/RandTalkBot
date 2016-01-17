@@ -191,13 +191,71 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.sender.send_notification.assert_not_called()
         logging.warning.assert_called_once()
 
-    def test_send_invitation__languages(self):
+    def test_send_invitation__no_languages(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
+        self.stranger.get_languages.return_value = []
         yield from self.stranger_setup_wizard._send_invitation()
         self.sender.send_notification.assert_called_once_with(
             'Enumerate the languages you speak like this: "English, Italian" -- in descending ' + \
                 'order of your speaking convenience or just pick one at special keyboard.',
+            '',
+            reply_markup={'keyboard': [('English', 'Português'), ('Italiano', 'Русский')]},
+            )
+
+    def test_send_invitation__one_language(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'languages'
+        self.stranger.get_languages.return_value = ['pt']
+        yield from self.stranger_setup_wizard._send_invitation()
+        self.sender.send_notification.assert_called_once_with(
+            'Your current language is {0}. Enumerate the languages you speak like this: '
+                '"English, Italian" -- in descending order of your speaking convenience '
+                'or just pick one at special keyboard.',
+            'Português',
+            reply_markup={
+                'keyboard': [
+                    ('English', 'Português'),
+                    ('Italiano', 'Русский'),
+                    ['Leave the language unchanged'],
+                    ]
+                },
+            )
+
+    def test_send_invitation__many_language(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'languages'
+        self.stranger.get_languages.return_value = ['pt', 'de', 'en']
+        yield from self.stranger_setup_wizard._send_invitation()
+        self.sender.send_notification.assert_called_once_with(
+            'Your current languages are: {0}. Enumerate the languages you speak the same way '
+                '-- in descending order of your speaking convenience or just pick one '
+                'at special keyboard.',
+            'Português, German, English',
+            reply_markup={
+                'keyboard': [
+                    ('English', 'Português'),
+                    ('Italiano', 'Русский'),
+                    ['Leave the languages unchanged'],
+                    ]
+                },
+            )
+
+    @patch(
+        'randtalkbot.stranger_setup_wizard.get_languages_names',
+        Mock(side_effect=LanguageNotFoundError('')),
+        )
+    @patch('randtalkbot.stranger_setup_wizard.logging', Mock())
+    @asyncio.coroutine
+    def test_send_invitation__unknown_languages(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'languages'
+        self.stranger.get_languages.return_value = []
+        yield from self.stranger_setup_wizard._send_invitation()
+        self.sender.send_notification.assert_called_once_with(
+            'Enumerate the languages you speak like this: "English, Italian" -- in descending ' + \
+                'order of your speaking convenience or just pick one at special keyboard.',
+            '',
             reply_markup={'keyboard': [('English', 'Português'), ('Italiano', 'Русский')]},
             )
 
