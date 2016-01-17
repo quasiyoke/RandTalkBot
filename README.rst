@@ -61,12 +61,11 @@ Roadmap
 * 0.2 Storing data at MySQL
 * 0.3 Partner's sex, language choosing
 * 0.4 Translate interface to various languages
-* 1.0 Stickers
+* 1.0 Almost all messages types support except replies and forwards
 * 1.1 Customizable greetings message
 * 1.2 /oops -- return last partner!
 * 1.3 Don't talk with recent partners
-* 1.4 Instant bots messages
-* 1.5 Replies
+* 1.4 Replies
 
 Contributing
 ------------

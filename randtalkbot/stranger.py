@@ -41,7 +41,9 @@ class MissingPartnerError(Exception):
 
 class SexError(Exception):
     def __init__(self, sex):
-        super(SexError, self).__init__('Unknown sex: \"{0}\" -- is not a valid sex name.'.format(sex))
+        super(SexError, self).__init__(
+            'Unknown sex: \"{0}\" -- is not a valid sex name.'.format(sex),
+            )
         self.name = sex
 
 class StrangerError(Exception):
@@ -119,28 +121,30 @@ class Stranger(Model):
         self.save()
 
     @asyncio.coroutine
-    def send(self, content_type, content_kwargs):
+    def send(self, message):
         '''
         @throws StrangerError if can't send content.
         '''
         sender = self.get_sender()
         try:
-            yield from sender.send(content_type, content_kwargs)
+            yield from sender.send(message)
         except StrangerSenderError as e:
             raise StrangerError('Can\'t send content: {0}'.format(e))
 
     @asyncio.coroutine
-    def send_to_partner(self, content_type, content_kwargs):
+    def send_to_partner(self, message):
         '''
         @throws StrangerError if can't send content.
         @throws MissingPartnerError if there's no partner for this stranger.
         '''
         if self.partner:
-            yield from self.partner.send(content_type, content_kwargs)
+            yield from self.partner.send(message)
         else:
             raise MissingPartnerError()
 
     def set_languages(self, languages):
+        if languages == ['same']:
+            languages = self.get_languages()
         if not len(languages):
             raise EmptyLanguagesError()
         languages = json.dumps(languages)

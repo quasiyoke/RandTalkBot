@@ -39,15 +39,16 @@ class TestStrangerSender(asynctest.TestCase):
             )
 
     def test_send_notification__format(self):
-        self.translation.return_value = '{0} foo_translation {1}'
+        self.translation.return_value = '{0} {2} foo_translation {1}'
         yield from self.sender.send_notification(
             'foo',
             'zero',
             'one',
+            2,
             )
         self.translation.assert_called_once_with('foo')
         self.sender.sendMessage.assert_called_once_with(
-            '*Rand Talk:* zero foo_translation one',
+            '*Rand Talk:* zero 2 foo_translation one',
             parse_mode='Markdown',
             reply_markup=None,
             )
@@ -107,12 +108,18 @@ class TestStrangerSender(asynctest.TestCase):
             )
 
     def test_send__text(self):
-        content_kwargs = {'foo': 'bar'}
-        yield from self.sender.send('text', content_kwargs)
-        self.sender.sendMessage.assert_called_once_with(**content_kwargs)
+        message = Mock()
+        message.type = 'text'
+        message.sending_kwargs = {
+            'foo': 'bar',
+            'baz': 'boo',
+            }
+        yield from self.sender.send(message)
+        self.sender.sendMessage.assert_called_once_with(**message.sending_kwargs)
 
-    def test_send__video(self):
-        content_kwargs = {'foo': 'bar'}
+    def test_send__unknown_content_type(self):
+        message = Mock()
+        message.type = 'foo_type'
         with self.assertRaises(StrangerSenderError):
-            yield from self.sender.send('video', content_kwargs)
+            yield from self.sender.send(message)
         self.sender.sendMessage.assert_not_called()

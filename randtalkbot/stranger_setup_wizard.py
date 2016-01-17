@@ -9,7 +9,8 @@ import logging
 import re
 import sys
 import telepot
-from .i18n import get_languages_codes, LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
+from .i18n import get_languages_codes, get_languages_names, LanguageNotFoundError, \
+    SUPPORTED_LANGUAGES_NAMES
 from .stranger import EmptyLanguagesError, MissingPartnerError, SexError, SEX_NAMES
 from .stranger_sender_service import StrangerSenderService
 from .wizard import Wizard
@@ -22,8 +23,8 @@ SEX_KEYBOARD = {
 
 class StrangerSetupWizard(Wizard):
     '''
-    Wizard which guides stranger through process of customizing her parameters. Activates automatically
-    for novices.
+    Wizard which guides stranger through process of customizing her parameters. Activates
+    automatically for novices.
     '''
 
     def __init__(self, stranger):
@@ -113,19 +114,43 @@ class StrangerSetupWizard(Wizard):
             else:
                 yield from self.deactivate()
         else:
-            logging.warning('Undknown wizard_step value was found: \"%s\"', self._stranger.wizard_step)
+            logging.warning(
+                'Undknown wizard_step value was found: \"%s\"',
+                self._stranger.wizard_step,
+                )
         return True
 
     @asyncio.coroutine
     def _send_invitation(self):
         wizard_step = self._stranger.wizard_step
         if wizard_step == 'languages':
+            languages = self._stranger.get_languages()
+            keyboard = [SUPPORTED_LANGUAGES_NAMES[:2], SUPPORTED_LANGUAGES_NAMES[2:], ]
+            try:
+                languages_enumeration = get_languages_names(languages)
+            except LanguageNotFoundError:
+                logging.error('Language not found at setup wizard: %s', self._stranger.languages)
+                languages_enumeration = ''
+            if len(languages) == 0 or not languages_enumeration:
+                notification = _('Enumerate the languages you speak like this: \"English, Italian\" '
+                    '-- in descending order of your speaking convenience or just pick one '
+                    'at special keyboard.')
+            else:
+                if len(languages) == 1:
+                    keyboard.append([_('Leave the language unchanged')])
+                    notification = _('Your current language is {0}. Enumerate the languages '
+                        'you speak like this: \"English, Italian\" -- in descending order '
+                        'of your speaking convenience or just pick one at special keyboard.')
+                else:
+                    keyboard.append([_('Leave the languages unchanged')])
+                    notification = _('Your current languages are: {0}. Enumerate the languages you '
+                        'speak the same way -- in descending order of your speaking '
+                        'convenience or just pick one at special keyboard.')
             yield from self._sender.send_notification(
-                _('Enumerate the languages you speak like this: \"English, Italian\" -- '
-                    'in descending order of your speaking convenience or just pick one '
-                    'at special keyboard.'),
+                notification,
+                languages_enumeration,
                 reply_markup={
-                    'keyboard': [SUPPORTED_LANGUAGES_NAMES[:2], SUPPORTED_LANGUAGES_NAMES[2:], ],
+                    'keyboard': keyboard,
                     },
                 )
         elif wizard_step == 'sex':

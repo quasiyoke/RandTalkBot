@@ -14,9 +14,15 @@ class StrangerSenderError(Exception):
     pass
 
 class StrangerSender(telepot.helper.Sender):
-    CONTENT_TYPE_TO_METHOD_NAME = {
-        'text': 'sendMessage',
+    MESSAGE_TYPE_TO_METHOD_NAME = {
+        'audio': 'sendAudio',
+        'document': 'sendDocument',
+        'location': 'sendLocation',
         'photo': 'sendPhoto',
+        'sticker': 'sendSticker',
+        'text': 'sendMessage',
+        'video': 'sendVideo',
+        'voice': 'sendVoice',
         }
     MARKDOWN_RE = re.compile('([\[*_`])')
 
@@ -31,20 +37,23 @@ class StrangerSender(telepot.helper.Sender):
         Escapes string to prevent injecting Markdown into notifications.
         @see https://core.telegram.org/bots/api#using-markdown
         '''
-        return cls.MARKDOWN_RE.sub(r'\\\1', s)
+        if s is not str:
+            s = str(s)
+        s = cls.MARKDOWN_RE.sub(r'\\\1', s)
+        return s
 
     @asyncio.coroutine
-    def send(self, content_type, content_kwargs):
+    def send(self, message):
         try:
-            method_name = StrangerSender.CONTENT_TYPE_TO_METHOD_NAME[content_type]
+            method_name = StrangerSender.MESSAGE_TYPE_TO_METHOD_NAME[message.type]
         except KeyError:
-            raise StrangerSenderError('Unsupported content_type: {0}'.format(content_type))
+            raise StrangerSenderError('Unsupported content_type: {0}'.format(message.type))
         else:
-            yield from getattr(self, method_name)(**content_kwargs)
+            yield from getattr(self, method_name)(**message.sending_kwargs)
 
     @asyncio.coroutine
     def send_notification(self, message, *args, reply_markup=None):
-        args = map(StrangerSender._escape_markdown, args)
+        args = [StrangerSender._escape_markdown(arg) for arg in args]
         message = self._(message).format(*args)
         if reply_markup and 'keyboard' in reply_markup:
             reply_markup = {
