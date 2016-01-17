@@ -149,7 +149,7 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.assertEqual(self.stranger_service.get_cached_stranger.call_count, 2)
         self.stranger_service.get_cached_stranger.assert_called_with(partner)
 
-    def test_get_partner__returns_the_longest_waiting_stranger(self):
+    def test_get_partner__returns_the_longest_waiting_stranger_1(self):
         self.stranger_0.languages = '["foo", "bar", "baz"]'
         self.stranger_0.save()
         self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
@@ -165,9 +165,27 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.stranger_5.save()
         self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
         self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
-        self.stranger_service.get_cached_stranger.assert_called_once(self.stranger_2)
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_2)
 
-    def test_get_partner__returns_stranger_with_proper_sex(self):
+    def test_get_partner__returns_the_longest_waiting_stranger_2(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.save()
+        # The longest waiting stranger.
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1994, 1, 1)
+        self.stranger_2.save()
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_1)
+
+    def test_get_partner__returns_stranger_with_proper_sex_1(self):
         self.stranger_0.languages = '["foo", "bar", "baz"]'
         self.stranger_0.save()
         self.stranger_1.sex = 'female'
@@ -184,18 +202,46 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
         self.stranger_3.save()
         self.stranger_4.sex = 'female'
-        self.stranger_1.partner_sex = 'female'
+        self.stranger_4.partner_sex = 'female'
         self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
         self.stranger_4.save()
         self.stranger_5.sex = 'female'
-        self.stranger_1.partner_sex = 'female'
+        self.stranger_5.partner_sex = 'female'
         self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
         self.stranger_5.save()
         self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
         self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
-        self.stranger_service.get_cached_stranger.assert_called_once(self.stranger_3)
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_3)
 
-    def test_get_partner__returns_stranger_looking_for_proper_sex(self):
+    def test_get_partner__returns_stranger_with_proper_sex_2(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.save()
+        self.stranger_1.sex = 'female'
+        self.stranger_1.partner_sex = 'female'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.sex = 'female'
+        self.stranger_2.partner_sex = 'female'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        self.stranger_3.sex = 'female'
+        self.stranger_3.partner_sex = 'female'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        # Stranger with proper sex.
+        self.stranger_4.sex = 'male'
+        self.stranger_4.partner_sex = 'female'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.sex = 'female'
+        self.stranger_5.partner_sex = 'female'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_4)
+
+    def test_get_partner__returns_stranger_looking_for_proper_sex_1(self):
         self.stranger_0.languages = '["foo", "bar", "baz"]'
         self.stranger_0.save()
         self.stranger_1.sex = 'male'
@@ -206,24 +252,24 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.stranger_2.partner_sex = 'male'
         self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
         self.stranger_2.save()
-        # Stranger with proper sex.
+        # Stranger looking for proper sex.
         self.stranger_3.sex = 'male'
         self.stranger_3.partner_sex = 'female'
         self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
         self.stranger_3.save()
         self.stranger_4.sex = 'male'
-        self.stranger_1.partner_sex = 'male'
+        self.stranger_4.partner_sex = 'male'
         self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
         self.stranger_4.save()
         self.stranger_5.sex = 'male'
-        self.stranger_1.partner_sex = 'male'
+        self.stranger_5.partner_sex = 'male'
         self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
         self.stranger_5.save()
         self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
         self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
-        self.stranger_service.get_cached_stranger.assert_called_once(self.stranger_3)
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_3)
 
-    def test_get_partner__returns_stranger_looking_for_any_sex(self):
+    def test_get_partner__returns_stranger_looking_for_proper_sex_2(self):
         self.stranger_0.languages = '["foo", "bar", "baz"]'
         self.stranger_0.save()
         self.stranger_1.sex = 'male'
@@ -234,24 +280,221 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.stranger_2.partner_sex = 'male'
         self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
         self.stranger_2.save()
-        # Stranger with proper sex.
+        self.stranger_3.sex = 'male'
+        self.stranger_3.partner_sex = 'male'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        # Stranger looking for proper sex.
+        self.stranger_4.sex = 'male'
+        self.stranger_4.partner_sex = 'female'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.sex = 'male'
+        self.stranger_5.partner_sex = 'male'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_4)
+
+    def test_get_partner__filters_strangers_when_stranger_partner_sex_isnt_specified_1(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.partner_sex = 'not_specified'
+        self.stranger_0.save()
+        self.stranger_1.sex = 'male'
+        self.stranger_1.partner_sex = 'male'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.sex = 'male'
+        self.stranger_2.partner_sex = 'male'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        # Stranger looking for proper sex.
+        self.stranger_3.sex = 'male'
+        self.stranger_3.partner_sex = 'female'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        self.stranger_4.sex = 'male'
+        self.stranger_4.partner_sex = 'male'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.sex = 'male'
+        self.stranger_5.partner_sex = 'male'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_3)
+
+    def test_get_partner__filters_strangers_when_stranger_partner_sex_isnt_specified_2(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.partner_sex = 'not_specified'
+        self.stranger_0.save()
+        # Stranger looking for proper sex.
+        self.stranger_1.sex = 'male'
+        self.stranger_1.partner_sex = 'female'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.sex = 'male'
+        self.stranger_2.partner_sex = 'male'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        self.stranger_3.sex = 'male'
+        self.stranger_3.partner_sex = 'male'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        self.stranger_4.sex = 'male'
+        self.stranger_4.partner_sex = 'male'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.sex = 'male'
+        self.stranger_5.partner_sex = 'male'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_1)
+
+    def test_get_partner__returns_stranger_looking_for_any_sex_in_case_of_rare_sex_1(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.save()
+        self.stranger_1.sex = 'male'
+        self.stranger_1.partner_sex = 'male'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.sex = 'male'
+        self.stranger_2.partner_sex = 'male'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        # Stranger looking for any sex.
         self.stranger_3.sex = 'male'
         self.stranger_3.partner_sex = 'not_specified'
         self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
         self.stranger_3.save()
         self.stranger_4.sex = 'male'
-        self.stranger_1.partner_sex = 'male'
+        self.stranger_4.partner_sex = 'male'
         self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
         self.stranger_4.save()
         self.stranger_5.sex = 'male'
-        self.stranger_1.partner_sex = 'male'
+        self.stranger_5.partner_sex = 'male'
         self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
         self.stranger_5.save()
         self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
         self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
-        self.stranger_service.get_cached_stranger.assert_called_once(self.stranger_3)
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_3)
 
-    def test_get_partner__returns_stranger_speaking_on_highest_priority_language(self):
+    def test_get_partner__returns_stranger_looking_for_any_sex_in_case_of_rare_sex_2(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.save()
+        self.stranger_1.sex = 'male'
+        self.stranger_1.partner_sex = 'male'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.sex = 'male'
+        self.stranger_2.partner_sex = 'male'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        self.stranger_3.sex = 'male'
+        self.stranger_3.partner_sex = 'male'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        # Stranger looking for any sex.
+        self.stranger_4.sex = 'male'
+        self.stranger_4.partner_sex = 'not_specified'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.sex = 'male'
+        self.stranger_5.partner_sex = 'male'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_4)
+
+    def test_get_partner__returns_stranger_looking_for_any_sex_if_sex_is_not_specified_1(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.sex = 'not_specified'
+        self.stranger_0.partner_sex = 'not_specified'
+        self.stranger_0.save()
+        self.stranger_1.sex = 'male'
+        self.stranger_1.partner_sex = 'male'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.sex = 'male'
+        self.stranger_2.partner_sex = 'male'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        # Stranger looking for any sex.
+        self.stranger_3.sex = 'male'
+        self.stranger_3.partner_sex = 'not_specified'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        self.stranger_4.sex = 'male'
+        self.stranger_4.partner_sex = 'male'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.sex = 'male'
+        self.stranger_5.partner_sex = 'male'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_3)
+
+    def test_get_partner__returns_stranger_looking_for_any_sex_if_sex_is_not_specified_2(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.sex = 'not_specified'
+        self.stranger_0.partner_sex = 'not_specified'
+        self.stranger_0.save()
+        self.stranger_1.sex = 'male'
+        self.stranger_1.partner_sex = 'male'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.sex = 'male'
+        self.stranger_2.partner_sex = 'male'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        self.stranger_3.sex = 'male'
+        self.stranger_3.partner_sex = 'male'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        # Stranger looking for any sex.
+        self.stranger_4.sex = 'male'
+        self.stranger_4.partner_sex = 'not_specified'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.sex = 'male'
+        self.stranger_5.partner_sex = 'male'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_4)
+
+    def test_get_partner__returns_stranger_speaking_on_highest_priority_language_1(self):
+        self.stranger_0.languages = '["foo", "bar", "baz", "boo", "bim"]'
+        self.stranger_0.save()
+        self.stranger_1.languages = '["BAR", "baz", "FOO"]'
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.languages = '["boo"]'
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
+        self.stranger_2.save()
+        # Stranger speaking on highest priority language (foo).
+        self.stranger_3.languages = '["BAR", "BAZ", "foo"]'
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        self.stranger_4.languages = '["BAR", "BAZ", "boo", "BIM"]'
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.save()
+        self.stranger_5.languages = '["bar"]'
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_3)
+
+    def test_get_partner__returns_stranger_speaking_on_highest_priority_language_2(self):
         self.stranger_0.languages = '["foo", "bar", "baz", "boo", "bim"]'
         self.stranger_0.save()
         self.stranger_1.languages = '["BAR", "baz", "FOO"]'
@@ -272,7 +515,7 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.stranger_5.save()
         self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
         self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
-        self.stranger_service.get_cached_stranger.assert_called_once(self.stranger_4)
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_4)
 
     @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
     def test_get_partner__database_error(self):

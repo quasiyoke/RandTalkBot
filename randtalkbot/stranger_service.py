@@ -68,12 +68,16 @@ class StrangerService:
                 Stranger.partner == None,
                 Stranger.looking_for_partner_from != None,
                 )
-            # If stranger has obtained us her (his) sex and she (he) wants to filter partners by sex,
-            # let's do that.
+            if stranger.sex == 'not_specified':
+                possible_partners = possible_partners.where(Stranger.partner_sex == 'not_specified')
+            else:
+                possible_partners = possible_partners.where(
+                    (Stranger.partner_sex == stranger.sex) | (Stranger.partner_sex == 'not_specified'),
+                    )
+            # If stranger wants to filter partners by sex, let's do that.
             if stranger.partner_sex == 'male' or stranger.partner_sex == 'female':
                 possible_partners = possible_partners.where(
                     Stranger.sex == stranger.partner_sex,
-                    (Stranger.partner_sex == stranger.sex) | (Stranger.partner_sex == 'not_specified'),
                     )
             possible_partners = possible_partners.order_by(Stranger.looking_for_partner_from)
             partner = None
