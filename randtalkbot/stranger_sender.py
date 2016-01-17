@@ -14,9 +14,10 @@ class StrangerSenderError(Exception):
     pass
 
 class StrangerSender(telepot.helper.Sender):
-    CONTENT_TYPE_TO_METHOD_NAME = {
-        'text': 'sendMessage',
+    MESSAGE_TYPE_TO_METHOD_NAME = {
         'photo': 'sendPhoto',
+        'text': 'sendMessage',
+        'sticker': 'sendSticker',
         }
     MARKDOWN_RE = re.compile('([\[*_`])')
 
@@ -37,13 +38,13 @@ class StrangerSender(telepot.helper.Sender):
         return s
 
     @asyncio.coroutine
-    def send(self, content_type, content_kwargs):
+    def send(self, message):
         try:
-            method_name = StrangerSender.CONTENT_TYPE_TO_METHOD_NAME[content_type]
+            method_name = StrangerSender.MESSAGE_TYPE_TO_METHOD_NAME[message.type]
         except KeyError:
-            raise StrangerSenderError('Unsupported content_type: {0}'.format(content_type))
+            raise StrangerSenderError('Unsupported content_type: {0}'.format(message.type))
         else:
-            yield from getattr(self, method_name)(**content_kwargs)
+            yield from getattr(self, method_name)(**message.sending_kwargs)
 
     @asyncio.coroutine
     def send_notification(self, message, *args, reply_markup=None):

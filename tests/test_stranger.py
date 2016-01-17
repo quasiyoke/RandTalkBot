@@ -145,17 +145,19 @@ class TestStranger(asynctest.TestCase):
     def test_send__ok(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
-        yield from self.stranger.send('content_type', 'content_kwargs')
-        sender.send.assert_called_once_with('content_type', 'content_kwargs')
+        message = Mock()
+        yield from self.stranger.send(message)
+        sender.send.assert_called_once_with(message)
         sender.send_notification.assert_not_called()
 
     def test_send__sender_error(self):
         sender = CoroutineMock()
         sender.send.side_effect = StrangerSenderError()
         self.stranger.get_sender = Mock(return_value=sender)
+        message = Mock()
         with self.assertRaises(StrangerError):
-            yield from self.stranger.send('content_type', 'content_kwargs')
-        sender.send.assert_called_once_with('content_type', 'content_kwargs')
+            yield from self.stranger.send(message)
+        sender.send.assert_called_once_with(message)
         sender.send_notification.assert_not_called()
 
     def test_send_to_partner__chatting_stranger(self):
@@ -164,8 +166,9 @@ class TestStranger(asynctest.TestCase):
         self.stranger.partner = self.stranger2
         self.stranger2.send = CoroutineMock()
         self.stranger.save()
-        yield from self.stranger.send_to_partner('content_type', 'content_kwargs')
-        self.stranger2.send.assert_called_once_with('content_type', 'content_kwargs')
+        message = Mock()
+        yield from self.stranger.send_to_partner(message)
+        self.stranger2.send.assert_called_once_with(message)
         sender.send_notification.assert_not_called()
         sender.send.assert_not_called()
 
@@ -173,7 +176,7 @@ class TestStranger(asynctest.TestCase):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
         with self.assertRaises(MissingPartnerError):
-            yield from self.stranger.send_to_partner('content_type', 'content_kwargs')
+            yield from self.stranger.send_to_partner(Mock())
         sender.send_notification.assert_not_called()
         sender.send.assert_not_called()
 

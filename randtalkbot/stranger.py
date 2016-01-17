@@ -119,24 +119,24 @@ class Stranger(Model):
         self.save()
 
     @asyncio.coroutine
-    def send(self, content_type, content_kwargs):
+    def send(self, message):
         '''
         @throws StrangerError if can't send content.
         '''
         sender = self.get_sender()
         try:
-            yield from sender.send(content_type, content_kwargs)
+            yield from sender.send(message)
         except StrangerSenderError as e:
             raise StrangerError('Can\'t send content: {0}'.format(e))
 
     @asyncio.coroutine
-    def send_to_partner(self, content_type, content_kwargs):
+    def send_to_partner(self, message):
         '''
         @throws StrangerError if can't send content.
         @throws MissingPartnerError if there's no partner for this stranger.
         '''
         if self.partner:
-            yield from self.partner.send(content_type, content_kwargs)
+            yield from self.partner.send(message)
         else:
             raise MissingPartnerError()
 
