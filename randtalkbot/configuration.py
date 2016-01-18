@@ -33,4 +33,5 @@ class Configuration:
         except KeyError as e:
             logging.error('Troubles with obtaining parameters: %s', e)
             raise ConfigurationObtainingError('Troubles with obtaining parameters \"{0}\"'.format(e))
+        self.admins_telegram_ids = configuration_json.get('admins', [])
         self.debug = configuration_json.get('debug', False)

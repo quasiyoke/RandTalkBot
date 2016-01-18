@@ -79,7 +79,9 @@ class Stranger(Model):
         sender = self.get_sender()
         # If stranger is chatting now
         if self.partner:
-            yield from self.partner.kick()
+            # If partner isn't taking with the stranger because of some error, we shouldn't kick him.
+            if self.partner.partner == self:
+                yield from self.partner.kick()
             yield from sender.send_notification(
                 _('Chat was finished. Feel free to /begin a new one.'),
                 )

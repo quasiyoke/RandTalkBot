@@ -555,3 +555,20 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
             self.stranger_service.get_or_create_stranger(31416)
         Stranger.get_or_create.assert_called_once_with(telegram_id=31416)
         self.stranger_service.get_cached_stranger.assert_not_called()
+
+    def test_get_stranger__stranger_found(self):
+        self.stranger_service.get_cached_stranger = Mock()
+        self.stranger_service.get_cached_stranger.return_value = 'cached_stranger'
+        self.assertEqual(
+            self.stranger_service.get_stranger(31416),
+            'cached_stranger',
+            )
+        self.assertEqual(
+            self.stranger_service.get_cached_stranger.call_args[0][0].id,
+            self.stranger_1.id,
+            )
+
+    @patch('randtalkbot.stranger_service.Stranger.select', Mock(side_effect=DatabaseError()))
+    def test_get_stranger__database_error(self):
+        with self.assertRaises(StrangerServiceError):
+            self.stranger_service.get_stranger(31416)

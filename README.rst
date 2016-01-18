@@ -18,17 +18,24 @@ Deployment
     $ source randtalkbotenv/bin/activate
     (randtalkbotenv) $ pip install https://github.com/quasiyoke/RandTalkBot/zipball/master
 
-After that write ``randtalkbotenv/configuration.json`` file::
+After that write ``randtalkbotenv/configuration.json`` file like that::
 
     {
+        "admins": [31416, 271828],
         "database": {
             "host": "localhost",
             "name": "randtalk",
             "user": "randtalkbot",
             "password": "xwBUr3oobCXjqSvz4t"
             },
+        "debug": true,
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
     }
+
+Where:
+
+* ``admins`` -- list of admins' Telegram IDs. Optional. Default is ``[]``.
+* ``debug`` -- should the bot log debug messages. Optional. Default is ``false``.
 
 Create MySQL DB::
 

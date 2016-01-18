@@ -108,3 +108,12 @@ class StrangerService:
                 'Database problems during `get_or_create_stranger`: {0}'.format(e),
                 )
         return self.get_cached_stranger(stranger)
+
+    def get_stranger(self, telegram_id):
+        try:
+            stranger = Stranger.select().where(Stranger.telegram_id == telegram_id).get()
+        except (DatabaseError, DoesNotExist) as e:
+            raise StrangerServiceError(
+                'Database problems during `get_or_create_stranger`: {0}'.format(e),
+                )
+        return self.get_cached_stranger(stranger)

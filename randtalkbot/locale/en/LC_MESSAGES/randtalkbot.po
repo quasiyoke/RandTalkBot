@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-17 10:54+0300\n"
+"POT-Creation-Date: 2016-01-18 23:38+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: English\n"
@@ -29,32 +29,32 @@ msgstr "Male"
 msgid "Not specified"
 msgstr "Not specified"
 
-#: build/lib/randtalkbot/stranger.py:82 randtalkbot/stranger.py:82
+#: build/lib/randtalkbot/stranger.py:82 randtalkbot/stranger.py:86
 msgid "Chat was finished. Feel free to /begin a new one."
 msgstr "Chat was finished. Feel free to /begin a new one."
 
-#: build/lib/randtalkbot/stranger.py:87 randtalkbot/stranger.py:87
+#: build/lib/randtalkbot/stranger.py:87 randtalkbot/stranger.py:91
 msgid "Looking for partner was stopped."
 msgstr "Looking for partner was stopped"
 
-#: build/lib/randtalkbot/stranger.py:117 randtalkbot/stranger.py:117
+#: build/lib/randtalkbot/stranger.py:117 randtalkbot/stranger.py:121
 msgid "Your partner has left chat. Feel free to /begin a new conversation."
 msgstr "Your partner has left chat. 😿 Feel free to /begin a new conversation."
 
-#: build/lib/randtalkbot/stranger.py:160 randtalkbot/stranger.py:162
+#: build/lib/randtalkbot/stranger.py:160 randtalkbot/stranger.py:166
 msgid "Looking for a stranger for you."
 msgstr "Looking for a stranger for you 🤔"
 
-#: build/lib/randtalkbot/stranger.py:169 randtalkbot/stranger.py:171
+#: build/lib/randtalkbot/stranger.py:169 randtalkbot/stranger.py:175
 msgid "Here's another stranger. Have fun!"
 msgstr "Here's another stranger. Have fun 🤗"
 
-#: build/lib/randtalkbot/stranger.py:173 randtalkbot/stranger.py:175
+#: build/lib/randtalkbot/stranger.py:173 randtalkbot/stranger.py:179
 msgid "Your partner is here. Have a nice chat!"
 msgstr "Your partner is here. Have a nice chat 🤗"
 
 #: build/lib/randtalkbot/stranger_handler.py:96
-#: randtalkbot/stranger_handler.py:96
+#: randtalkbot/stranger_handler.py:74
 msgid ""
 "*Manual*\n"
 "\n"
@@ -67,7 +67,7 @@ msgstr ""
 "matched you can use /end to finish the conversation."
 
 #: build/lib/randtalkbot/stranger_handler.py:114
-#: randtalkbot/stranger_handler.py:114
+#: randtalkbot/stranger_handler.py:100
 #, python-brace-format
 msgid ""
 "*Help*\n"
@@ -99,7 +99,8 @@ msgstr ""
 
 #: build/lib/randtalkbot/stranger_handler.py:137
 #: build/lib/randtalkbot/stranger_handler.py:156
-#: randtalkbot/stranger_handler.py:137 randtalkbot/stranger_handler.py:156
+#: randtalkbot/stranger_handler.py:124 randtalkbot/stranger_handler.py:138
+#: randtalkbot/stranger_handler.py:153
 msgid "Messages of this type aren't supported."
 msgstr "Messages of this type aren't supported 😞"
 
@@ -158,6 +159,10 @@ msgstr ""
 msgid "Choose your partner's sex"
 msgstr "Choose your partner's sex"
 
+#: randtalkbot/stranger_handler.py:142
+msgid "Unknown command. Look /help for the full list of commands."
+msgstr "Unknown command. Look /help for the full list of commands."
+
 #: randtalkbot/stranger_setup_wizard.py:140
 msgid "Leave the language unchanged"
 msgstr "Leave the language unchanged"
@@ -170,8 +175,8 @@ msgid ""
 "just pick one at special keyboard."
 msgstr ""
 "Your current language is {0}. Enumerate the languages you speak like this: "
-"“English, Italian” — in descending order of your speaking convenience or just pick one "
-"at special keyboard."
+"“English, Italian” — in descending order of your speaking convenience or "
+"just pick one at special keyboard."
 
 #: randtalkbot/stranger_setup_wizard.py:145
 msgid "Leave the languages unchanged"
@@ -184,6 +189,6 @@ msgid ""
 "way -- in descending order of your speaking convenience or just pick one at "
 "special keyboard."
 msgstr ""
-"Your current languages are: {0}. Enumerate the languages you speak the same way, "
-"in descending order of your speaking convenience or just pick one "
-"at special keyboard."
+"Your current languages are: {0}. Enumerate the languages you speak the same "
+"way, in descending order of your speaking convenience or just pick one at "
+"special keyboard."

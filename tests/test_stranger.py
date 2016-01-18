@@ -53,6 +53,7 @@ class TestStranger(asynctest.TestCase):
     def test_end_chatting__chatting_stranger(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger2.partner = self.stranger
         self.stranger.partner = self.stranger2
         self.stranger.save()
         self.stranger2.kick = CoroutineMock()
@@ -62,6 +63,23 @@ class TestStranger(asynctest.TestCase):
             )
         sender.send.assert_not_called()
         self.stranger2.kick.assert_called_once_with()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, None)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+
+    def test_end_chatting__buggy_stranger(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger2.partner = None
+        self.stranger.partner = self.stranger2
+        self.stranger.save()
+        self.stranger2.kick = CoroutineMock()
+        yield from self.stranger.end_chatting()
+        sender.send_notification.assert_called_once_with(
+            'Chat was finished. Feel free to /begin a new one.',
+            )
+        sender.send.assert_not_called()
+        self.stranger2.kick.assert_not_called()
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)

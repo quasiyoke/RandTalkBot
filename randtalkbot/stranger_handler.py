@@ -26,8 +26,14 @@ class MissingCommandError(Exception):
 class StrangerHandlerError(Exception):
     pass
 
+class UnknownCommandError(Exception):
+    def __init__(self, command):
+        super(UnknownCommandError, self).__init__()
+        self.command = command
+
 class StrangerHandler(telepot.helper.ChatHandler):
-    COMMAND_RE_PATTERN = re.compile('^/(begin|end|help|setup|start)\\b')
+    COMMAND_RE_PATTERN = re.compile('^/(\w+)\\b\s*(.*)$')
+    COMMANDS = ['begin', 'end', 'help', 'setup', 'start', ]
 
     def __init__(self, seed_tuple, stranger_service):
         '''
@@ -53,20 +59,23 @@ class StrangerHandler(telepot.helper.ChatHandler):
     @classmethod
     def _get_command(cls, message):
         command_match = cls.COMMAND_RE_PATTERN.match(message)
-        if command_match:
-            return command_match.group(1)
-        else:
+        if not command_match:
             raise MissingCommandError()
+        command = command_match.group(1)
+        args = command_match.group(2)
+        if command not in cls.COMMANDS:
+            raise UnknownCommandError(command)
+        return command, args
 
     @asyncio.coroutine
-    def _handle_command(self, command):
+    def handle_command(self, command, args=None):
         if command == 'start':
             yield from self._sender.send_notification(
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
                     'you\'re matched you can use /end to end the conversation.')
                 )
             logging.debug('Start: %d', self._stranger.id)
-        if command == 'begin':
+        elif command == 'begin':
             try:
                 partner = self._stranger_service.get_partner(self._stranger)
             except PartnerObtainingError:
@@ -118,7 +127,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         if content_type == 'text':
             if not (yield from self._stranger_setup_wizard.handle(message_json['text'])):
                 try:
-                    command = StrangerHandler._get_command(message_json['text'])
+                    command, args = type(self)._get_command(message_json['text'])
                 except MissingCommandError:
                     try:
                         yield from self._stranger.send_to_partner(message)
@@ -128,8 +137,12 @@ class StrangerHandler(telepot.helper.ChatHandler):
                         yield from self._sender.send_notification(
                             _('Messages of this type aren\'t supported.'),
                             )
+                except UnknownCommandError as e:
+                    yield from self._sender.send_notification(
+                        _('Unknown command. Look /help for the full list of commands.'),
+                        )
                 else:
-                    yield from self._handle_command(command)
+                    yield from self.handle_command(command, args)
         else:
             try:
                 yield from self._stranger.send_to_partner(message)

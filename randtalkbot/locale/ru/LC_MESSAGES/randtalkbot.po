@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-17 10:54+0300\n"
+"POT-Creation-Date: 2016-01-18 23:38+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: Russian\n"
@@ -29,33 +29,33 @@ msgstr "Мужской"
 msgid "Not specified"
 msgstr "Не указано"
 
-#: build/lib/randtalkbot/stranger.py:82 randtalkbot/stranger.py:82
+#: build/lib/randtalkbot/stranger.py:82 randtalkbot/stranger.py:86
 msgid "Chat was finished. Feel free to /begin a new one."
 msgstr "Беседа закончена. Чтобы начать новый разговор, скомандуйте /begin."
 
-#: build/lib/randtalkbot/stranger.py:87 randtalkbot/stranger.py:87
+#: build/lib/randtalkbot/stranger.py:87 randtalkbot/stranger.py:91
 msgid "Looking for partner was stopped."
 msgstr "Поиск партнера прекращен"
 
-#: build/lib/randtalkbot/stranger.py:117 randtalkbot/stranger.py:117
+#: build/lib/randtalkbot/stranger.py:117 randtalkbot/stranger.py:121
 msgid "Your partner has left chat. Feel free to /begin a new conversation."
 msgstr ""
 "Собеседник покинул чат. 😿 Чтобы начать новый разговор, скомандуйте /begin."
 
-#: build/lib/randtalkbot/stranger.py:160 randtalkbot/stranger.py:162
+#: build/lib/randtalkbot/stranger.py:160 randtalkbot/stranger.py:166
 msgid "Looking for a stranger for you."
 msgstr "Идет подбор партнера 🤔"
 
-#: build/lib/randtalkbot/stranger.py:169 randtalkbot/stranger.py:171
+#: build/lib/randtalkbot/stranger.py:169 randtalkbot/stranger.py:175
 msgid "Here's another stranger. Have fun!"
 msgstr "Подобран новый собеедник. Общайтесь на здоровье 🤗"
 
-#: build/lib/randtalkbot/stranger.py:173 randtalkbot/stranger.py:175
+#: build/lib/randtalkbot/stranger.py:173 randtalkbot/stranger.py:179
 msgid "Your partner is here. Have a nice chat!"
 msgstr "Собеседник найден. Приятного общения 🤗"
 
 #: build/lib/randtalkbot/stranger_handler.py:96
-#: randtalkbot/stranger_handler.py:96
+#: randtalkbot/stranger_handler.py:74
 msgid ""
 "*Manual*\n"
 "\n"
@@ -68,7 +68,7 @@ msgstr ""
 "будет найден, вы сможете закончить разговор, выполнив /end."
 
 #: build/lib/randtalkbot/stranger_handler.py:114
-#: randtalkbot/stranger_handler.py:114
+#: randtalkbot/stranger_handler.py:100
 #, python-brace-format
 msgid ""
 "*Help*\n"
@@ -100,7 +100,8 @@ msgstr ""
 
 #: build/lib/randtalkbot/stranger_handler.py:137
 #: build/lib/randtalkbot/stranger_handler.py:156
-#: randtalkbot/stranger_handler.py:137 randtalkbot/stranger_handler.py:156
+#: randtalkbot/stranger_handler.py:124 randtalkbot/stranger_handler.py:138
+#: randtalkbot/stranger_handler.py:153
 msgid "Messages of this type aren't supported."
 msgstr "Сообщения такого типа не поддерживаются 😞"
 
@@ -169,6 +170,10 @@ msgstr ""
 msgid "Choose your partner's sex"
 msgstr "Выберите пол собеседника"
 
+#: randtalkbot/stranger_handler.py:142
+msgid "Unknown command. Look /help for the full list of commands."
+msgstr "Неизвестная команда. Чтобы посмотреть все команды, скомандуйте /help."
+
 #: randtalkbot/stranger_setup_wizard.py:140
 msgid "Leave the language unchanged"
 msgstr "Не менять язык"
@@ -180,13 +185,13 @@ msgid ""
 "\"English, Italian\" -- in descending order of your speaking convenience or "
 "just pick one at special keyboard."
 msgstr ""
-"Сейчас установлен {0} язык. Перечислите языки, которыми вы владеете, в таком формате: "
-"«English, Italian» — в порядке убывания уровня ваших знаний или просто выберите ваш язык на "
-"специальной «клавиатуре».\n"
+"Сейчас установлен {0} язык. Перечислите языки, которыми вы владеете, в таком "
+"формате: «English, Italian» — в порядке убывания уровня ваших знаний или "
+"просто выберите ваш язык на специальной «клавиатуре».\n"
 "\n"
 "Your current language is {0}. Enumerate the languages you speak like this: "
-"“English, Italian” — in descending order of your speaking convenience or just pick one "
-"at special keyboard."
+"“English, Italian” — in descending order of your speaking convenience or "
+"just pick one at special keyboard."
 
 #: randtalkbot/stranger_setup_wizard.py:145
 msgid "Leave the languages unchanged"
@@ -199,10 +204,10 @@ msgid ""
 "way -- in descending order of your speaking convenience or just pick one at "
 "special keyboard."
 msgstr ""
-"Сейчас выбраны следующие языки: {0}. Перечислите языки, которыми вы владеете, "
-"в таком же формате, в порядке убывания уровня ваших знаний или просто выберите "
-"ваш язык на специальной «клавиатуре».\n"
+"Сейчас выбраны следующие языки: {0}. Перечислите языки, которыми вы "
+"владеете, в таком же формате, в порядке убывания уровня ваших знаний или "
+"просто выберите ваш язык на специальной «клавиатуре».\n"
 "\n"
-"Your current languages are: {0}. Enumerate the languages you speak the same way, "
-"in descending order of your speaking convenience or just pick one "
-"at special keyboard."
+"Your current languages are: {0}. Enumerate the languages you speak the same "
+"way, in descending order of your speaking convenience or just pick one at "
+"special keyboard."
