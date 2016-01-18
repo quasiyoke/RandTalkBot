@@ -86,22 +86,26 @@ class Stranger(Model):
     @asyncio.coroutine
     def end_chatting(self):
         sender = self.get_sender()
-        # If stranger is chatting now
-        if self.partner:
-            # If partner isn't taking with the stranger because of some error, we shouldn't kick him.
-            if self.partner.partner == self:
-                yield from self.partner.kick()
-            yield from sender.send_notification(
-                _('Chat was finished. Feel free to /begin a new one.'),
-                )
         # If stranger is looking for partner
-        elif self.looking_for_partner_from:
+        if self.looking_for_partner_from:
             yield from sender.send_notification(
                 _('Looking for partner was stopped.'),
                 )
+        recent_partner = self.partner
         self.partner = None
         self.looking_for_partner_from = None
         self.save()
+        # If stranger is chatting now
+        if recent_partner:
+            yield from sender.send_notification(
+                _('Chat was finished. Feel free to /begin a new one.'),
+                )
+            # If partner isn't taking with the stranger because of some error, we shouldn't kick him.
+            # Working with partner should be in the end of function because partner possibly have blocked
+            # the bot.
+            # TODO: Handle bot blocking.
+            if recent_partner.partner == self:
+                yield from recent_partner.kick()
 
     def get_languages(self):
         if self.languages:
@@ -125,11 +129,11 @@ class Stranger(Model):
     @asyncio.coroutine
     def kick(self):
         self.partner = None
+        self.save()
         sender = self.get_sender()
         yield from sender.send_notification(
             _('Your partner has left chat. Feel free to /begin a new conversation.'),
             )
-        self.save()
 
     @asyncio.coroutine
     def send(self, message):
