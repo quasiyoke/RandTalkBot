@@ -65,19 +65,27 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
                     'you\'re matched you can use /end to end the conversation.')
                 )
+            logging.debug('Start: %d', self._stranger.id)
         if command == 'begin':
             try:
                 partner = self._stranger_service.get_partner(self._stranger)
             except PartnerObtainingError:
                 yield from self._stranger.set_looking_for_partner()
+                logging.debug('Looking for partner: %d', self._stranger.id)
             except StrangerServiceError as e:
                 logging.error('Problems with handling /begin command: %s', e)
                 sys.exit('Problems with handling /begin command: %s' % e)
             else:
                 yield from self._stranger.set_partner(partner)
                 yield from partner.set_partner(self._stranger)
+                logging.debug('Found partner: %d -> %s.', self._stranger.id, partner.id)
         elif command == 'end':
             yield from self._stranger.end_chatting()
+            logging.debug(
+                'Finished chatting: %d -x-> %d',
+                self._stranger.id,
+                self._stranger.partner.id if self._stranger.partner else 0,
+                )
         elif command == 'help':
             yield from self._sender.send_notification(
                 _('*Help*\n\nUse /begin to start looking for a conversational partner, once '
@@ -92,6 +100,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         elif command == 'setup':
             yield from self._stranger.end_chatting()
             yield from self._stranger_setup_wizard.activate()
+            logging.debug('Setup: %d', self._stranger.id)
 
     @asyncio.coroutine
     def on_message(self, message_json):

@@ -29,13 +29,16 @@ Arguments:
 
 def main():
     arguments = docopt(DOC, version=__version__)
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     try:
         configuration = Configuration(arguments['CONFIGURATION'])
     except ConfigurationObtainingError as e:
         logging.error('Can\'t obtain configuration: %s', e)
         sys.exit('Can\'t obtain configuration: %s' % e)
+
+    if not configuration.debug:
+        logging.basicConfig(level=logging.INFO)
 
     try:
         stranger_service = StrangerService(configuration)

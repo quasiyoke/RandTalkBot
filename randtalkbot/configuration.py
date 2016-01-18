@@ -33,3 +33,4 @@ class Configuration:
         except KeyError as e:
             logging.error('Troubles with obtaining parameters: %s', e)
             raise ConfigurationObtainingError('Troubles with obtaining parameters \"{0}\"'.format(e))
+        self.debug = configuration_json.get('debug', False)
