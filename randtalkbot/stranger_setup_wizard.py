@@ -21,17 +21,28 @@ SEX_KEYBOARD = {
     'keyboard': [SEX_NAMES[:2], SEX_NAMES[2:], ],
     }
 
+class InvalidCommandError(Exception):
+    pass
+
 class StrangerSetupWizard(Wizard):
     '''
     Wizard which guides stranger through process of customizing her parameters. Activates
     automatically for novices.
     '''
+    COMMAND_RE_PATTERN = re.compile('^/(\w+)\\b')
 
     def __init__(self, stranger):
         super(StrangerSetupWizard, self).__init__()
         self._stranger = stranger
         self._sender = StrangerSenderService.get_instance() \
             .get_or_create_stranger_sender(stranger)
+
+    @classmethod
+    def _get_command(cls, message):
+        command_match = cls.COMMAND_RE_PATTERN.match(message)
+        if not command_match:
+            raise InvalidCommandError()
+        return command_match.group(1)
 
     @asyncio.coroutine
     def activate(self):
@@ -65,6 +76,24 @@ class StrangerSetupWizard(Wizard):
                 return False
         elif self._stranger.wizard != 'setup':
             return False
+        try:
+            command = type(self)._get_command(text)
+        except InvalidCommandError:
+            pass
+        else:
+            if not self._stranger.is_full():
+                yield from self._sender.send_notification(
+                    _('Finish setup process please. After that you can start using bot.'),
+                    )
+            elif command == 'cancel':
+                yield from self.deactivate()
+                return True
+            else:
+                yield from self._sender.send_notification(
+                    _('To interrupt setup use /cancel.'),
+                    )
+            yield from self._send_invitation()
+            return True
         if self._stranger.wizard_step == 'languages':
             try:
                 self._stranger.set_languages(get_languages_codes(text))

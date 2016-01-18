@@ -66,6 +66,35 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.assertFalse((yield from self.stranger_setup_wizard.handle('foo_text')))
         self.stranger_setup_wizard.activate.assert_not_called()
 
+    def test_handle__command_full_stranger(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'sex'
+        self.stranger.is_full.return_value = True
+        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.assertTrue((yield from self.stranger_setup_wizard.handle('/begin')))
+        self.stranger.is_full.assert_called_once_with()
+        self.sender.send_notification.assert_called_once_with('To interrupt setup use /cancel.')
+        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+
+    def test_handle__command_not_full_stranger(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'sex'
+        self.stranger.is_full.return_value = False
+        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.assertTrue((yield from self.stranger_setup_wizard.handle('/cancel')))
+        self.sender.send_notification.assert_called_once_with(
+            'Finish setup process please. After that you can start using bot.',
+            )
+        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+
+    def test_handle__command_full_stranger_cancel(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'sex'
+        self.stranger.is_full.return_value = True
+        self.stranger_setup_wizard.deactivate = CoroutineMock()
+        self.assertTrue((yield from self.stranger_setup_wizard.handle('/cancel')))
+        self.stranger_setup_wizard.deactivate.assert_called_once_with()
+
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     @asyncio.coroutine
     def test_handle__languages_ok(self):
