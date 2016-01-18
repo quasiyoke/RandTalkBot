@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-19 00:19+0300\n"
+"POT-Creation-Date: 2016-01-19 01:19+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: English\n"
@@ -29,27 +29,27 @@ msgstr "Male"
 msgid "Not specified"
 msgstr "Not specified"
 
-#: build/lib/randtalkbot/stranger.py:82 randtalkbot/stranger.py:86
+#: build/lib/randtalkbot/stranger.py:82 randtalkbot/stranger.py:95
 msgid "Chat was finished. Feel free to /begin a new one."
 msgstr "Chat was finished. Feel free to /begin a new one."
 
-#: build/lib/randtalkbot/stranger.py:87 randtalkbot/stranger.py:91
+#: build/lib/randtalkbot/stranger.py:87 randtalkbot/stranger.py:100
 msgid "Looking for partner was stopped."
 msgstr "Looking for partner was stopped"
 
-#: build/lib/randtalkbot/stranger.py:117 randtalkbot/stranger.py:121
+#: build/lib/randtalkbot/stranger.py:117 randtalkbot/stranger.py:130
 msgid "Your partner has left chat. Feel free to /begin a new conversation."
 msgstr "Your partner has left chat. 😿 Feel free to /begin a new conversation."
 
-#: build/lib/randtalkbot/stranger.py:160 randtalkbot/stranger.py:166
+#: build/lib/randtalkbot/stranger.py:160 randtalkbot/stranger.py:175
 msgid "Looking for a stranger for you."
 msgstr "Looking for a stranger for you 🤔"
 
-#: build/lib/randtalkbot/stranger.py:169 randtalkbot/stranger.py:175
+#: build/lib/randtalkbot/stranger.py:169 randtalkbot/stranger.py:184
 msgid "Here's another stranger. Have fun!"
 msgstr "Here's another stranger. Have fun 🤗"
 
-#: build/lib/randtalkbot/stranger.py:173 randtalkbot/stranger.py:179
+#: build/lib/randtalkbot/stranger.py:173 randtalkbot/stranger.py:188
 msgid "Your partner is here. Have a nice chat!"
 msgstr "Your partner is here. Have a nice chat 🤗"
 
@@ -158,6 +158,22 @@ msgstr ""
 #: randtalkbot/stranger_setup_wizard.py:193
 msgid "Choose your partner's sex"
 msgstr "Choose your partner's sex"
+
+#: randtalkbot/stranger.py:24
+msgid "boy"
+msgstr "boy"
+
+#: randtalkbot/stranger.py:25
+msgid "man"
+msgstr "man"
+
+#: randtalkbot/stranger.py:27
+msgid "girl"
+msgstr "girl"
+
+#: randtalkbot/stranger.py:28
+msgid "woman"
+msgstr "woman"
 
 #: randtalkbot/stranger_handler.py:142
 msgid "Unknown command. Look /help for the full list of commands."

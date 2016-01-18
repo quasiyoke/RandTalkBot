@@ -308,12 +308,19 @@ class TestStranger(asynctest.TestCase):
         self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
+    def test_set_sex__additional(self):
+        self.stranger.save = Mock()
+        self.stranger.set_sex('  МАЛЬЧИК ')
+        self.assertEqual(self.stranger.sex, 'male')
+        self.stranger.save.assert_called_once_with()
+
+    @asynctest.ignore_loop
     def test_set_sex__incorrect(self):
         from randtalkbot.stranger import SexError
         self.stranger.save = Mock()
         self.stranger.sex = 'foo'
         with self.assertRaises(SexError):
-            self.stranger.set_sex('Boy')
+            self.stranger.set_sex('not_a_sex')
         self.assertEqual(self.stranger.sex, 'foo')
 
     @asynctest.ignore_loop
@@ -324,12 +331,19 @@ class TestStranger(asynctest.TestCase):
         self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
+    def test_set_sex__additional(self):
+        self.stranger.save = Mock()
+        self.stranger.set_partner_sex('  МАЛЬЧИК ')
+        self.assertEqual(self.stranger.partner_sex, 'male')
+        self.stranger.save.assert_called_once_with()
+
+    @asynctest.ignore_loop
     def test_set_partner_sex__incorrect(self):
         from randtalkbot.stranger import SexError
         self.stranger.save = Mock()
         self.stranger.partner_sex = 'foo'
         with self.assertRaises(SexError):
-            self.stranger.set_partner_sex('Boy')
+            self.stranger.set_partner_sex('not_a_sex')
         self.assertEqual(self.stranger.partner_sex, 'foo')
 
     @asynctest.ignore_loop

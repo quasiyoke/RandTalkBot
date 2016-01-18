@@ -20,10 +20,19 @@ SEX_CHOICES = (
     ('male', _('Male')),
     ('not_specified', _('Not specified')),
     )
+ADDITIONAL_SEX_NAMES_TO_CODES = {
+    _('boy'): 'male',
+    _('man'): 'male',
+    'men': 'male',
+    _('girl'): 'female',
+    _('woman'): 'female',
+}
+SEX_NAMES_TO_CODES = {}
 SEX_NAMES = list(zip(*SEX_CHOICES))[1]
-SEX_NAMES_TO_CODES = {item[1].lower(): item[0] for item in SEX_CHOICES}
 for translation in get_translations():
     for sex, name in SEX_CHOICES:
+        SEX_NAMES_TO_CODES[translation(name).lower()] = sex
+    for name, sex in ADDITIONAL_SEX_NAMES_TO_CODES.items():
         SEX_NAMES_TO_CODES[translation(name).lower()] = sex
 WIZARD_CHOICES = (
     ('none', 'None'),
