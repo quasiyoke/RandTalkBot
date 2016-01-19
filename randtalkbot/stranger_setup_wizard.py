@@ -85,15 +85,17 @@ class StrangerSetupWizard(Wizard):
                 yield from self._sender.send_notification(
                     _('Finish setup process please. After that you can start using bot.'),
                     )
+                yield from self._send_invitation()
+                return True
             elif command == 'cancel':
                 yield from self.deactivate()
                 return True
-            else:
+            elif command != 'start':
                 yield from self._sender.send_notification(
                     _('To interrupt setup use /cancel.'),
                     )
-            yield from self._send_invitation()
-            return True
+                yield from self._send_invitation()
+                return True
         if self._stranger.wizard_step == 'languages':
             try:
                 self._stranger.set_languages(get_languages_codes(text))

@@ -44,6 +44,9 @@ class StrangerSender(telepot.helper.Sender):
 
     @asyncio.coroutine
     def send(self, message):
+        '''
+        @raise TelegramError if stranger has blocked the bot.
+        '''
         try:
             method_name = StrangerSender.MESSAGE_TYPE_TO_METHOD_NAME[message.type]
         except KeyError:
@@ -53,6 +56,9 @@ class StrangerSender(telepot.helper.Sender):
 
     @asyncio.coroutine
     def send_notification(self, message, *args, reply_markup=None):
+        '''
+        @raise TelegramError if stranger has blocked the bot.
+        '''
         args = [StrangerSender._escape_markdown(arg) for arg in args]
         message = self._(message).format(*args)
         if reply_markup and 'keyboard' in reply_markup:

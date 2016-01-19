@@ -14,6 +14,7 @@ from randtalkbot import stranger
 from randtalkbot.stranger import Stranger, MissingPartnerError, StrangerError
 from randtalkbot.stranger_sender import StrangerSenderError
 from randtalkbot.stranger_sender_service import StrangerSenderService
+from telepot import TelegramError
 
 database = SqliteDatabase(':memory:')
 stranger.database_proxy.initialize(database)
@@ -67,6 +68,22 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
+    @patch('randtalkbot.stranger.logging', Mock())
+    @asyncio.coroutine
+    def test_end_chatting__chatting_stranger_has_blocked_the_bot(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger2.partner = self.stranger
+        self.stranger.partner = self.stranger2
+        self.stranger.save()
+        self.stranger2.kick = CoroutineMock()
+        sender.send_notification.side_effect = TelegramError('foo_description', 123)
+        yield from self.stranger.end_chatting()
+        self.stranger2.kick.assert_called_once_with()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, None)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+
     def test_end_chatting__buggy_stranger(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
@@ -97,6 +114,24 @@ class TestStranger(asynctest.TestCase):
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
+
+    @patch('randtalkbot.stranger.logging', Mock())
+    @asyncio.coroutine
+    def test_end_chatting__stranger_looking_for_partner_has_blocked_the_bot(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.looking_for_partner_from = datetime.datetime(1970, 1, 1)
+        self.stranger.save = Mock()
+        sender.send_notification.side_effect = TelegramError('foo_description', 123)
+        yield from self.stranger.end_chatting()
+        sender.send_notification.assert_called_once_with(
+            'Looking for partner was stopped.',
+            )
+        sender.send.assert_not_called()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, None)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+        self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
     def test_get_languages__has_languages(self):
@@ -159,6 +194,22 @@ class TestStranger(asynctest.TestCase):
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
+
+    @patch('randtalkbot.stranger.logging', Mock())
+    @asyncio.coroutine
+    def test_kick(self):
+        from randtalkbot.stranger import logging
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.partner = self.stranger2
+        self.stranger.save()
+        error =  TelegramError('foo_description', 123)
+        sender.send_notification.side_effect =error
+        yield from self.stranger.kick()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, None)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+        logging.warning.assert_called_once_with('Kick. Can\'t notify stranger %d: %s', stranger.id, error)
 
     def test_send__ok(self):
         sender = CoroutineMock()
@@ -270,16 +321,57 @@ class TestStranger(asynctest.TestCase):
     def test_set_partner__chatting_stranger(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger2.partner = self.stranger
+        self.stranger2.kick = CoroutineMock()
         self.stranger.partner = self.stranger2
         self.stranger.save()
         yield from self.stranger.set_partner(self.stranger3)
         sender.send_notification.assert_called_once_with(
             'Here\'s another stranger. Have fun!',
             )
-        sender.send.assert_not_called()
+        self.stranger2.kick.assert_called_once_with()
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, self.stranger3)
         self.assertEqual(stranger.looking_for_partner_from, None)
+
+    def test_set_partner__buggy_chatting_stranger(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger2.kick = CoroutineMock()
+        self.stranger.partner = self.stranger2
+        self.stranger.save()
+        yield from self.stranger.set_partner(self.stranger3)
+        sender.send_notification.assert_called_once_with(
+            'Here\'s another stranger. Have fun!',
+            )
+        self.stranger2.kick.assert_not_called()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, self.stranger3)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+
+    @patch('randtalkbot.stranger.logging', Mock())
+    @asyncio.coroutine
+    def test_set_partner__chatting_stranger_has_blocked_the_bot(self):
+        from randtalkbot.stranger import logging
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger2.partner = self.stranger
+        self.stranger2.kick = CoroutineMock()
+        self.stranger.partner = self.stranger2
+        self.stranger.save()
+        error = TelegramError('foo_description', 123)
+        sender.send_notification.side_effect = error
+        with self.assertRaises(StrangerError):
+            yield from self.stranger.set_partner(self.stranger3)
+        self.stranger2.kick.assert_called_once_with()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, None)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+        logging.warning.assert_called_once_with(
+            'Set partner. Can\'t notify stranger %d: %s',
+            self.stranger.id,
+            error,
+            )
 
     def test_set_partner__not_chatting_stranger(self):
         sender = CoroutineMock()
@@ -292,6 +384,29 @@ class TestStranger(asynctest.TestCase):
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, self.stranger3)
         self.assertEqual(stranger.looking_for_partner_from, None)
+
+    @patch('randtalkbot.stranger.logging', Mock())
+    @asyncio.coroutine
+    def test_set_partner__not_chatting_stranger_has_blocked_the_bot(self):
+        from randtalkbot.stranger import logging
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        error = TelegramError('foo_description', 123)
+        sender.send_notification.side_effect = error
+        with self.assertRaises(StrangerError):
+            yield from self.stranger.set_partner(self.stranger3)
+        sender.send_notification.assert_called_once_with(
+            'Your partner is here. Have a nice chat!',
+            )
+        sender.send.assert_not_called()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, None)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+        logging.warning.assert_called_once_with(
+            'Set partner. Can\'t notify stranger %d: %s',
+            self.stranger.id,
+            error,
+            )
 
     @asynctest.ignore_loop
     def test_set_sex__correct(self):

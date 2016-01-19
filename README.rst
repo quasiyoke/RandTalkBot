@@ -58,7 +58,7 @@ In @BotFather compatible format::
 
     begin - Begin looking for next stranger
     end - End talking
-    setup - Choose sex and language
+    setup - Choose sex and languages
     help - Help for Rand Talk
 
 Roadmap

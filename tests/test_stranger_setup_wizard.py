@@ -218,7 +218,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
         self.stranger_setup_wizard._send_invitation.assert_not_called()
         self.sender.send_notification.assert_not_called()
-        logging.warning.assert_called_once()
+        logging.warning.assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
 
     def test_send_invitation__no_languages(self):
         self.stranger.wizard = 'setup'

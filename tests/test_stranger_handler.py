@@ -7,11 +7,12 @@
 import asyncio
 import asynctest
 from randtalkbot.message import Message, UnsupportedContentError
+from randtalkbot.stranger import StrangerError
 from randtalkbot.stranger_handler import StrangerHandler, MissingCommandError, UnknownCommandError
 from randtalkbot.stranger_sender_service import StrangerSenderService
 from randtalkbot.stranger_service import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
-from asynctest.mock import create_autospec, patch, Mock, CoroutineMock
+from asynctest.mock import call, create_autospec, patch, Mock, CoroutineMock
 
 class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerSetupWizard', create_autospec(StrangerSetupWizard))
@@ -84,6 +85,42 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger.set_partner.assert_called_once_with(partner)
         partner.set_partner.assert_called_once_with(self.stranger)
 
+    def test_handle_command__begin_stranger_has_blocked_the_bot(self):
+        partner = CoroutineMock()
+        self.stranger_service.get_partner.return_value = partner
+        self.stranger.set_partner.side_effect = StrangerError()
+        yield from self.stranger_handler.handle_command('begin')
+        self.stranger_service.get_partner.assert_called_once_with(self.stranger)
+        self.stranger.set_partner.assert_called_once_with(partner)
+        partner.set_partner.assert_not_called()
+
+    def test_handle_command__begin_first_partner_has_blocked_the_bot(self):
+        partner = CoroutineMock()
+        self.stranger_service.get_partner.return_value = partner
+        partner.set_partner.side_effect = [StrangerError(), None]
+        yield from self.stranger_handler.handle_command('begin')
+        self.assertEqual(
+            self.stranger_service.get_partner.call_args_list,
+            [
+                call(self.stranger),
+                call(self.stranger),
+                ],
+            )
+        self.assertEqual(
+            self.stranger.set_partner.call_args_list,
+            [
+                call(partner),
+                call(partner),
+                ],
+            )
+        self.assertEqual(
+            partner.set_partner.call_args_list,
+            [
+                call(self.stranger),
+                call(self.stranger),
+                ],
+            )
+
     def test_handle_command__begin_partner_obtaining_error(self):
         from randtalkbot.stranger_service import PartnerObtainingError
         partner = CoroutineMock()
@@ -95,12 +132,20 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.logging', Mock())
     @asyncio.coroutine
     def test_handle_command__begin_stranger_service_error(self):
+        from randtalkbot.stranger_handler import logging
         from randtalkbot.stranger_service import StrangerServiceError
         partner = CoroutineMock()
         self.stranger_service.get_partner.side_effect = StrangerServiceError()
-        with self.assertRaises(SystemExit):
-            yield from self.stranger_handler.handle_command('begin')
-        self.stranger_service.get_partner.assert_called_once_with(self.stranger)
+        self.stranger.id = 31416
+        yield from self.stranger_handler.handle_command('begin')
+        logging.error.assert_called_once_with(
+            'Problems with handling /begin command for %d: %s',
+            31416,
+            '',
+            )
+        self.sender.send_notification.assert_called_once_with(
+            'Internal error. Admins are already notified about that',
+            )
 
     def test_handle_command__end(self):
         yield from self.stranger_handler.handle_command('end')
