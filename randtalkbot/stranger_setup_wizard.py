@@ -17,6 +17,7 @@ from .wizard import Wizard
 
 def _(s): return s
 
+LOGGER = logging.getLogger('randtalkbot')
 SEX_KEYBOARD = {
     'keyboard': [SEX_NAMES[:2], SEX_NAMES[2:], ],
     }
@@ -100,7 +101,7 @@ class StrangerSetupWizard(Wizard):
             try:
                 self._stranger.set_languages(get_languages_codes(text))
             except LanguageNotFoundError as e:
-                logging.info('Languages weren\'t parsed: \"%s\"', text)
+                LOGGER.info('Languages weren\'t parsed: \"%s\"', text)
                 yield from self._sender.send_notification(
                     _('Language \"{0}\" wasn\'t found.'),
                     e.name,
@@ -118,7 +119,7 @@ class StrangerSetupWizard(Wizard):
             try:
                 self._stranger.set_sex(text)
             except SexError as e:
-                logging.info('Stranger\'s sex wasn\'t parsed: \"%s\"', text)
+                LOGGER.info('Stranger\'s sex wasn\'t parsed: \"%s\"', text)
                 yield from self._sender.send_notification(
                     _('Unknown sex: \"{0}\" -- is not a valid sex name.'),
                     e.name,
@@ -136,7 +137,7 @@ class StrangerSetupWizard(Wizard):
             try:
                 self._stranger.set_partner_sex(text)
             except SexError as e:
-                logging.info('Stranger partner\'s sex wasn\'t parsed: \"%s\"', text)
+                LOGGER.info('Stranger partner\'s sex wasn\'t parsed: \"%s\"', text)
                 yield from self._sender.send_notification(
                     _('Unknown sex: \"{0}\" -- is not a valid sex name.'),
                     e.name,
@@ -145,7 +146,7 @@ class StrangerSetupWizard(Wizard):
             else:
                 yield from self.deactivate()
         else:
-            logging.warning(
+            LOGGER.warning(
                 'Undknown wizard_step value was found: \"%s\"',
                 self._stranger.wizard_step,
                 )
@@ -160,7 +161,7 @@ class StrangerSetupWizard(Wizard):
             try:
                 languages_enumeration = get_languages_names(languages)
             except LanguageNotFoundError:
-                logging.error('Language not found at setup wizard: %s', self._stranger.languages)
+                LOGGER.error('Language not found at setup wizard: %s', self._stranger.languages)
                 languages_enumeration = ''
             if len(languages) == 0 or not languages_enumeration:
                 notification = _('Enumerate the languages you speak like this: \"English, Italian\" '

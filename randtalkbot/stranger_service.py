@@ -10,6 +10,8 @@ from peewee import *
 from playhouse.shortcuts import RetryOperationalError
 from randtalkbot import stranger
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class PartnerObtainingError(Exception):
     pass
 

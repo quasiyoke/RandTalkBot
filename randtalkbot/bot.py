@@ -12,6 +12,8 @@ from .stranger_handler import StrangerHandler
 from telepot.delegate import per_chat_id
 from telepot.async.delegate import create_open
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class Bot:
     def __init__(self, configuration, stranger_service):
         self._admins_telegram_ids = configuration.admins_telegram_ids
@@ -43,5 +45,5 @@ class Bot:
     def start_listening(self):
         loop = asyncio.get_event_loop()
         loop.create_task(self._delegator_bot.messageLoop())
-        logging.info('Listening...')
+        LOGGER.info('Listening...')
         loop.run_forever()

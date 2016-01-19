@@ -27,15 +27,64 @@ After that write ``randtalkbotenv/configuration.json`` file like that::
             "name": "randtalk",
             "user": "randtalkbot",
             "password": "xwBUr3oobCXjqSvz4t"
+                },
+        "logging": {
+            "version": 1,
+            "formatters": {
+                "simple": {
+                    "class": "logging.Formatter",
+                    "format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+                    }
+                },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "DEBUG",
+                    "formatter": "simple"
+                    },
+                "file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "DEBUG",
+                    "formatter": "simple",
+                    "filename": "log.log",
+                    "maxBytes": 10485760,
+                    "backupCount": 10,
+                    "encoding": "utf-8"
+                    },
+                "email": {
+                    "class": "logging.handlers.SMTPHandler",
+                    "level": "ERROR",
+                    "formatter": "simple",
+                    "mailhost": ["smtp.gmail.com", 587],
+                    "fromaddr": "example1@gmail.com",
+                    "toaddrs": ["example2@gmail.com"],
+                    "subject": "[Rand Talk Error]",
+                    "credentials": ["example1@gmail.com", "RM49p7XFB:Z6x@kCkv"],
+                    "secure": []
+                    }
+                },
+            "loggers": {
+                "randtalkbot": {
+                    "level": "DEBUG",
+                    "handlers": ["file", "email"]
+                    },
+                "peewee": {
+                    "level": "DEBUG",
+                    "handlers": ["file", "email"]
+                    }
+                },
+            "root": {
+                "level": "DEBUG",
+                "handlers": ["console"]
+                }
             },
-        "debug": true,
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
     }
 
 Where:
 
 * ``admins`` -- list of admins' Telegram IDs. Optional. Default is ``[]``.
-* ``debug`` -- should the bot log debug messages. Optional. Default is ``false``.
+* ``logging`` -- logging setup as described in `this howto <https://docs.python.org/3/howto/logging.html>`_.
 
 Create MySQL DB::
 

@@ -7,6 +7,8 @@
 import logging
 from .stranger_sender import StrangerSender
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class StrangerSenderServiceError(Exception):
     pass
 

@@ -29,7 +29,9 @@ var/
 *.manifest
 *.spec
 
-# Installer logs
+# Logs
+log.log
+log.log.*
 pip-log.txt
 pip-delete-this-directory.txt
 
@@ -45,9 +47,6 @@ coverage.xml
 
 # Translations
 *.pot
-
-# Django stuff:
-*.log
 
 # Sphinx documentation
 docs/_build/

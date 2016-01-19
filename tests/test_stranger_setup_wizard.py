@@ -208,17 +208,17 @@ class TestStrangerSetupWizard(asynctest.TestCase):
             'foo_sex',
             )
 
-    @patch('randtalkbot.stranger_setup_wizard.logging', Mock())
+    @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     @asyncio.coroutine
     def test_handle__unknown_wizard_step(self):
-        from randtalkbot.stranger_setup_wizard import logging
+        from randtalkbot.stranger_setup_wizard import LOGGER
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'unknown_step'
         self.stranger_setup_wizard._send_invitation = CoroutineMock()
         self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
         self.stranger_setup_wizard._send_invitation.assert_not_called()
         self.sender.send_notification.assert_not_called()
-        logging.warning.assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
+        LOGGER.warning.assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
 
     def test_send_invitation__no_languages(self):
         self.stranger.wizard = 'setup'
@@ -274,7 +274,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         'randtalkbot.stranger_setup_wizard.get_languages_names',
         Mock(side_effect=LanguageNotFoundError('')),
         )
-    @patch('randtalkbot.stranger_setup_wizard.logging', Mock())
+    @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     @asyncio.coroutine
     def test_send_invitation__unknown_languages(self):
         self.stranger.wizard = 'setup'

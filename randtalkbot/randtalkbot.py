@@ -7,6 +7,7 @@
 '''randtalkbot.randtalkbot: provides entry point main().'''
 
 import logging
+import logging.config
 import sys
 from .bot import Bot
 from .configuration import Configuration, ConfigurationObtainingError
@@ -26,6 +27,7 @@ Usage:
 Arguments:
   CONFIGURATION  Path to configuration.json file.
 '''
+LOGGER = logging.getLogger('randtalkbot')
 
 def main():
     arguments = docopt(DOC, version=__version__)
@@ -34,29 +36,28 @@ def main():
     try:
         configuration = Configuration(arguments['CONFIGURATION'])
     except ConfigurationObtainingError as e:
-        logging.error('Can\'t obtain configuration: %s', e)
+        LOGGER.error('Can\'t obtain configuration: %s', e)
         sys.exit('Can\'t obtain configuration: %s' % e)
 
-    if not configuration.debug:
-        logging.basicConfig(level=logging.INFO)
+    logging.config.dictConfig(configuration.logging)
 
     try:
         stranger_service = StrangerService(configuration)
     except StrangerServiceError as e:
-        logging.error('Can\'t construct StrangerService: %s', e)
+        LOGGER.error('Can\'t construct StrangerService: %s', e)
         sys.exit('Can\'t construct StrangerService: %s' % e)
 
     if arguments['install']:
-        logging.info('Installing RandTalkBot.')
+        LOGGER.info('Installing RandTalkBot.')
         try:
             stranger_service.install()
         except StrangerServiceError as e:
-            logging.error('Can\'t install StrangerService: %s', e)
+            LOGGER.error('Can\'t install StrangerService: %s', e)
             sys.exit('Can\'t install StrangerService: %s' % e)
     else:
-        logging.info('Executing RandTalkBot.')
+        LOGGER.info('Executing RandTalkBot.')
         bot = Bot(configuration, stranger_service)
         try:
             bot.start_listening()
         except KeyboardInterrupt:
-            logging.info('Execution was finished by keyboard interrupt.')
+            LOGGER.info('Execution was finished by keyboard interrupt.')

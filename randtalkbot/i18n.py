@@ -12,6 +12,8 @@ from .utils import LOCALE_DIR
 from collections import OrderedDict
 from os import path
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class LanguageNotFoundError(Exception):
     def __init__(self, name):
         super(LanguageNotFoundError, self).__init__('Language \"{0}\" wasn\'t found.'.format(name))

@@ -68,7 +68,7 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
-    @patch('randtalkbot.stranger.logging', Mock())
+    @patch('randtalkbot.stranger.LOGGER', Mock())
     @asyncio.coroutine
     def test_end_chatting__chatting_stranger_has_blocked_the_bot(self):
         sender = CoroutineMock()
@@ -115,7 +115,7 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
-    @patch('randtalkbot.stranger.logging', Mock())
+    @patch('randtalkbot.stranger.LOGGER', Mock())
     @asyncio.coroutine
     def test_end_chatting__stranger_looking_for_partner_has_blocked_the_bot(self):
         sender = CoroutineMock()
@@ -195,10 +195,10 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
-    @patch('randtalkbot.stranger.logging', Mock())
+    @patch('randtalkbot.stranger.LOGGER', Mock())
     @asyncio.coroutine
     def test_kick(self):
-        from randtalkbot.stranger import logging
+        from randtalkbot.stranger import LOGGER
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
         self.stranger.partner = self.stranger2
@@ -209,7 +209,7 @@ class TestStranger(asynctest.TestCase):
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
-        logging.warning.assert_called_once_with('Kick. Can\'t notify stranger %d: %s', stranger.id, error)
+        LOGGER.warning.assert_called_once_with('Kick. Can\'t notify stranger %d: %s', stranger.id, error)
 
     def test_send__ok(self):
         sender = CoroutineMock()
@@ -349,10 +349,10 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, self.stranger3)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
-    @patch('randtalkbot.stranger.logging', Mock())
+    @patch('randtalkbot.stranger.LOGGER', Mock())
     @asyncio.coroutine
     def test_set_partner__chatting_stranger_has_blocked_the_bot(self):
-        from randtalkbot.stranger import logging
+        from randtalkbot.stranger import LOGGER
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
         self.stranger2.partner = self.stranger
@@ -367,7 +367,7 @@ class TestStranger(asynctest.TestCase):
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
-        logging.warning.assert_called_once_with(
+        LOGGER.warning.assert_called_once_with(
             'Set partner. Can\'t notify stranger %d: %s',
             self.stranger.id,
             error,
@@ -385,10 +385,10 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, self.stranger3)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
-    @patch('randtalkbot.stranger.logging', Mock())
+    @patch('randtalkbot.stranger.LOGGER', Mock())
     @asyncio.coroutine
     def test_set_partner__not_chatting_stranger_has_blocked_the_bot(self):
-        from randtalkbot.stranger import logging
+        from randtalkbot.stranger import LOGGER
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
         error = TelegramError('foo_description', 123)
@@ -402,7 +402,7 @@ class TestStranger(asynctest.TestCase):
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
-        logging.warning.assert_called_once_with(
+        LOGGER.warning.assert_called_once_with(
             'Set partner. Can\'t notify stranger %d: %s',
             self.stranger.id,
             error,

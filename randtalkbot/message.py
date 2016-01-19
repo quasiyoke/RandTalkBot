@@ -7,6 +7,8 @@
 import logging
 import telepot
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class UnsupportedContentError(Exception):
     pass
 

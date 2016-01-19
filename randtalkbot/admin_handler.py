@@ -10,6 +10,8 @@ from .stranger import MissingPartnerError, SEX_NAMES, StrangerError
 from .stranger_handler import StrangerHandler
 from .stranger_service import StrangerServiceError
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class AdminHandler(StrangerHandler):
     COMMANDS = StrangerHandler.COMMANDS + ['clear']
 
@@ -28,6 +30,6 @@ class AdminHandler(StrangerHandler):
                 return
             yield from stranger.end_chatting()
             yield from self._sender.send_notification('Stranger was cleared.')
-            logging.debug('Clear: %d -> %d', self._stranger.id, telegram_id)
+            LOGGER.debug('Clear: %d -> %d', self._stranger.id, telegram_id)
         else:
             yield from super(AdminHandler, self).handle_command(command, args)

@@ -10,6 +10,8 @@ import re
 import telepot
 from .i18n import get_translation
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class StrangerSenderError(Exception):
     pass
 

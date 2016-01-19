@@ -18,6 +18,8 @@ from .stranger_service import PartnerObtainingError, StrangerServiceError
 from .stranger_setup_wizard import StrangerSetupWizard
 from .utils import __version__
 
+LOGGER = logging.getLogger('randtalkbot')
+
 def _(s): return s
 
 class MissingCommandError(Exception):
@@ -50,7 +52,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         try:
             self._stranger = self._stranger_service.get_or_create_stranger(self.chat_id)
         except StrangerServiceError as e:
-            logging.error('Problems with StrangerHandler construction: %s', e)
+            LOGGER.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
         self._sender = StrangerSenderService.get_instance(bot) \
             .get_or_create_stranger_sender(self._stranger)
@@ -70,7 +72,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
     @asyncio.coroutine
     def handle_command(self, command, args=None):
         if command == 'start':
-            logging.debug('Start: %d', self._stranger.id)
+            LOGGER.debug('Start: %d', self._stranger.id)
             yield from self._sender.send_notification(
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
                     'you\'re matched you can use /end to end the conversation.')
@@ -93,17 +95,17 @@ class StrangerHandler(telepot.helper.ChatHandler):
                             # partner.
                             partner = None
             except PartnerObtainingError:
-                logging.debug('Looking for partner: %d', self._stranger.id)
+                LOGGER.debug('Looking for partner: %d', self._stranger.id)
                 yield from self._stranger.set_looking_for_partner()
             except StrangerServiceError as e:
-                logging.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
+                LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
                 yield from self._sender.send_notification(
                     _('Internal error. Admins are already notified about that'),
                     )
             else:
-                logging.debug('Found partner: %d -> %s.', self._stranger.id, partner.id)
+                LOGGER.debug('Found partner: %d -> %s.', self._stranger.id, partner.id)
         elif command == 'end':
-            logging.debug(
+            LOGGER.debug(
                 'Finished chatting: %d -x-> %d',
                 self._stranger.id,
                 self._stranger.partner.id if self._stranger.partner else 0,
@@ -121,7 +123,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                     __version__,
                 )
         elif command == 'setup':
-            logging.debug('Setup: %d', self._stranger.id)
+            LOGGER.debug('Setup: %d', self._stranger.id)
             yield from self._stranger.end_chatting()
             yield from self._stranger_setup_wizard.activate()
 

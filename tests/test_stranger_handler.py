@@ -50,7 +50,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(self.stranger)
         self.StrangerSetupWizard.assert_called_once_with(self.stranger)
 
-    @patch('randtalkbot.stranger_handler.logging', Mock())
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
     @asynctest.ignore_loop
     def test_init__stranger_service_error(self):
         self.stranger_service.reset_mock()
@@ -129,16 +129,16 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
         self.stranger.set_looking_for_partner.assert_called_once_with()
 
-    @patch('randtalkbot.stranger_handler.logging', Mock())
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
     @asyncio.coroutine
     def test_handle_command__begin_stranger_service_error(self):
-        from randtalkbot.stranger_handler import logging
+        from randtalkbot.stranger_handler import LOGGER
         from randtalkbot.stranger_service import StrangerServiceError
         partner = CoroutineMock()
         self.stranger_service.get_partner.side_effect = StrangerServiceError()
         self.stranger.id = 31416
         yield from self.stranger_handler.handle_command('begin')
-        logging.error.assert_called_once_with(
+        LOGGER.error.assert_called_once_with(
             'Problems with handling /begin command for %d: %s',
             31416,
             '',

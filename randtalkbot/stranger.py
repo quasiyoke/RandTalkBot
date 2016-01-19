@@ -14,6 +14,8 @@ from .stranger_sender_service import StrangerSenderService
 from peewee import *
 from telepot import TelegramError
 
+LOGGER = logging.getLogger('randtalkbot')
+
 def _(s): return s
 
 SEX_CHOICES = (
@@ -93,7 +95,7 @@ class Stranger(Model):
                 try:
                     yield from sender.send_notification(_('Looking for partner was stopped.'))
                 except TelegramError as e:
-                    logging.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
+                    LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
             elif self.partner:
                 # If stranger is chatting now
                 try:
@@ -101,7 +103,7 @@ class Stranger(Model):
                         _('Chat was finished. Feel free to /begin a new one.'),
                         )
                 except TelegramError as e:
-                    logging.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
+                    LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
                 if self.partner.partner == self:
                     # If partner isn't taking with the stranger because of some error, we shouldn't kick him.
                     yield from self.partner.kick()
@@ -139,7 +141,7 @@ class Stranger(Model):
                 _('Your partner has left chat. Feel free to /begin a new conversation.'),
                 )
         except TelegramError as e:
-            logging.warning('Kick. Can\'t notify stranger %d: %s', self.id, e)
+            LOGGER.warning('Kick. Can\'t notify stranger %d: %s', self.id, e)
 
     @asyncio.coroutine
     def send(self, message):
@@ -201,14 +203,14 @@ class Stranger(Model):
                 try:
                     yield from sender.send_notification(_('Here\'s another stranger. Have fun!'))
                 except TelegramError as e:
-                    logging.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
+                    LOGGER.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
                     self.partner = None
                     raise StrangerError(e)
             else:
                 try:
                     yield from sender.send_notification(_('Your partner is here. Have a nice chat!'))
                 except TelegramError as e:
-                    logging.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
+                    LOGGER.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
                     raise StrangerError(e)
             self.partner = partner
         finally:

@@ -8,6 +8,8 @@ import codecs
 import json
 import logging
 
+LOGGER = logging.getLogger('randtalkbot')
+
 class ConfigurationObtainingError(Exception):
     pass
 
@@ -18,10 +20,10 @@ class Configuration:
             with open(path, 'rb') as f:
                 configuration_json = json.load(reader(f))
         except OSError as e:
-            logging.error('Troubles with opening \"%s\": %s', path, e)
+            LOGGER.error('Troubles with opening \"%s\": %s', path, e)
             raise ConfigurationObtainingError('Troubles with opening \"{0}\"'.format(path))
         except ValueError as e:
-            logging.error('Troubles with parsing \"%s\": %s', path, e)
+            LOGGER.error('Troubles with parsing \"%s\": %s', path, e)
             raise ConfigurationObtainingError('Troubles with parsing \"{0}\"'.format(path))
 
         try:
@@ -29,9 +31,9 @@ class Configuration:
             self.database_name = configuration_json['database']['name']
             self.database_user = configuration_json['database']['user']
             self.database_password = configuration_json['database']['password']
+            self.logging = configuration_json['logging']
             self.token = configuration_json['token']
         except KeyError as e:
-            logging.error('Troubles with obtaining parameters: %s', e)
+            LOGGER.error('Troubles with obtaining parameters: %s', e)
             raise ConfigurationObtainingError('Troubles with obtaining parameters \"{0}\"'.format(e))
         self.admins_telegram_ids = configuration_json.get('admins', [])
-        self.debug = configuration_json.get('debug', False)
