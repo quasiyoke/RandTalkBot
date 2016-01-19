@@ -47,7 +47,8 @@ class StrangerSender(telepot.helper.Sender):
     @asyncio.coroutine
     def send(self, message):
         '''
-        @raise TelegramError if stranger has blocked the bot.
+        @raises StrangerSenderError if message's content type is not supported.
+        @raises TelegramError if stranger has blocked the bot.
         '''
         try:
             method_name = StrangerSender.MESSAGE_TYPE_TO_METHOD_NAME[message.type]

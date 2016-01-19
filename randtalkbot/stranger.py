@@ -146,7 +146,8 @@ class Stranger(Model):
     @asyncio.coroutine
     def send(self, message):
         '''
-        @throws StrangerError if can't send content.
+        @raises StrangerError if can't send message because of unknown content type.
+        @raises TelegramError if stranger has blocked the bot.
         '''
         sender = self.get_sender()
         try:
@@ -157,8 +158,8 @@ class Stranger(Model):
     @asyncio.coroutine
     def send_to_partner(self, message):
         '''
-        @throws StrangerError if can't send content.
-        @throws MissingPartnerError if there's no partner for this stranger.
+        @raises StrangerError if can't send content.
+        @raises MissingPartnerError if there's no partner for this stranger.
         '''
         if self.partner:
             yield from self.partner.send(message)

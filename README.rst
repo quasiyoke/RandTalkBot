@@ -66,11 +66,11 @@ After that write ``randtalkbotenv/configuration.json`` file like that::
             "loggers": {
                 "randtalkbot": {
                     "level": "DEBUG",
-                    "handlers": ["file", "email"]
+                    "handlers": []
                     },
                 "peewee": {
                     "level": "DEBUG",
-                    "handlers": ["file", "email"]
+                    "handlers": []
                     }
                 },
             "root": {
@@ -99,6 +99,20 @@ Create necessary DB tables::
 Now you may run ``randtalkbot``::
 
     (randtalkbotenv) $ randtalkbot randtalkbotenv/configuration.json
+
+I'm using such shell script for semi-automatic deployment::
+
+    #!/bin/bash
+    cd path/to/randtalkbotenv/
+    source bin/activate
+    echo "y" | pip uninstall randtalkbot
+    pip install https://github.com/quasiyoke/RandTalkBot/zipball/master
+    killall randtalkbot
+    randtalkbot configuration.json
+
+Just launch::
+
+    $ ssh john_doe@8.8.8.8 "bash -s" < randtalk-deploy.sh
 
 List of supported commands
 --------------------------

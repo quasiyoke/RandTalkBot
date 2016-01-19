@@ -6,13 +6,14 @@
 
 import asyncio
 import asynctest
+from asynctest.mock import call, create_autospec, patch, Mock, CoroutineMock
 from randtalkbot.message import Message, UnsupportedContentError
 from randtalkbot.stranger import StrangerError
 from randtalkbot.stranger_handler import StrangerHandler, MissingCommandError, UnknownCommandError
 from randtalkbot.stranger_sender_service import StrangerSenderService
 from randtalkbot.stranger_service import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
-from asynctest.mock import call, create_autospec, patch, Mock, CoroutineMock
+from telepot import TelegramError
 
 class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerSetupWizard', create_autospec(StrangerSetupWizard))
@@ -92,7 +93,8 @@ class TestStrangerHandler(asynctest.TestCase):
         yield from self.stranger_handler.handle_command('begin')
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
         self.stranger.set_partner.assert_called_once_with(partner)
-        partner.set_partner.assert_not_called()
+        partner.set_looking_for_partner.assert_called_once_with()
+        partner.set_partner.assert_called_once_with(self.stranger)
 
     def test_handle_command__begin_first_partner_has_blocked_the_bot(self):
         partner = CoroutineMock()
@@ -107,19 +109,13 @@ class TestStrangerHandler(asynctest.TestCase):
                 ],
             )
         self.assertEqual(
-            self.stranger.set_partner.call_args_list,
-            [
-                call(partner),
-                call(partner),
-                ],
-            )
-        self.assertEqual(
             partner.set_partner.call_args_list,
             [
                 call(self.stranger),
                 call(self.stranger),
                 ],
             )
+        self.stranger.set_partner.assert_called_once_with(partner)
 
     def test_handle_command__begin_partner_obtaining_error(self):
         from randtalkbot.stranger_service import PartnerObtainingError
@@ -262,6 +258,39 @@ class TestStrangerHandler(asynctest.TestCase):
         Message.assert_called_once_with(message_json)
         handle_command_mock.assert_not_called()
 
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
+    @patch('randtalkbot.stranger_handler.telepot', Mock())
+    @patch(
+        'randtalkbot.stranger_handler.StrangerHandler._get_command',
+        Mock(side_effect=MissingCommandError()),
+        )
+    @patch('randtalkbot.stranger_handler.Message', Mock())
+    @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
+    @asyncio.coroutine
+    def test_on_message__text_stranger_has_blocked_the_bot(self, handle_command_mock):
+        from randtalkbot.stranger_handler import LOGGER
+        from randtalkbot.stranger_handler import Message
+        from randtalkbot.stranger_handler import telepot
+        from randtalkbot.stranger_handler import StrangerError
+        telepot.glance2.return_value = 'text', 'private', 31416
+        self.stranger_setup_wizard.handle.return_value = False
+        message_json = {
+            'text': 'message_text',
+            }
+        self.stranger.id = 31416
+        self.stranger.partner.id = 27183
+        self.stranger.send_to_partner = CoroutineMock(side_effect=TelegramError('foo_description', 123))
+        yield from self.stranger_handler.on_message(message_json)
+        LOGGER.warning(
+            'Send text. Can\'t send to partned: %d -> %d',
+            31416,
+            27183
+            )
+        self.sender.send_notification.assert_called_once_with(
+            'Your partner has blocked me! How did you do that?!',
+            )
+        StrangerHandler._get_command.assert_not_called()
+
     @patch('randtalkbot.stranger_handler.telepot', Mock())
     @patch(
         'randtalkbot.stranger_handler.StrangerHandler._get_command',
@@ -371,6 +400,36 @@ class TestStrangerHandler(asynctest.TestCase):
         StrangerHandler._get_command.assert_not_called()
         Message.assert_called_once_with(message_json)
         handle_command_mock.assert_not_called()
+
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
+    @patch('randtalkbot.stranger_handler.telepot', Mock())
+    @patch(
+        'randtalkbot.stranger_handler.StrangerHandler._get_command',
+        Mock(side_effect=MissingCommandError()),
+        )
+    @patch('randtalkbot.stranger_handler.Message', create_autospec(Message))
+    @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
+    @asyncio.coroutine
+    def test_on_message__media_stranger_has_blocked_the_bot(self, handle_command_mock):
+        from randtalkbot.stranger_handler import LOGGER
+        from randtalkbot.stranger_handler import Message
+        from randtalkbot.stranger_handler import telepot
+        from randtalkbot.stranger_handler import StrangerError
+        telepot.glance2.return_value = 'media_content', 'private', 31416
+        message_json = Mock()
+        self.stranger.id = 31416
+        self.stranger.partner.id = 27183
+        self.stranger.send_to_partner = CoroutineMock(side_effect=TelegramError('foo_description', 123))
+        yield from self.stranger_handler.on_message(message_json)
+        self.stranger.send_to_partner.assert_called_once_with(Message.return_value)
+        LOGGER.warning.assert_called_once_with(
+            'Send media. Can\'t send to partned: %d -> %d',
+            31416,
+            27183,
+            )
+        self.sender.send_notification.assert_called_once_with(
+            'Your partner has blocked me! How did you do that?!',
+            )
 
     @patch('randtalkbot.stranger_handler.telepot', Mock())
     @patch(

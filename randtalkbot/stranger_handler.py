@@ -16,6 +16,7 @@ from .stranger_sender import StrangerSender
 from .stranger_sender_service import StrangerSenderService
 from .stranger_service import PartnerObtainingError, StrangerServiceError
 from .stranger_setup_wizard import StrangerSetupWizard
+from telepot import TelegramError
 from .utils import __version__
 
 LOGGER = logging.getLogger('randtalkbot')
@@ -83,17 +84,17 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 while not partner:
                     partner = self._stranger_service.get_partner(self._stranger)
                     try:
-                        yield from self._stranger.set_partner(partner)
+                        yield from partner.set_partner(self._stranger)
                     except StrangerError:
-                        # Stranger has blocked the bot. Forgive him and exit the cycle.
-                        pass
+                        # Potential partner has blocked the bot. Let's look for next potential partner.
+                        partner = None
                     else:
                         try:
-                            yield from partner.set_partner(self._stranger)
+                            yield from self._stranger.set_partner(partner)
                         except StrangerError:
-                            # Potential partner has blocked the bot. Clear him and look for next potential
-                            # partner.
-                            partner = None
+                            # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
+                            # the cycle.
+                            yield from partner.set_looking_for_partner()
             except PartnerObtainingError:
                 LOGGER.debug('Looking for partner: %d', self._stranger.id)
                 yield from self._stranger.set_looking_for_partner()
@@ -153,6 +154,16 @@ class StrangerHandler(telepot.helper.ChatHandler):
                         yield from self._sender.send_notification(
                             _('Messages of this type aren\'t supported.'),
                             )
+                    except TelegramError:
+                        LOGGER.warning(
+                            'Send text. Can\'t send to partned: %d -> %d',
+                            self._stranger.id,
+                            self._stranger.partner.id,
+                            )
+                        yield from self._sender.send_notification(
+                            _('Your partner has blocked me! How did you do that?!'),
+                            )
+                        self._stranger.end_chatting()
                 except UnknownCommandError as e:
                     yield from self._sender.send_notification(
                         _('Unknown command. Look /help for the full list of commands.'),
@@ -165,6 +176,14 @@ class StrangerHandler(telepot.helper.ChatHandler):
             except MissingPartnerError:
                 pass
             except StrangerError:
-                yield from self._sender.send_notification(
-                    _('Messages of this type aren\'t supported.'),
+                yield from self._sender.send_notification(_('Messages of this type aren\'t supported.'))
+            except TelegramError:
+                LOGGER.warning(
+                    'Send media. Can\'t send to partned: %d -> %d',
+                    self._stranger.id,
+                    self._stranger.partner.id,
                     )
+                yield from self._sender.send_notification(
+                    _('Your partner has blocked me! How did you do that?!'),
+                    )
+                self._stranger.end_chatting()
