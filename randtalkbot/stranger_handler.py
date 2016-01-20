@@ -163,7 +163,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                         yield from self._sender.send_notification(
                             _('Your partner has blocked me! How did you do that?!'),
                             )
-                        self._stranger.end_chatting()
+                        yield from self._stranger.end_chatting()
                 except UnknownCommandError as e:
                     yield from self._sender.send_notification(
                         _('Unknown command. Look /help for the full list of commands.'),
@@ -186,4 +186,4 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 yield from self._sender.send_notification(
                     _('Your partner has blocked me! How did you do that?!'),
                     )
-                self._stranger.end_chatting()
+                yield from self._stranger.end_chatting()
