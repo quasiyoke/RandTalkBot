@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-19 14:01+0300\n"
+"POT-Creation-Date: 2016-01-21 02:12+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: Russian\n"
@@ -45,30 +45,50 @@ msgstr "девочка"
 msgid "woman"
 msgstr "женщина"
 
-#: randtalkbot/stranger.py:96
+#: randtalkbot/stranger.py:95
 msgid "Looking for partner was stopped."
 msgstr "Поиск партнера прекращен"
 
-#: randtalkbot/stranger.py:103
+#: randtalkbot/stranger.py:102
 msgid "Chat was finished. Feel free to /begin a new one."
 msgstr "Беседа закончена. Чтобы начать новый разговор, скомандуйте /begin."
 
-#: randtalkbot/stranger.py:141
+#: randtalkbot/stranger.py:143
 msgid "Your partner has left chat. Feel free to /begin a new conversation."
 msgstr ""
 "Собеседник покинул чат. 😿 Чтобы начать новый разговор, скомандуйте /begin."
 
-#: randtalkbot/stranger.py:188
-msgid "Looking for a stranger for you."
-msgstr "Идет подбор партнера 🤔"
+#: randtalkbot/stranger.py:174
+#, python-brace-format
+msgid "Here's another stranger. Use {0} please."
+msgstr "Подобран новый собеседник. Используйте пожалуйста {0} 🤗"
 
-#: randtalkbot/stranger.py:205
+#: randtalkbot/stranger.py:179
+#, python-brace-format
+msgid "Here's another stranger. You can use the following languages: {0}."
+msgstr "Подобран новый собеседник. Вы можете говорить на этих языках: {0} 🤗"
+
+#: randtalkbot/stranger.py:183
 msgid "Here's another stranger. Have fun!"
 msgstr "Подобран новый собеседник. Общайтесь на здоровье 🤗"
 
-#: randtalkbot/stranger.py:212
+#: randtalkbot/stranger.py:199
+#, python-brace-format
+msgid "Your partner is here. Use {0} please."
+msgstr "Собеседник найден. Используйте пожалуйста {0} 🤗"
+
+#: randtalkbot/stranger.py:204
+#, python-brace-format
+msgid "Your partner is here. You can use the following languages: {0}."
+msgstr "Собеседник найден. Вы можете использовать следующие языки: {0}."
+
+#: randtalkbot/stranger.py:208
 msgid "Your partner is here. Have a nice chat!"
 msgstr "Собеседник найден. Приятного общения 🤗"
+
+#: randtalkbot/stranger.py:240
+msgid "Looking for a stranger for you."
+msgstr "Идет подбор партнера 🤔"
 
 #: randtalkbot/stranger_handler.py:78
 msgid ""
@@ -82,7 +102,7 @@ msgstr ""
 "Чтобы приступить к поиску собеседника, скомандуйте /begin. Когда ваш партнер "
 "будет найден, вы сможете закончить разговор, выполнив /end."
 
-#: randtalkbot/stranger_handler.py:104
+#: randtalkbot/stranger_handler.py:106
 msgid "Internal error. Admins are already notified about that"
 msgstr "Внутренняя ошибка. Мы уже работаем над этим. 🤕"
 

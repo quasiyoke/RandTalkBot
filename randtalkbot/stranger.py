@@ -8,7 +8,7 @@ import asyncio
 import datetime
 import json
 import logging
-from .i18n import get_translations
+from .i18n import get_languages_names, get_translations
 from .stranger_sender import StrangerSenderError
 from .stranger_sender_service import StrangerSenderService
 from peewee import *
@@ -40,7 +40,6 @@ for translation in get_translations():
 WIZARD_CHOICES = (
     ('none', 'None'),
     ('setup', 'Setup'),
-    ('completion', 'Completion'),
     )
 
 database_proxy = Proxy()
@@ -112,6 +111,9 @@ class Stranger(Model):
             self.looking_for_partner_from = None
             self.save()
 
+    def get_common_languages(self, partner):
+        return set(self.get_languages()).intersection(partner.get_languages())
+
     def get_languages(self):
         if self.languages:
             return json.loads(self.languages)
@@ -156,6 +158,56 @@ class Stranger(Model):
             raise StrangerError('Can\'t send content: {0}'.format(e))
 
     @asyncio.coroutine
+    def send_notification_about_another_partner(self, partner):
+        '''
+        Notifies the stranger about retrieving a partner in case when (s)he DID HAS one.
+
+        @raise TelegramError if stranger has blocked the bot.
+        '''
+        sender = self.get_sender()
+        common_languages = self.get_common_languages(partner)
+        if set(self.get_languages()) > common_languages:
+            # If the stranger knows any language which another partner doesn't, we should notify him
+            # especial way.
+            if len(common_languages) == 1:
+                yield from sender.send_notification(
+                    _('Here\'s another stranger. Use {0} please.'),
+                    get_languages_names(common_languages),
+                    )
+            else:
+                yield from sender.send_notification(
+                    _('Here\'s another stranger. You can use the following languages: {0}.'),
+                    get_languages_names(common_languages),
+                    )
+        else:
+            yield from sender.send_notification(_('Here\'s another stranger. Have fun!'))
+
+    @asyncio.coroutine
+    def send_notification_about_retrieving_partner(self, partner):
+        '''
+        Notifies the stranger about retrieving a partner in case when (s)he DIDN'T HAS one.
+
+        @raise TelegramError if stranger has blocked the bot.
+        '''
+        sender = self.get_sender()
+        common_languages = self.get_common_languages(partner)
+        if set(self.get_languages()) > common_languages:
+            # If the stranger knows any language which another partner doesn't, we should notify him
+            # especial way.
+            if len(common_languages) == 1:
+                yield from sender.send_notification(
+                    _('Your partner is here. Use {0} please.'),
+                    get_languages_names(common_languages),
+                    )
+            else:
+                yield from sender.send_notification(
+                    _('Your partner is here. You can use the following languages: {0}.'),
+                    get_languages_names(common_languages),
+                    )
+        else:
+            yield from sender.send_notification(_('Your partner is here. Have a nice chat!'))
+
+    @asyncio.coroutine
     def send_to_partner(self, message):
         '''
         @raises StrangerError if can't send content.
@@ -194,7 +246,6 @@ class Stranger(Model):
         '''
         @raise StrangerError If stranger we're changing has blocked the bot.
         '''
-        sender = self.get_sender()
         self.looking_for_partner_from = None
         try:
             if self.partner:
@@ -202,14 +253,14 @@ class Stranger(Model):
                     # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
                     yield from self.partner.kick()
                 try:
-                    yield from sender.send_notification(_('Here\'s another stranger. Have fun!'))
+                    yield from self.send_notification_about_another_partner(partner)
                 except TelegramError as e:
                     LOGGER.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
                     self.partner = None
                     raise StrangerError(e)
             else:
                 try:
-                    yield from sender.send_notification(_('Your partner is here. Have a nice chat!'))
+                    yield from self.send_notification_about_retrieving_partner(partner)
                 except TelegramError as e:
                     LOGGER.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
                     raise StrangerError(e)

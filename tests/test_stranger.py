@@ -229,6 +229,92 @@ class TestStranger(asynctest.TestCase):
         sender.send.assert_called_once_with(message)
         sender.send_notification.assert_not_called()
 
+    @patch('randtalkbot.stranger.get_languages_names', Mock())
+    @asyncio.coroutine
+    def test_send_notification_about_another_partner__knows_uncommon_languages_one_common(self):
+        from randtalkbot.stranger import get_languages_names
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.languages = '["foo", "bar", "baz", "boo"]'
+        self.stranger2.languages = '["zet", "zen", "foo"]'
+        yield from self.stranger.send_notification_about_another_partner(self.stranger2)
+        get_languages_names.assert_called_once_with({'foo'})
+        sender.send_notification.assert_called_once_with(
+            'Here\'s another stranger. Use {0} please.',
+            get_languages_names.return_value,
+            )
+
+    @patch('randtalkbot.stranger.get_languages_names', Mock())
+    @asyncio.coroutine
+    def test_send_notification_about_another_partner__knows_uncommon_languages_several_common(self):
+        from randtalkbot.stranger import get_languages_names
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.languages = '["foo", "bar", "baz", "boo"]'
+        self.stranger2.languages = '["zet", "bar", "foo"]'
+        yield from self.stranger.send_notification_about_another_partner(self.stranger2)
+        get_languages_names.assert_called_once_with({'foo', 'bar'})
+        sender.send_notification.assert_called_once_with(
+            'Here\'s another stranger. You can use the following languages: {0}.',
+            get_languages_names.return_value,
+            )
+
+    @patch('randtalkbot.stranger.get_languages_names', Mock())
+    @asyncio.coroutine
+    def test_send_notification_about_another_partner__all_languages_are_common(self):
+        from randtalkbot.stranger import get_languages_names
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.languages = '["foo", "bar", "baz"]'
+        self.stranger2.languages = '["baz", "bar", "foo"]'
+        yield from self.stranger.send_notification_about_another_partner(self.stranger2)
+        sender.send_notification.assert_called_once_with(
+            'Here\'s another stranger. Have fun!',
+            )
+
+    @patch('randtalkbot.stranger.get_languages_names', Mock())
+    @asyncio.coroutine
+    def test_send_notification_about_retrieving_partner__knows_uncommon_languages_one_common(self):
+        from randtalkbot.stranger import get_languages_names
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.languages = '["foo", "bar", "baz", "boo"]'
+        self.stranger2.languages = '["zet", "zen", "foo"]'
+        yield from self.stranger.send_notification_about_retrieving_partner(self.stranger2)
+        get_languages_names.assert_called_once_with({'foo'})
+        sender.send_notification.assert_called_once_with(
+            'Your partner is here. Use {0} please.',
+            get_languages_names.return_value,
+            )
+
+    @patch('randtalkbot.stranger.get_languages_names', Mock())
+    @asyncio.coroutine
+    def test_send_notification_about_retrieving_partner__knows_uncommon_languages_several_common(self):
+        from randtalkbot.stranger import get_languages_names
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.languages = '["foo", "bar", "baz", "boo"]'
+        self.stranger2.languages = '["zet", "bar", "foo"]'
+        yield from self.stranger.send_notification_about_retrieving_partner(self.stranger2)
+        get_languages_names.assert_called_once_with({'foo', 'bar'})
+        sender.send_notification.assert_called_once_with(
+            'Your partner is here. You can use the following languages: {0}.',
+            get_languages_names.return_value,
+            )
+
+    @patch('randtalkbot.stranger.get_languages_names', Mock())
+    @asyncio.coroutine
+    def test_send_notification_about_retrieving_partner__all_languages_are_common(self):
+        from randtalkbot.stranger import get_languages_names
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.languages = '["foo", "bar", "baz"]'
+        self.stranger2.languages = '["baz", "bar", "foo"]'
+        yield from self.stranger.send_notification_about_retrieving_partner(self.stranger2)
+        sender.send_notification.assert_called_once_with(
+            'Your partner is here. Have a nice chat!',
+            )
+
     def test_send_to_partner__chatting_stranger(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
@@ -319,31 +405,24 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.looking_for_partner_from, datetime.datetime(1980, 1, 1))
 
     def test_set_partner__chatting_stranger(self):
-        sender = CoroutineMock()
-        self.stranger.get_sender = Mock(return_value=sender)
         self.stranger2.partner = self.stranger
         self.stranger2.kick = CoroutineMock()
         self.stranger.partner = self.stranger2
+        self.stranger.send_notification_about_another_partner = CoroutineMock()
         self.stranger.save()
         yield from self.stranger.set_partner(self.stranger3)
-        sender.send_notification.assert_called_once_with(
-            'Here\'s another stranger. Have fun!',
-            )
+        self.stranger.send_notification_about_another_partner.assert_called_once_with(self.stranger3)
         self.stranger2.kick.assert_called_once_with()
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, self.stranger3)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
     def test_set_partner__buggy_chatting_stranger(self):
-        sender = CoroutineMock()
-        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.send_notification_about_another_partner = CoroutineMock()
         self.stranger2.kick = CoroutineMock()
         self.stranger.partner = self.stranger2
         self.stranger.save()
         yield from self.stranger.set_partner(self.stranger3)
-        sender.send_notification.assert_called_once_with(
-            'Here\'s another stranger. Have fun!',
-            )
         self.stranger2.kick.assert_not_called()
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, self.stranger3)
@@ -353,14 +432,12 @@ class TestStranger(asynctest.TestCase):
     @asyncio.coroutine
     def test_set_partner__chatting_stranger_has_blocked_the_bot(self):
         from randtalkbot.stranger import LOGGER
-        sender = CoroutineMock()
-        self.stranger.get_sender = Mock(return_value=sender)
         self.stranger2.partner = self.stranger
         self.stranger2.kick = CoroutineMock()
-        self.stranger.partner = self.stranger2
-        self.stranger.save()
         error = TelegramError('foo_description', 123)
-        sender.send_notification.side_effect = error
+        self.stranger.partner = self.stranger2
+        self.stranger.send_notification_about_another_partner = CoroutineMock(side_effect=error)
+        self.stranger.save()
         with self.assertRaises(StrangerError):
             yield from self.stranger.set_partner(self.stranger3)
         self.stranger2.kick.assert_called_once_with()
@@ -374,13 +451,9 @@ class TestStranger(asynctest.TestCase):
             )
 
     def test_set_partner__not_chatting_stranger(self):
-        sender = CoroutineMock()
-        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.send_notification_about_retrieving_partner = CoroutineMock()
         yield from self.stranger.set_partner(self.stranger3)
-        sender.send_notification.assert_called_once_with(
-            'Your partner is here. Have a nice chat!',
-            )
-        sender.send.assert_not_called()
+        self.stranger.send_notification_about_retrieving_partner.assert_called_once_with(self.stranger3)
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, self.stranger3)
         self.assertEqual(stranger.looking_for_partner_from, None)
@@ -389,16 +462,10 @@ class TestStranger(asynctest.TestCase):
     @asyncio.coroutine
     def test_set_partner__not_chatting_stranger_has_blocked_the_bot(self):
         from randtalkbot.stranger import LOGGER
-        sender = CoroutineMock()
-        self.stranger.get_sender = Mock(return_value=sender)
         error = TelegramError('foo_description', 123)
-        sender.send_notification.side_effect = error
+        self.stranger.send_notification_about_retrieving_partner = CoroutineMock(side_effect=error)
         with self.assertRaises(StrangerError):
             yield from self.stranger.set_partner(self.stranger3)
-        sender.send_notification.assert_called_once_with(
-            'Your partner is here. Have a nice chat!',
-            )
-        sender.send.assert_not_called()
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
