@@ -199,8 +199,8 @@ class Stranger(Model):
         try:
             if self.partner:
                 if self.partner.partner == self:
-                    # If partner isn't taking with the stranger because of some error, we shouldn't kick him.
-                    self.partner.kick()
+                    # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
+                    yield from self.partner.kick()
                 try:
                     yield from sender.send_notification(_('Here\'s another stranger. Have fun!'))
                 except TelegramError as e:

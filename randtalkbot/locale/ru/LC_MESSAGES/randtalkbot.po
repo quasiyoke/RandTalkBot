@@ -64,7 +64,7 @@ msgstr "Идет подбор партнера 🤔"
 
 #: randtalkbot/stranger.py:205
 msgid "Here's another stranger. Have fun!"
-msgstr "Подобран новый собеедник. Общайтесь на здоровье 🤗"
+msgstr "Подобран новый собеседник. Общайтесь на здоровье 🤗"
 
 #: randtalkbot/stranger.py:212
 msgid "Your partner is here. Have a nice chat!"

@@ -56,3 +56,4 @@ target/
 
 # Bot
 configuration.json
+*.sh

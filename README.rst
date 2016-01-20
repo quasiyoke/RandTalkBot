@@ -100,6 +100,9 @@ Now you may run ``randtalkbot``::
 
     (randtalkbotenv) $ randtalkbot randtalkbotenv/configuration.json
 
+Updating using SSH
+^^^^^^^^^^^^^^^^^^
+
 I'm using such shell script for semi-automatic deployment::
 
     #!/bin/bash
@@ -112,7 +115,7 @@ I'm using such shell script for semi-automatic deployment::
 
 Just launch::
 
-    $ ssh john_doe@8.8.8.8 "bash -s" < randtalk-deploy.sh
+    $ ssh john_doe@8.8.8.8 "bash -s" < deploy.sh
 
 List of supported commands
 --------------------------

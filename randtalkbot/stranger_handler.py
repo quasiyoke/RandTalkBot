@@ -95,6 +95,8 @@ class StrangerHandler(telepot.helper.ChatHandler):
                             # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
                             # the cycle.
                             yield from partner.set_looking_for_partner()
+                        else:
+                            LOGGER.debug('Found partner: %d -> %d.', self._stranger.id, partner.id)
             except PartnerObtainingError:
                 LOGGER.debug('Looking for partner: %d', self._stranger.id)
                 yield from self._stranger.set_looking_for_partner()
@@ -103,8 +105,6 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 yield from self._sender.send_notification(
                     _('Internal error. Admins are already notified about that'),
                     )
-            else:
-                LOGGER.debug('Found partner: %d -> %s.', self._stranger.id, partner.id)
         elif command == 'end':
             LOGGER.debug(
                 'Finished chatting: %d -x-> %d',
