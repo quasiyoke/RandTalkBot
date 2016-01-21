@@ -9,41 +9,41 @@ msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-21 11:02+0300\n"
-"PO-Revision-Date: 2016-01-16 10:10+0300\n"
-"Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
-"Language-Team: English\n"
-"Language: en\n"
+"PO-Revision-Date: Wed Jan 20 2016 21:18:36 GMT+0100\n"
+"Last-Translator: Marco Giustetto <arducode@gmail.com>\n"
+"Language-Team: Italian\n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: randtalkbot/stranger.py:22
 msgid "Female"
-msgstr "Female"
+msgstr "Femmina"
 
 #: randtalkbot/stranger.py:23
 msgid "Male"
-msgstr "Male"
+msgstr "Maschio"
 
 #: randtalkbot/stranger.py:24
 msgid "Not specified"
-msgstr "Not specified"
+msgstr "Non specificare"
 
 #: randtalkbot/stranger.py:27
 msgid "boy"
-msgstr "boy"
+msgstr "ragazzo"
 
 #: randtalkbot/stranger.py:28
 msgid "man"
-msgstr "man"
+msgstr "uomo"
 
 #: randtalkbot/stranger.py:30
 msgid "girl"
-msgstr "girl"
+msgstr "ragazza"
 
 #: randtalkbot/stranger.py:31
 msgid "woman"
-msgstr "woman"
+msgstr "donna"
 
 #: randtalkbot/stranger.py:98
 #, python-brace-format
@@ -54,55 +54,57 @@ msgid ""
 "between your friends: telegram.me/RandTalkBot or [vote for Rand Talk]"
 "(https://telegram.me/storebot?start=randtalkbot). More people -- more fun!"
 msgstr ""
-"You're still searching for partner among {0} people. You can talk with some "
-"of them if you remove partner's sex restrictions or extend the list of "
-"languages you know using /setup command. You can share the link to the bot "
-"between your friends: telegram.me/RandTalkBot or [vote for Rand Talk]"
-"(https://telegram.me/storebot?start=randtalkbot). More people — more fun!"
+"Sto trovando {0} persone disponibili a parlare. Per parlarci puoi aspettare "
+"un po', oppure selezionare “Non specificare” come sesso del tuo partner di "
+"chat o selezionare altre lingue premendo /setup. Ricordati di consigliare "
+"il bot ai tuoi amici: telegram.me/RandTalkBot o "
+"[valuta Rand Talk](https://telegram.me/storebot?start=randtalkbot) — così "
+"altre persone lo utilizzeranno e diventerá ancora più interessante!"
 
 #: randtalkbot/stranger.py:116
 msgid "Looking for partner was stopped."
-msgstr "Looking for partner was stopped"
+msgstr "Ricerca partner per la chat interrotta"
 
 #: randtalkbot/stranger.py:123
 msgid "Chat was finished. Feel free to /begin a new one."
-msgstr "Chat was finished. Feel free to /begin a new one."
+msgstr "Chat chiusa. Premi /begin per iniziarne un'altra!"
 
 #: randtalkbot/stranger.py:164
 msgid "Your partner has left chat. Feel free to /begin a new conversation."
-msgstr "Your partner has left chat. 😿 Feel free to /begin a new conversation."
+msgstr ""
+"L'altra persona ha lasciato la chat. 😿 Premi /begin per iniziarne un'altra!"
 
 #: randtalkbot/stranger.py:205
 #, python-brace-format
 msgid "Here's another stranger. Use {0} please."
-msgstr "Here's another stranger. Use {0} please 🤗"
+msgstr "Ho trovato un'altra persona. Parla in {0} per favore."
 
 #: randtalkbot/stranger.py:210
 #, python-brace-format
 msgid "Here's another stranger. You can use the following languages: {0}."
-msgstr "Here's another stranger. You can use the following languages: {0} 🤗"
+msgstr "Ho trovato un'altra persona. Puoi parlarle in queste lingue: {0}."
 
 #: randtalkbot/stranger.py:214
 msgid "Here's another stranger. Have fun!"
-msgstr "Here's another stranger. Have fun 🤗"
+msgstr "Ho trovato un'altra persona. 🤗 Buona chat!"
 
 #: randtalkbot/stranger.py:230
-#, python-brace-format
+#, fuzzy, python-brace-format
 msgid "Your partner is here. Use {0} please."
-msgstr "Your partner is here. Use {0} please 🤗"
+msgstr ""
 
 #: randtalkbot/stranger.py:235
 #, python-brace-format
 msgid "Your partner is here. You can use the following languages: {0}."
-msgstr "Your partner is here. You can use the following languages: {0} 🤗"
+msgstr ""
 
 #: randtalkbot/stranger.py:239
 msgid "Your partner is here. Have a nice chat!"
-msgstr "Your partner is here. Have a nice chat 🤗"
+msgstr "La chat è pronta. Divertiti :) 🤗"
 
 #: randtalkbot/stranger.py:271
 msgid "Looking for a stranger for you."
-msgstr "Looking for a stranger for you 🤔"
+msgstr "Ricerca partner per la chat in corso... 🤔"
 
 #: randtalkbot/stranger_handler.py:82
 msgid ""
@@ -111,14 +113,15 @@ msgid ""
 "Use /begin to start looking for a conversational partner, once you're "
 "matched you can use /end to end the conversation."
 msgstr ""
-"*Manual*\n"
+"*Comandi*\n"
 "\n"
-"Use /begin to start looking for a conversational partner, once you're "
-"matched you can use /end to finish the conversation."
+"Premi (o scrivi) /begin per cercare una persona con cui iniziare la chat; se "
+"vuoi cambiare persona, chiudi la chat premendo o scrivendo /end e cerca "
+"un'altra persona."
 
 #: randtalkbot/stranger_handler.py:98
 msgid "Internal error. Admins are already notified about that"
-msgstr "Internal error. Admins are already working on that. 🤕"
+msgstr "Errore del bot. L'amministratore sta lavorando per risolverlo 🤕"
 
 #: randtalkbot/stranger_handler.py:106
 #, python-brace-format
@@ -126,8 +129,8 @@ msgid ""
 "Your partner's been looking for you for {0} hr. Say him \"Hello\" -- if he "
 "doesn't respond to you, launch search again by /begin command."
 msgstr ""
-"Your partner's been looking for you for {0} hr. Say him “Hello” — if he "
-"doesn't respond to you, launch search again by /begin command."
+"Il vostro partner è stato alla ricerca di voi per {0} ore. Lui dire “Ciao” "
+"— se non risponde a voi, cercare lanciare nuovamente il comando /begin."
 
 #: randtalkbot/stranger_handler.py:112
 #, python-brace-format
@@ -135,8 +138,8 @@ msgid ""
 "Your partner's been looking for you for {0} min. Say him \"Hello\" -- if he "
 "doesn't respond to you, launch search again by /begin command."
 msgstr ""
-"Your partner's been looking for you for {0} min. Say him “Hello” — if he "
-"doesn't respond to you, launch search again by /begin command."
+"Il vostro partner è stato alla ricerca di voi per {0} min. Lui dire “Ciao” "
+"— se non risponde a voi, cercare lanciare nuovamente il comando /begin."
 
 #: randtalkbot/stranger_handler.py:126
 #, python-brace-format
@@ -154,65 +157,71 @@ msgid ""
 "\n"
 "version {1}"
 msgstr ""
-"*Help*\n"
+"*Aiuto*\n"
 "\n"
-"Use /begin to start looking for a conversational partner, once you're "
-"matched you can use /end to finish the conversation. To choose your "
-"settings, apply /setup.\n"
+"Premi (o scrivi) /begin per cercare una persona con cui iniziare la chat; se "
+"vuoi cambiare persona, chiudi la chat premendo o scrivendo /end e cerca "
+"un'altra persona.\n"
 "\n"
-"If you have any suggestions or require help, please contact @quasiyoke. When "
-"asking questions, please provide this number: {0}\n"
+"Se hai suggerimenti o hai bisogno di aiuto scrivi pure all'admin del bot, "
+"@quasiyoke. Nel messaggio per favore includi questo numero: {0}\n"
 "\n"
-"You're welcome to inspect and improve [Rand Talk's source code.](https://"
-"github.com/quasiyoke/RandTalkBot)\n"
+"Se vuoi migliorare Rand Talk o eliminare dei bug direttamente sul codice, "
+"puoi trovarlo a questo link: [Rand Talk's source code.](https://github.com/"
+"quasiyoke/RandTalkBot)\n"
 "\n"
-"version {1}"
+"versione {1}"
 
 #: randtalkbot/stranger_handler.py:151 randtalkbot/stranger_handler.py:165
 #: randtalkbot/stranger_handler.py:189
 msgid "Messages of this type aren't supported."
-msgstr "Messages of this type aren't supported 😞"
+msgstr ""
+"Mi dispiace, il bot non supporta messaggi inoltrati o risposte ad altri "
+"messaggi 😞"
 
 #: randtalkbot/stranger_handler.py:174 randtalkbot/stranger_handler.py:197
 msgid "Your partner has blocked me! How did you do that?!"
-msgstr "Your partner has blocked me! How did you do that?! 😕"
+msgstr "L'altra persona mi ha bloccato. Cosa hai fatto?! 😕"
 
 #: randtalkbot/stranger_handler.py:179
 msgid "Unknown command. Look /help for the full list of commands."
-msgstr "Unknown command. Look /help for the full list of commands."
+msgstr "Comando sconosciuto. Premi /help per una lista di tutti i comandi."
 
 #: randtalkbot/stranger_setup_wizard.py:61
 msgid ""
 "Thank you. Use /begin to start looking for a conversational partner, once "
 "you're matched you can use /end to end the conversation."
 msgstr ""
-"Thanks for info. 😋 Use /begin to start looking for a conversational partner, "
-"once you're matched you can use /end to finish the conversation."
+"Profilo completato. 😋 Premi (o scrivi) /begin per cercare una persona con "
+"cui iniziare la chat; se vuoi cambiare persona, chiudi la chat premendo o "
+"scrivendo /end e cerca un'altra persona."
 
 #: randtalkbot/stranger_setup_wizard.py:87
 msgid "Finish setup process please. After that you can start using bot."
-msgstr "Finish setup process please. After that you can start using bot."
+msgstr "Devi completare il profilo prima di iniziare ad usare il bot."
 
 #: randtalkbot/stranger_setup_wizard.py:96
 msgid "To interrupt setup use /cancel."
-msgstr "To interrupt setup use /cancel."
+msgstr "Per interrompere la personalizzazione del profilo premi /cancel."
 
 #: randtalkbot/stranger_setup_wizard.py:106
 #, python-brace-format
 msgid "Language \"{0}\" wasn't found."
-msgstr "Language “{0}” wasn't found. 😳 Try to specify language in English."
+msgstr ""
+"Non ho trovato la lingua “{0}”. 😳 Prova a scrivere il nome di quella lingua "
+"in inglese."
 
 #: randtalkbot/stranger_setup_wizard.py:111
 msgid "Please specify at least one language."
-msgstr "Please specify at least one language"
+msgstr "Scegli almeno una lingua"
 
 #: randtalkbot/stranger_setup_wizard.py:124
 #: randtalkbot/stranger_setup_wizard.py:142
 #, python-brace-format
 msgid "Unknown sex: \"{0}\" -- is not a valid sex name."
 msgstr ""
-"Unknown sex: “{0}” — is not a valid sex name. Are you sure you aren't "
-"mistaken? 😉"
+"Sesso sconosciuto: non conosco che sesso sia “{0}”. Controlla di non aver "
+"fatto errori di ortografia 😉"
 
 #: randtalkbot/stranger_setup_wizard.py:167
 msgid ""
@@ -220,13 +229,13 @@ msgid ""
 "descending order of your speaking convenience or just pick one at special "
 "keyboard."
 msgstr ""
-"Enumerate the languages you speak like this: “English, Italian” — in "
-"descending order of your speaking convenience or just pick one at special "
-"keyboard."
+"Scrivi quali lingue parli in questo modo: “English, Italian” (senza scrivere "
+"le \") — nell'ordine in cui ti interessano di più o scegline una dalla "
+"tastiera del bot."
 
 #: randtalkbot/stranger_setup_wizard.py:172
 msgid "Leave the language unchanged"
-msgstr "Leave the language unchanged"
+msgstr "Non cambiare la lingua"
 
 #: randtalkbot/stranger_setup_wizard.py:173
 #, python-brace-format
@@ -235,13 +244,13 @@ msgid ""
 "\"English, Italian\" -- in descending order of your speaking convenience or "
 "just pick one at special keyboard."
 msgstr ""
-"Your current language is {0}. Enumerate the languages you speak like this: "
-"“English, Italian” — in descending order of your speaking convenience or "
-"just pick one at special keyboard."
+"La tua lingua attuale è {0}. Scrivi quali lingue parli in questo modo: "
+"“English, Italian” (senza scrivere le \") — nell'ordine in cui ti "
+"interessano di più o scegline una dalla tastiera del bot."
 
 #: randtalkbot/stranger_setup_wizard.py:177
 msgid "Leave the languages unchanged"
-msgstr "Leave the languages unchanged"
+msgstr "Non cambiare le lingue"
 
 #: randtalkbot/stranger_setup_wizard.py:178
 #, python-brace-format
@@ -250,18 +259,18 @@ msgid ""
 "way -- in descending order of your speaking convenience or just pick one at "
 "special keyboard."
 msgstr ""
-"Your current languages are: {0}. Enumerate the languages you speak the same "
-"way, in descending order of your speaking convenience or just pick one at "
-"special keyboard."
+"Le tue lingue attuali sono {0}. Scrivi quali lingue parli in questo modo: "
+"“English, Italian” (senza scrivere le \") — nell'ordine in cui ti "
+"interessano di più o scegline una dalla tastiera del bot."
 
 #: randtalkbot/stranger_setup_wizard.py:190
 msgid ""
 "Set up your sex. If you pick \"Not Specified\" you can't choose your "
 "partner's sex."
 msgstr ""
-"Set up your sex. If you pick “Not Specified” you can't choose your partner's "
-"sex."
+"Seleziona il tuo sesso. Se scegli \"Non specificare\" non potrai sceglier il "
+"sesso del tuo partner della chat."
 
 #: randtalkbot/stranger_setup_wizard.py:196
 msgid "Choose your partner's sex"
-msgstr "Choose your partner's sex"
+msgstr "Scegli il sesso del tuo partner della chat"

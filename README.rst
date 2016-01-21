@@ -148,12 +148,18 @@ Translations
 
 We are interested in growing the number of Rand Talk's translations. You can help in doing that by translating some of ``.po`` files in ``randtalkbot/locale`` directory on your language. Feel free to send this files to quasiyoke@gmail.com
 
+Here's the list of bot translators. Take your chance to be here!
+
+* English. Pyotr Ermishkin, quasiyoke@gmail.com
+* Italian. Marco Giustetto, arducode@gmail.com
+* Russian. Pyotr Ermishkin, quasiyoke@gmail.com
+
 Building gettext files
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Use `verboselib <https://github.com/oblalex/verboselib>`_ to extract new messages::
 
-    $ verboselib-manage.py extract -d randtalkbot -l en -l ru -o randtalkbot/locale
+    $ verboselib-manage.py extract -d randtalkbot -a -o randtalkbot/locale
 
 And to compile them::
 

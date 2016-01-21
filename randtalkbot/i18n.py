@@ -90,9 +90,13 @@ def get_translations():
 
 SUPPORTED_LANGUAGES_NAMES_CHOICES = (
     ('en', 'English'),
-    ('pt', 'Português'),
-    ('it', 'Italiano'),
     ('ru', 'Русский'),
+    ('fa', 'فارسی'),
+    ('it', 'Italiano'),
+    ('fr', 'French'),
+    ('de', 'Deutsch'),
+    ('es', 'Español'),
+    ('pt', 'Português'),
     )
 LANGUAGES_CODES_TO_NAMES = \
     {item[0].lower(): item[1] for item in SUPPORTED_LANGUAGES_NAMES_CHOICES}

@@ -14,19 +14,19 @@ class TestI18n(unittest.TestCase):
         self.assertEqual(get_languages_names(['ru']), 'Русский')
 
     def test_get_languages_names__not_supported(self):
-        self.assertEqual(get_languages_names(['de', 'ru']), 'German, Русский')
+        self.assertEqual(get_languages_names(['aa', 'ru']), 'Afar, Русский')
 
     def test_get_languages_names__unknown(self):
         with self.assertRaises(LanguageNotFoundError):
             get_languages_names('foo')
 
     def test_get_languages_codes__ok(self):
-        self.assertEqual(get_languages_codes('   Русский  ,GERMAN,, enGLIsh,  '), ['ru', 'de', 'en'])
+        self.assertEqual(get_languages_codes('   Русский  ,AFAR,, enGLIsh,  '), ['ru', 'aa', 'en'])
 
     def test_get_languages_codes__duplicates(self):
         self.assertEqual(
-            get_languages_codes('enGLIsh, German, English, de, rus'),
-            ['en', 'de', 'ru'],
+            get_languages_codes('enGLIsh, Afar, English, aa, rus'),
+            ['en', 'aa', 'ru'],
             )
 
     def test_get_languages_codes__same(self):
