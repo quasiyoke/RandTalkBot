@@ -88,6 +88,7 @@ class TestStrangerHandler(asynctest.TestCase):
         partner.looking_for_partner_from = datetime.datetime(1970, 1, 1)
         self.stranger_service.get_partner.return_value = partner
         yield from self.stranger_handler.handle_command('begin')
+        self.stranger.prevent_advertising.assert_called_once_with()
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
         self.stranger.set_partner.assert_called_once_with(partner)
         partner.set_partner.assert_called_once_with(self.stranger)
@@ -188,6 +189,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     def test_handle_command__end(self):
         yield from self.stranger_handler.handle_command('end')
+        self.stranger.prevent_advertising.assert_called_once_with()
         self.stranger.end_chatting.assert_called_once_with()
 
     @patch('randtalkbot.stranger_handler.__version__', '0.0.0')
@@ -207,6 +209,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     def test_handle_command__setup(self):
         yield from self.stranger_handler.handle_command('setup')
+        self.stranger.prevent_advertising.assert_called_once_with()
         self.stranger_setup_wizard.activate.assert_called_once_with()
 
     def test_handle_command__start(self):

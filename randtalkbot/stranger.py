@@ -70,6 +70,8 @@ class Stranger(Model):
     wizard = CharField(choices=WIZARD_CHOICES, default='none', max_length=20)
     wizard_step = CharField(max_length=20, null=True)
 
+    ADVERTISING_DELAY = 30
+
     class Meta:
         database = database_proxy
         indexes = (
@@ -84,6 +86,25 @@ class Stranger(Model):
             return SEX_NAMES_TO_CODES[sex]
         except KeyError:
             raise SexError(sex_name)
+
+    @asyncio.coroutine
+    def _advertise(self):
+        yield from asyncio.sleep(type(self).ADVERTISING_DELAY)
+        self._deferred_advertising = None
+        searching_for_partner_count = Stranger.select().where(Stranger.looking_for_partner_from != None) \
+            .count()
+        if searching_for_partner_count > 1:
+            yield from self.get_sender().send_notification(
+                _('You\'re still searching for partner among {0} people. You can talk with some of them if you '
+                    'remove partner\'s sex restrictions or extend the list of languages you know using /setup '
+                    'command. You can share the link to the bot between your friends: telegram.me/RandTalkBot '
+                    'or [vote for Rand Talk](https://telegram.me/storebot?start=randtalkbot). More people '
+                    '-- more fun!'),
+                searching_for_partner_count,
+                )
+
+    def advertise_later(self):
+        self._deferred_advertising = asyncio.get_event_loop().create_task(self._advertise())
 
     @asyncio.coroutine
     def end_chatting(self):
@@ -144,6 +165,15 @@ class Stranger(Model):
                 )
         except TelegramError as e:
             LOGGER.warning('Kick. Can\'t notify stranger %d: %s', self.id, e)
+
+    def prevent_advertising(self):
+        try:
+            if not self._deferred_advertising:
+                return
+        except AttributeError:
+            return
+        self._deferred_advertising.cancel()
+        self._deferred_advertising = None
 
     @asyncio.coroutine
     def send(self, message):
@@ -247,6 +277,7 @@ class Stranger(Model):
         @raise StrangerError If stranger we're changing has blocked the bot.
         '''
         self.looking_for_partner_from = None
+        self.prevent_advertising()
         try:
             if self.partner:
                 if self.partner.partner == self:

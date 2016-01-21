@@ -41,6 +41,44 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
 
+    @patch('randtalkbot.stranger.asyncio')
+    @asyncio.coroutine
+    def test_advertise__people_are_searching(self, asyncio_mock):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.looking_for_partner_from = datetime.datetime.utcnow()
+        self.stranger.save()
+        self.stranger2.looking_for_partner_from = datetime.datetime.utcnow()
+        self.stranger2.save()
+        yield from self.stranger._advertise()
+        asyncio_mock.sleep.assert_called_once_with(30)
+        sender.send_notification.assert_called_once_with(
+            'You\'re still searching for partner among {0} people. You can talk with some of them if you '
+                'remove partner\'s sex restrictions or extend the list of languages you know using /setup '
+                'command. You can share the link to the bot between your friends: telegram.me/RandTalkBot '
+                'or [vote for Rand Talk](https://telegram.me/storebot?start=randtalkbot). More people '
+                '-- more fun!',
+            2,
+            )
+
+    @patch('randtalkbot.stranger.asyncio')
+    @asyncio.coroutine
+    def test_advertise__people_are_not_searching(self, asyncio_mock):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.looking_for_partner_from = datetime.datetime.utcnow()
+        self.stranger.save()
+        yield from self.stranger._advertise()
+        sender.send_notification.assert_not_called()
+
+    @patch('randtalkbot.stranger.asyncio')
+    @asyncio.coroutine
+    def test_advertise_later(self, asyncio_mock):
+        self.stranger._advertise = Mock(return_value='foo')
+        self.stranger.advertise_later()
+        asyncio_mock.get_event_loop.return_value.create_task \
+            .assert_called_once_with('foo')
+
     def test_end_chatting__not_chatting_or_looking_for_partner(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
@@ -210,6 +248,25 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
         LOGGER.warning.assert_called_once_with('Kick. Can\'t notify stranger %d: %s', stranger.id, error)
+
+    @asynctest.ignore_loop
+    def test_prevent_advertising__ok(self):
+        deferred_advertising = Mock()
+        self.stranger._deferred_advertising = deferred_advertising
+        self.stranger.prevent_advertising()
+        deferred_advertising.cancel.assert_called_once_with()
+        self.assertEqual(self.stranger._deferred_advertising, None)
+
+    @asynctest.ignore_loop
+    def test_prevent_advertising__deferred_is_not_set(self):
+        self.stranger.prevent_advertising()
+        self.assertTrue(True)
+
+    @asynctest.ignore_loop
+    def test_prevent_advertising__deferred_is_none(self):
+        self.stranger._deferred_advertising = None
+        self.stranger.prevent_advertising()
+        self.assertTrue(True)
 
     def test_send__ok(self):
         sender = CoroutineMock()
@@ -409,8 +466,10 @@ class TestStranger(asynctest.TestCase):
         self.stranger2.kick = CoroutineMock()
         self.stranger.partner = self.stranger2
         self.stranger.send_notification_about_another_partner = CoroutineMock()
+        self.stranger.prevent_advertising = Mock()
         self.stranger.save()
         yield from self.stranger.set_partner(self.stranger3)
+        self.stranger.prevent_advertising.assert_called_once_with()
         self.stranger.send_notification_about_another_partner.assert_called_once_with(self.stranger3)
         self.stranger2.kick.assert_called_once_with()
         stranger = Stranger.get(Stranger.telegram_id == 31416)

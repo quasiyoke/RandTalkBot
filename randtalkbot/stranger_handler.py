@@ -61,6 +61,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
         self._sender = StrangerSenderService.get_instance(bot) \
             .get_or_create_stranger_sender(self._stranger)
         self._stranger_setup_wizard = StrangerSetupWizard(self._stranger)
+        self._deferred_advertising = None
 
     @classmethod
     def _get_command(cls, message):
@@ -82,10 +83,12 @@ class StrangerHandler(telepot.helper.ChatHandler):
                     'you\'re matched you can use /end to end the conversation.')
                 )
         elif command == 'begin':
+            self._stranger.prevent_advertising()
             try:
                 looked_for_partner_from = (yield from self._set_partner())
             except PartnerObtainingError:
                 LOGGER.debug('Looking for partner: %d', self._stranger.id)
+                self._stranger.advertise_later()
                 yield from self._stranger.set_looking_for_partner()
             except StrangerHandlerError as e:
                 LOGGER.warning('Can\'t notify seeking for partner stranger: %s', e)
@@ -116,6 +119,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 self._stranger.id,
                 self._stranger.partner.id if self._stranger.partner else 0,
                 )
+            self._stranger.prevent_advertising()
             yield from self._stranger.end_chatting()
         elif command == 'help':
             yield from self._sender.send_notification(
@@ -130,6 +134,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 )
         elif command == 'setup':
             LOGGER.debug('Setup: %d', self._stranger.id)
+            self._stranger.prevent_advertising()
             yield from self._stranger.end_chatting()
             yield from self._stranger_setup_wizard.activate()
 

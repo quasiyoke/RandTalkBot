@@ -220,6 +220,11 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.sender.send_notification.assert_not_called()
         LOGGER.warning.assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
 
+    @patch(
+        'randtalkbot.stranger_setup_wizard.SUPPORTED_LANGUAGES_NAMES',
+        ('English', 'Português', 'Italiano', 'Русский', ),
+        )
+    @asyncio.coroutine
     def test_send_invitation__no_languages(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
@@ -232,6 +237,11 @@ class TestStrangerSetupWizard(asynctest.TestCase):
             reply_markup={'keyboard': [('English', 'Português'), ('Italiano', 'Русский')]},
             )
 
+    @patch(
+        'randtalkbot.stranger_setup_wizard.SUPPORTED_LANGUAGES_NAMES',
+        ('English', 'Português', 'Italiano', 'Русский', ),
+        )
+    @asyncio.coroutine
     def test_send_invitation__one_language(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
@@ -251,6 +261,11 @@ class TestStrangerSetupWizard(asynctest.TestCase):
                 },
             )
 
+    @patch(
+        'randtalkbot.stranger_setup_wizard.SUPPORTED_LANGUAGES_NAMES',
+        ('English', 'Português', 'Italiano', 'Русский', ),
+        )
+    @asyncio.coroutine
     def test_send_invitation__many_language(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
@@ -260,7 +275,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
             'Your current languages are: {0}. Enumerate the languages you speak the same way '
                 '-- in descending order of your speaking convenience or just pick one '
                 'at special keyboard.',
-            'Português, German, English',
+            'Português, Deutsch, English',
             reply_markup={
                 'keyboard': [
                     ('English', 'Português'),
@@ -273,6 +288,10 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     @patch(
         'randtalkbot.stranger_setup_wizard.get_languages_names',
         Mock(side_effect=LanguageNotFoundError('')),
+        )
+    @patch(
+        'randtalkbot.stranger_setup_wizard.SUPPORTED_LANGUAGES_NAMES',
+        ('English', 'Português', 'Italiano', 'Русский', ),
         )
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     @asyncio.coroutine
