@@ -5,6 +5,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import datetime
 import logging
 import re
 import sys
@@ -37,6 +38,8 @@ class UnknownCommandError(Exception):
 class StrangerHandler(telepot.helper.ChatHandler):
     COMMAND_RE_PATTERN = re.compile('^/(\w+)\\b\s*(.*)$')
     COMMANDS = ['begin', 'end', 'help', 'setup', 'start', ]
+    HOUR_TIMEDELTA = datetime.timedelta(hours=1)
+    LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=10)
 
     def __init__(self, seed_tuple, stranger_service):
         '''
@@ -80,31 +83,33 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 )
         elif command == 'begin':
             try:
-                partner = None
-                while not partner:
-                    partner = self._stranger_service.get_partner(self._stranger)
-                    try:
-                        yield from partner.set_partner(self._stranger)
-                    except StrangerError:
-                        # Potential partner has blocked the bot. Let's look for next potential partner.
-                        partner = None
-                    else:
-                        try:
-                            yield from self._stranger.set_partner(partner)
-                        except StrangerError:
-                            # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
-                            # the cycle.
-                            yield from partner.set_looking_for_partner()
-                        else:
-                            LOGGER.debug('Found partner: %d -> %d.', self._stranger.id, partner.id)
+                looked_for_partner_from = (yield from self._set_partner())
             except PartnerObtainingError:
                 LOGGER.debug('Looking for partner: %d', self._stranger.id)
                 yield from self._stranger.set_looking_for_partner()
+            except StrangerHandlerError as e:
+                LOGGER.warning('Can\'t notify seeking for partner stranger: %s', e)
             except StrangerServiceError as e:
                 LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
                 yield from self._sender.send_notification(
                     _('Internal error. Admins are already notified about that'),
                     )
+            else:
+                looked_for_partner_for = datetime.datetime.utcnow() - looked_for_partner_from
+                if type(self).LONG_WAITING_TIMEDELTA < looked_for_partner_for:
+                    # Notify Stranger if his partner did wait too much and could be asleep.
+                    if type(self).HOUR_TIMEDELTA <= looked_for_partner_for:
+                        yield from self._sender.send_notification(
+                            _('Your partner\'s been looking for you for {0} hr. Say him \"Hello\" -- '
+                                'if he doesn\'t respond to you, launch search again by /begin command.'),
+                            round(looked_for_partner_for.total_seconds() / 3600),
+                            )
+                    else:
+                        yield from self._sender.send_notification(
+                            _('Your partner\'s been looking for you for {0} min. Say him \"Hello\" -- '
+                                'if he doesn\'t respond to you, launch search again by /begin command.'),
+                            round(looked_for_partner_for.total_seconds() / 60),
+                            )
         elif command == 'end':
             LOGGER.debug(
                 'Finished chatting: %d -x-> %d',
@@ -187,3 +192,34 @@ class StrangerHandler(telepot.helper.ChatHandler):
                     _('Your partner has blocked me! How did you do that?!'),
                     )
                 yield from self._stranger.end_chatting()
+
+    @asyncio.coroutine
+    def _set_partner(self):
+        '''
+        Finds partner for the stranger. Does handling of strangers who have blocked the bot.
+
+        @raise PartnerObtainingError if there's no proper partners.
+        @raise StrangerHandlerError if the stranger has blocked the bot.
+        @raise StrangerServiceError if there're some DB troubles.
+        @return The datetime when partner started looking for the stranger.
+        '''
+        while True:
+            partner = self._stranger_service.get_partner(self._stranger)
+            looked_for_partner_from = partner.looking_for_partner_from
+            try:
+                yield from partner.set_partner(self._stranger)
+            except StrangerError:
+                # Potential partner has blocked the bot. Let's look for next potential partner.
+                pass
+            else:
+                try:
+                    yield from self._stranger.set_partner(partner)
+                except StrangerError as e:
+                    # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
+                    # the cycle.
+                    yield from partner.set_looking_for_partner()
+                    raise StrangerHandlerError('Can\'t notify seeking for partner stranger: {0}'.format(e))
+                else:
+                    LOGGER.debug('Found partner: %d -> %d.', self._stranger.id, partner.id)
+                    break
+        return looked_for_partner_from

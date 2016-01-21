@@ -6,6 +6,7 @@
 
 import asyncio
 import asynctest
+import datetime
 from asynctest.mock import call, create_autospec, patch, Mock, CoroutineMock
 from randtalkbot.message import Message, UnsupportedContentError
 from randtalkbot.stranger import StrangerError
@@ -78,14 +79,21 @@ class TestStrangerHandler(asynctest.TestCase):
         with self.assertRaises(UnknownCommandError):
             StrangerHandler._get_command('/beginnnnnn')
 
+    @patch('randtalkbot.stranger_handler.datetime', Mock())
+    @asyncio.coroutine
     def test_handle_command__begin(self):
+        from randtalkbot.stranger_handler import datetime as datetime_mock
+        datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1)
         partner = CoroutineMock()
+        partner.looking_for_partner_from = datetime.datetime(1970, 1, 1)
         self.stranger_service.get_partner.return_value = partner
         yield from self.stranger_handler.handle_command('begin')
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
         self.stranger.set_partner.assert_called_once_with(partner)
         partner.set_partner.assert_called_once_with(self.stranger)
 
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
+    @asyncio.coroutine
     def test_handle_command__begin_stranger_has_blocked_the_bot(self):
         partner = CoroutineMock()
         self.stranger_service.get_partner.return_value = partner
@@ -96,8 +104,13 @@ class TestStrangerHandler(asynctest.TestCase):
         partner.set_looking_for_partner.assert_called_once_with()
         partner.set_partner.assert_called_once_with(self.stranger)
 
+    @patch('randtalkbot.stranger_handler.datetime', Mock())
+    @asyncio.coroutine
     def test_handle_command__begin_first_partner_has_blocked_the_bot(self):
+        from randtalkbot.stranger_handler import datetime as datetime_mock
+        datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1)
         partner = CoroutineMock()
+        partner.looking_for_partner_from = datetime.datetime(1970, 1, 1)
         self.stranger_service.get_partner.return_value = partner
         partner.set_partner.side_effect = [StrangerError(), None]
         yield from self.stranger_handler.handle_command('begin')
@@ -141,6 +154,36 @@ class TestStrangerHandler(asynctest.TestCase):
             )
         self.sender.send_notification.assert_called_once_with(
             'Internal error. Admins are already notified about that',
+            )
+
+    @patch('randtalkbot.stranger_handler.datetime', Mock())
+    @asyncio.coroutine
+    def test_handle_command__begin_waiting_several_minutes(self):
+        from randtalkbot.stranger_handler import datetime as datetime_mock
+        datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1, 10, 11)
+        partner = CoroutineMock()
+        partner.looking_for_partner_from = datetime.datetime(1970, 1, 1, 10, 0)
+        self.stranger_service.get_partner.return_value = partner
+        yield from self.stranger_handler.handle_command('begin')
+        self.sender.send_notification.assert_called_once_with(
+            'Your partner\'s been looking for you for {0} min. Say him "Hello" -- if he doesn\'t '
+                'respond to you, launch search again by /begin command.',
+            11,
+            )
+
+    @patch('randtalkbot.stranger_handler.datetime', Mock())
+    @asyncio.coroutine
+    def test_handle_command__begin_waiting_several_hours(self):
+        from randtalkbot.stranger_handler import datetime as datetime_mock
+        datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1, 11, 0)
+        partner = CoroutineMock()
+        partner.looking_for_partner_from = datetime.datetime(1970, 1, 1, 10, 0)
+        self.stranger_service.get_partner.return_value = partner
+        yield from self.stranger_handler.handle_command('begin')
+        self.sender.send_notification.assert_called_once_with(
+            'Your partner\'s been looking for you for {0} hr. Say him "Hello" -- if he doesn\'t '
+                'respond to you, launch search again by /begin command.',
+            1,
             )
 
     def test_handle_command__end(self):

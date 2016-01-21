@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-21 02:12+0300\n"
+"POT-Creation-Date: 2016-01-21 06:39+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: English\n"
@@ -101,11 +101,11 @@ msgstr ""
 "Use /begin to start looking for a conversational partner, once you're "
 "matched you can use /end to finish the conversation."
 
-#: randtalkbot/stranger_handler.py:106
+#: randtalkbot/stranger_handler.py:107
 msgid "Internal error. Admins are already notified about that"
 msgstr "Internal error. Admins are already working on that. 🤕"
 
-#: randtalkbot/stranger_handler.py:117
+#: randtalkbot/stranger_handler.py:120
 #, python-brace-format
 msgid ""
 "*Help*\n"
@@ -135,16 +135,16 @@ msgstr ""
 "\n"
 "version {1}"
 
-#: randtalkbot/stranger_handler.py:141 randtalkbot/stranger_handler.py:155
-#: randtalkbot/stranger_handler.py:179
+#: randtalkbot/stranger_handler.py:144 randtalkbot/stranger_handler.py:158
+#: randtalkbot/stranger_handler.py:182
 msgid "Messages of this type aren't supported."
 msgstr "Messages of this type aren't supported 😞"
 
-#: randtalkbot/stranger_handler.py:164 randtalkbot/stranger_handler.py:187
+#: randtalkbot/stranger_handler.py:167 randtalkbot/stranger_handler.py:190
 msgid "Your partner has blocked me! How did you do that?!"
 msgstr "Your partner has blocked me! How did you do that?! 😕"
 
-#: randtalkbot/stranger_handler.py:169
+#: randtalkbot/stranger_handler.py:172
 msgid "Unknown command. Look /help for the full list of commands."
 msgstr "Unknown command. Look /help for the full list of commands."
 
