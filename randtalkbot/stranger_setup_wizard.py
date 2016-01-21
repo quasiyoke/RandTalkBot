@@ -157,7 +157,9 @@ class StrangerSetupWizard(Wizard):
         wizard_step = self._stranger.wizard_step
         if wizard_step == 'languages':
             languages = self._stranger.get_languages()
-            keyboard = [SUPPORTED_LANGUAGES_NAMES[:2], SUPPORTED_LANGUAGES_NAMES[2:], ]
+            # Just split languages by pairs.
+            keyboard = \
+                [SUPPORTED_LANGUAGES_NAMES[i: i + 2] for i in range(0, len(SUPPORTED_LANGUAGES_NAMES), 2)]
             try:
                 languages_enumeration = get_languages_names(languages)
             except LanguageNotFoundError:
