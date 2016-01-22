@@ -14,6 +14,7 @@ from .stranger_sender_service import StrangerSenderService
 from peewee import *
 from telepot import TelegramError
 
+LANGUAGES_MAX_LENGTH = 40
 LOGGER = logging.getLogger('randtalkbot')
 
 def _(s): return s
@@ -61,7 +62,7 @@ class StrangerError(Exception):
     pass
 
 class Stranger(Model):
-    languages = CharField(max_length=40, null=True)
+    languages = CharField(max_length=LANGUAGES_MAX_LENGTH, null=True)
     looking_for_partner_from = DateTimeField(null=True)
     partner = ForeignKeyField('self', null=True)
     partner_sex = CharField(choices=SEX_CHOICES, max_length=20, null=True)
@@ -136,9 +137,13 @@ class Stranger(Model):
         return set(self.get_languages()).intersection(partner.get_languages())
 
     def get_languages(self):
-        if self.languages:
+        try:
             return json.loads(self.languages)
-        else:
+        except ValueError:
+            # If languages field was corrupted, return default language.
+            return ['en']
+        except TypeError:
+            # If languages field wasn't set.
             return []
 
     def get_sender(self):
@@ -249,13 +254,18 @@ class Stranger(Model):
             raise MissingPartnerError()
 
     def set_languages(self, languages):
+        '''
+        @EmptyLanguagesError if no languages were specified.
+        @StrangerError if too much languages were specified.
+        '''
         if languages == ['same']:
             languages = self.get_languages()
         if not len(languages):
             raise EmptyLanguagesError()
         languages = json.dumps(languages)
+        if len(languages) > LANGUAGES_MAX_LENGTH:
+            raise StrangerError()
         self.languages = languages
-        self.save()
 
     @asyncio.coroutine
     def set_looking_for_partner(self):
@@ -304,14 +314,12 @@ class Stranger(Model):
         @throws SexError
         '''
         self.sex = Stranger._get_sex_code(sex_name)
-        self.save()
 
     def set_partner_sex(self, partner_sex_name):
         '''
         @throws SexError
         '''
         self.partner_sex = Stranger._get_sex_code(partner_sex_name)
-        self.save()
 
     def speaks_on_language(self, language):
         if self.languages:

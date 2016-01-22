@@ -182,6 +182,11 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(self.stranger.get_languages(), [])
 
     @asynctest.ignore_loop
+    def test_get_languages__corrupted_json(self):
+        self.stranger.languages = '["foo'
+        self.assertEqual(self.stranger.get_languages(), ['en'])
+
+    @asynctest.ignore_loop
     @patch('randtalkbot.stranger.StrangerSenderService', create_autospec(StrangerSenderService))
     def test_get_sender(self):
         from randtalkbot.stranger import StrangerSenderService
@@ -394,14 +399,12 @@ class TestStranger(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_set_languages__ok(self):
-        self.stranger.save = Mock()
-        self.stranger.set_languages(["foo", "bar", "baz"])
-        self.assertEqual(self.stranger.languages, '["foo", "bar", "baz"]')
-        self.stranger.save.assert_called_once_with()
+        # 6 languages.
+        self.stranger.set_languages(['ru', 'en', 'it', 'fr', 'de', 'pt', ])
+        self.assertEqual(self.stranger.languages, '["ru", "en", "it", "fr", "de", "pt"]')
 
     @asynctest.ignore_loop
     def test_set_languages__same(self):
-        self.stranger.save = Mock()
         self.stranger.languages = '["foo", "bar", "baz"]'
         self.stranger.set_languages(['same'])
         self.assertEqual(self.stranger.languages, '["foo", "bar", "baz"]')
@@ -409,19 +412,23 @@ class TestStranger(asynctest.TestCase):
     @asynctest.ignore_loop
     def test_set_languages__empty(self):
         from randtalkbot.stranger import EmptyLanguagesError
-        self.stranger.save = Mock()
         with self.assertRaises(EmptyLanguagesError):
             self.stranger.set_languages([])
-        self.stranger.save.assert_not_called()
 
     @asynctest.ignore_loop
     def test_set_languages__same_empty(self):
         from randtalkbot.stranger import EmptyLanguagesError
-        self.stranger.save = Mock()
         self.stranger.languages = None
         with self.assertRaises(EmptyLanguagesError):
             self.stranger.set_languages(['same'])
-        self.stranger.save.assert_not_called()
+
+    @asynctest.ignore_loop
+    def test_set_languages__too_much(self):
+        from randtalkbot.stranger import StrangerError
+        self.stranger.languages = None
+        with self.assertRaises(StrangerError):
+            # 7 languages.
+            self.stranger.set_languages(['ru', 'en', 'it', 'fr', 'de', 'pt', 'po'])
 
     @patch('randtalkbot.stranger.datetime')
     @asyncio.coroutine
@@ -536,29 +543,22 @@ class TestStranger(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_set_sex__correct(self):
-        self.stranger.save = Mock()
         self.stranger.set_sex('  mALe ')
         self.assertEqual(self.stranger.sex, 'male')
-        self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
     def test_set_sex__translated(self):
-        self.stranger.save = Mock()
         self.stranger.set_sex('  МУЖСКОЙ ')
         self.assertEqual(self.stranger.sex, 'male')
-        self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
     def test_set_sex__additional(self):
-        self.stranger.save = Mock()
         self.stranger.set_sex('  МАЛЬЧИК ')
         self.assertEqual(self.stranger.sex, 'male')
-        self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
     def test_set_sex__incorrect(self):
         from randtalkbot.stranger import SexError
-        self.stranger.save = Mock()
         self.stranger.sex = 'foo'
         with self.assertRaises(SexError):
             self.stranger.set_sex('not_a_sex')
@@ -566,22 +566,17 @@ class TestStranger(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_set_partner_sex__correct(self):
-        self.stranger.save = Mock()
         self.stranger.set_partner_sex('  mALe ')
         self.assertEqual(self.stranger.partner_sex, 'male')
-        self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
-    def test_set_sex__additional(self):
-        self.stranger.save = Mock()
+    def test_set_partner_sex__additional(self):
         self.stranger.set_partner_sex('  МАЛЬЧИК ')
         self.assertEqual(self.stranger.partner_sex, 'male')
-        self.stranger.save.assert_called_once_with()
 
     @asynctest.ignore_loop
     def test_set_partner_sex__incorrect(self):
         from randtalkbot.stranger import SexError
-        self.stranger.save = Mock()
         self.stranger.partner_sex = 'foo'
         with self.assertRaises(SexError):
             self.stranger.set_partner_sex('not_a_sex')

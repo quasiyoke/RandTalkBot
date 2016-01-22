@@ -8,11 +8,13 @@ import gettext
 import logging
 import os
 import pycountry
+import re
 from .utils import LOCALE_DIR
 from collections import OrderedDict
 from os import path
 
 LOGGER = logging.getLogger('randtalkbot')
+QUOTES = '\"\'“”«»'
 
 class LanguageNotFoundError(Exception):
     def __init__(self, name):
@@ -53,12 +55,12 @@ def get_languages_names(codes):
     names = map(_get_language_name, codes)
     return ', '.join(names)
 
-def get_languages_codes(names_str):
+def get_languages_codes(names):
     '''
     @throws LanguageNotFoundError
     '''
-    names = names_str.strip().lower()
-    if names in SAME_LANGUAGE_NAMES:
+    names = ''.join([c for c in names if c not in QUOTES])
+    if names.strip().lower() in SAME_LANGUAGE_NAMES:
         return ['same']
     names = [name.strip() for name in names.split(',')]
     names = filter(bool, names)

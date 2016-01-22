@@ -11,7 +11,7 @@ import sys
 import telepot
 from .i18n import get_languages_codes, get_languages_names, LanguageNotFoundError, \
     SUPPORTED_LANGUAGES_NAMES
-from .stranger import EmptyLanguagesError, MissingPartnerError, SexError, SEX_NAMES
+from .stranger import EmptyLanguagesError, MissingPartnerError, SexError, SEX_NAMES, StrangerError
 from .stranger_sender_service import StrangerSenderService
 from .wizard import Wizard
 
@@ -100,15 +100,17 @@ class StrangerSetupWizard(Wizard):
         if self._stranger.wizard_step == 'languages':
             try:
                 self._stranger.set_languages(get_languages_codes(text))
-            except LanguageNotFoundError as e:
-                LOGGER.info('Languages weren\'t parsed: \"%s\"', text)
-                yield from self._sender.send_notification(
-                    _('Language \"{0}\" wasn\'t found.'),
-                    e.name,
-                    )
             except EmptyLanguagesError as e:
                 yield from self._sender.send_notification(
                     _('Please specify at least one language.'),
+                    )
+            except LanguageNotFoundError as e:
+                LOGGER.info('Languages weren\'t parsed: \"%s\"', text)
+                yield from self._sender.send_notification(_('Language \"{0}\" wasn\'t found.'), e.name)
+            except StrangerError as e:
+                LOGGER.info('Too much languages were specified: \"%s\"', text)
+                yield from self._sender.send_notification(
+                    _('Too much languages were specified. Please shorten your list to 6 languages.'),
                     )
             else:
                 self._sender.update_translation()

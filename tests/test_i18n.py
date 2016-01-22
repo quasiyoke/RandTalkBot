@@ -35,6 +35,9 @@ class TestI18n(unittest.TestCase):
     def test_get_languages_codes__empty(self):
         self.assertEqual(get_languages_codes(''), [])
 
+    def test_get_languages_codes__quotes(self):
+        self.assertEqual(get_languages_codes('“«\"English, German\"”»'), ['en', 'de'])
+
     def test_get_languages_codes__unknown(self):
         with self.assertRaises(LanguageNotFoundError):
             get_languages_codes('Foo language')

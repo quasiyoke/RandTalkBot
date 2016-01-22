@@ -137,6 +137,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger_service.get_partner.side_effect = PartnerObtainingError()
         yield from self.stranger_handler.handle_command('begin')
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
+        self.stranger.advertise_later.assert_called_once_with()
         self.stranger.set_looking_for_partner.assert_called_once_with()
 
     @patch('randtalkbot.stranger_handler.LOGGER', Mock())
