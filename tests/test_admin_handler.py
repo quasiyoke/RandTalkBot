@@ -39,13 +39,19 @@ class TestAdminHandler(asynctest.TestCase):
     def test_handle_command__clear(self):
         stranger = CoroutineMock()
         self.stranger_service.get_stranger.return_value = stranger
-        yield from self.admin_handler.handle_command('clear', '31416')
+        message = Mock()
+        message.command = 'clear'
+        message.command_args = '31416'
+        yield from self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_called_once_with(31416)
         stranger.end_chatting.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with('Stranger was cleared.')
 
     def test_handle_command__clear_incorrect_telegram_id(self):
-        yield from self.admin_handler.handle_command('clear', 'foo')
+        message = Mock()
+        message.command = 'clear'
+        message.command_args = 'foo'
+        yield from self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Please specify Telegram ID like this: /clear 31416',
@@ -54,7 +60,10 @@ class TestAdminHandler(asynctest.TestCase):
     def test_handle_command__clear_unknown_stranger(self):
         error = StrangerServiceError()
         self.stranger_service.get_stranger.side_effect = error
-        yield from self.admin_handler.handle_command('clear', '31416')
+        message = Mock()
+        message.command = 'clear'
+        message.command_args = '31416'
+        yield from self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_called_once_with(31416)
         self.sender.send_notification.assert_called_once_with(
             'Stranger wasn\'t found: {0}',
@@ -65,5 +74,8 @@ class TestAdminHandler(asynctest.TestCase):
     @asyncio.coroutine
     def test_handle_command__other_command(self, handle_command):
         from randtalkbot.admin_handler import StrangerHandler
-        yield from self.admin_handler.handle_command('foo_command', 'foo_args')
-        handle_command.assert_called_once_with('foo_command', 'foo_args')
+        message = Mock()
+        message.command = 'foo_command'
+        message.command_args = 'foo_args'
+        yield from self.admin_handler.handle_command(message)
+        handle_command.assert_called_once_with(message)

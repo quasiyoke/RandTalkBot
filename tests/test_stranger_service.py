@@ -82,36 +82,42 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         stranger.database_proxy.initialize(self.database)
         self.database.create_tables([Stranger])
         self.stranger_0 = Stranger.create(
+            invitation='foo',
             languages='["foo"]',
             telegram_id=27183,
             sex='female',
             partner_sex='male',
             )
         self.stranger_1 = Stranger.create(
+            invitation='bar',
             languages='["foo"]',
             telegram_id=31416,
             sex='male',
             partner_sex='female',
             )
         self.stranger_2 = Stranger.create(
+            invitation='baz',
             languages='["foo"]',
             telegram_id=23571,
             sex='male',
             partner_sex='female',
             )
         self.stranger_3 = Stranger.create(
+            invitation='zen',
             languages='["foo"]',
             telegram_id=11317,
             sex='male',
             partner_sex='female',
             )
         self.stranger_4 = Stranger.create(
+            invitation='zig',
             languages='["foo"]',
             telegram_id=19232,
             sex='male',
             partner_sex='female',
             )
         self.stranger_5 = Stranger.create(
+            invitation='zam',
             languages='["foo"]',
             telegram_id=93137,
             sex='male',
@@ -537,7 +543,20 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
     @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
     def test_get_or_create_stranger__stranger_found(self):
         from randtalkbot.stranger_service import Stranger
-        Stranger.get_or_create.return_value = (self.stranger_0, False)
+        Stranger.get.return_value = self.stranger_0
+        self.stranger_service.get_cached_stranger = Mock()
+        self.stranger_service.get_cached_stranger.return_value = 'cached_stranger'
+        self.assertEqual(
+            self.stranger_service.get_or_create_stranger(31416),
+            'cached_stranger',
+            )
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_0)
+
+    @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
+    def test_get_or_create_stranger__stranger_not_found(self):
+        from randtalkbot.stranger_service import Stranger
+        Stranger.get.side_effect = DoesNotExist()
+        Stranger.create.return_value = self.stranger_0
         self.stranger_service.get_cached_stranger = Mock()
         self.stranger_service.get_cached_stranger.return_value = 'cached_stranger'
         self.assertEqual(
@@ -550,11 +569,9 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
     def test_get_or_create_stranger__database_error(self):
         from randtalkbot.stranger_service import Stranger
         self.stranger_service.get_cached_stranger = Mock()
-        Stranger.get_or_create.side_effect = DatabaseError()
+        Stranger.get.side_effect = DatabaseError()
         with self.assertRaises(StrangerServiceError):
             self.stranger_service.get_or_create_stranger(31416)
-        Stranger.get_or_create.assert_called_once_with(telegram_id=31416)
-        self.stranger_service.get_cached_stranger.assert_not_called()
 
     def test_get_stranger__stranger_found(self):
         self.stranger_service.get_cached_stranger = Mock()
@@ -568,7 +585,34 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
             self.stranger_1.id,
             )
 
-    @patch('randtalkbot.stranger_service.Stranger.select', Mock(side_effect=DatabaseError()))
+    @patch('randtalkbot.stranger_service.Stranger.get', Mock(side_effect=DatabaseError()))
     def test_get_stranger__database_error(self):
         with self.assertRaises(StrangerServiceError):
             self.stranger_service.get_stranger(31416)
+
+    @patch('randtalkbot.stranger_service.INVITATION_LENGTH', 3)
+    def test_get_stranger_by_invitation__ok(self):
+        self.stranger_service.get_cached_stranger = Mock()
+        self.stranger_service.get_cached_stranger.return_value = 'cached_stranger'
+        self.assertEqual(
+            self.stranger_service.get_stranger_by_invitation('zam'),
+            'cached_stranger',
+            )
+        self.assertEqual(
+            self.stranger_service.get_cached_stranger.call_args[0][0].id,
+            self.stranger_5.id,
+            )
+
+    @patch('randtalkbot.stranger_service.INVITATION_LENGTH', 3)
+    def test_get_stranger_by_invitation__wrong_length(self):
+        self.stranger_service.get_cached_stranger = Mock()
+        self.stranger_service.get_cached_stranger.return_value = 'cached_stranger'
+        with self.assertRaises(StrangerServiceError):
+            self.stranger_service.get_stranger_by_invitation('booo')
+        self.stranger_service.get_cached_stranger.assert_not_called()
+
+    @patch('randtalkbot.stranger_service.INVITATION_LENGTH', 3)
+    @patch('randtalkbot.stranger_service.Stranger.get', Mock(side_effect=DatabaseError()))
+    def test_get_stranger_by_invitation__database_error(self):
+        with self.assertRaises(StrangerServiceError):
+            self.stranger_service.get_stranger_by_invitation('zam')

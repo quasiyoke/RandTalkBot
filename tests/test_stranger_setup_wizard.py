@@ -26,15 +26,15 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(self.stranger)
 
     def test_activate(self):
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
         yield from self.stranger_setup_wizard.activate()
         self.assertEqual(self.stranger.wizard, 'setup')
         self.assertEqual(self.stranger.wizard_step, 'languages')
         self.stranger.save.assert_called_once_with()
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
 
     def test_deactivate(self):
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
         yield from self.stranger_setup_wizard.deactivate()
         self.assertEqual(self.stranger.wizard, 'none')
         self.assertEqual(self.stranger.wizard_step, None)
@@ -44,56 +44,33 @@ class TestStrangerSetupWizard(asynctest.TestCase):
                 'once you\'re matched you can use /end to end the conversation.',
             reply_markup={'hide_keyboard': True},
             )
-        self.stranger_setup_wizard._send_invitation.assert_not_called()
+        self.stranger_setup_wizard._prompt.assert_not_called()
 
     def test_handle__deactivated_novice(self):
         self.stranger.wizard = 'none'
         self.stranger.is_novice = Mock(return_value=True)
         self.stranger_setup_wizard.activate = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger_setup_wizard.activate.assert_called_once_with()
 
     def test_handle__deactivated_not_novice(self):
         self.stranger.wizard = 'none'
         self.stranger.is_novice = Mock(return_value=False)
         self.stranger_setup_wizard.activate = CoroutineMock()
-        self.assertFalse((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertFalse((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger_setup_wizard.activate.assert_not_called()
 
     def test_handle__other_wizard(self):
         self.stranger.wizard = 'other_wizard'
         self.stranger_setup_wizard.activate = CoroutineMock()
-        self.assertFalse((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertFalse((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger_setup_wizard.activate.assert_not_called()
-
-    def test_handle__command_full_stranger(self):
-        self.stranger.wizard = 'setup'
-        self.stranger.wizard_step = 'sex'
-        self.stranger.is_full.return_value = True
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('/begin')))
-        self.stranger.is_full.assert_called_once_with()
-        self.sender.send_notification.assert_called_once_with('To interrupt setup use /cancel.')
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
-
-    def test_handle__command_not_full_stranger(self):
-        self.stranger.wizard = 'setup'
-        self.stranger.wizard_step = 'sex'
-        self.stranger.is_full.return_value = False
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('/cancel')))
-        self.sender.send_notification.assert_called_once_with(
-            'Finish setup process please. After that you can start using bot.',
-            )
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
-
-    def test_handle__command_full_stranger_cancel(self):
-        self.stranger.wizard = 'setup'
-        self.stranger.wizard_step = 'sex'
-        self.stranger.is_full.return_value = True
-        self.stranger_setup_wizard.deactivate = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('/cancel')))
-        self.stranger_setup_wizard.deactivate.assert_called_once_with()
 
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     @asyncio.coroutine
@@ -102,11 +79,13 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         get_languages_codes.return_value = 'foo_languages_codes'
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         get_languages_codes.assert_called_once_with('foo_text')
         self.stranger.set_languages.assert_called_once_with('foo_languages_codes')
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
         self.assertEqual(self.stranger.wizard_step, 'sex')
         self.stranger.save.assert_called_once_with()
         self.sender.update_translation.assert_called_once_with()
@@ -119,11 +98,13 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         get_languages_codes.side_effect = EmptyLanguagesError()
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         get_languages_codes.assert_called_once_with('foo_text')
         self.stranger.set_languages.assert_not_called()
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with('Please specify at least one language.')
 
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
@@ -134,11 +115,13 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         get_languages_codes.side_effect = LanguageNotFoundError('foo_lang')
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         get_languages_codes.assert_called_once_with('foo_text')
         self.stranger.set_languages.assert_not_called()
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with(
             'Language "{0}" wasn\'t found.',
             'foo_lang',
@@ -155,10 +138,12 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard_step = 'languages'
         get_languages_codes.return_value = 'languages_codes'
         self.stranger.set_languages.side_effect = StrangerError()
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger.set_languages.assert_called_once_with('languages_codes')
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with(
             'Too much languages were specified. Please shorten your list to 6 languages.',
             )
@@ -167,35 +152,41 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     def test_handle__sex_ok(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'sex'
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
         self.stranger.sex = 'some_sex'
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger.set_sex.assert_called_once_with('foo_text')
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
         self.assertEqual(self.stranger.wizard_step, 'partner_sex')
         self.stranger.save.assert_called_once_with()
 
     def test_handle__sex_not_specified(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'sex'
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
         self.stranger_setup_wizard.deactivate = CoroutineMock()
         self.stranger.sex = 'not_specified'
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger.set_sex.assert_called_once_with('foo_text')
         self.stranger_setup_wizard.deactivate.assert_called_once_with()
-        self.stranger_setup_wizard._send_invitation.assert_not_called()
+        self.stranger_setup_wizard._prompt.assert_not_called()
         self.stranger.save.assert_not_called()
 
     def test_handle__sex_sex_error(self):
         from randtalkbot.stranger import SexError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'sex'
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
         self.stranger.set_sex.side_effect = SexError('foo_sex')
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger.set_sex.assert_called_once_with('foo_text')
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with(
             'Unknown sex: "{0}" -- is not a valid sex name.',
             'foo_sex',
@@ -204,13 +195,15 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     def test_handle__partner_sex_ok(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'partner_sex'
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
         self.stranger_setup_wizard.deactivate = CoroutineMock()
         self.stranger.partner_sex = 'some_partner_sex'
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger.set_partner_sex.assert_called_once_with('foo_text')
         self.stranger_setup_wizard.deactivate.assert_called_once_with()
-        self.stranger_setup_wizard._send_invitation.assert_not_called()
+        self.stranger_setup_wizard._prompt.assert_not_called()
         self.assertEqual(self.stranger.wizard_step, 'partner_sex')
         self.stranger.save.assert_not_called()
 
@@ -218,11 +211,13 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         from randtalkbot.stranger import SexError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'partner_sex'
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
         self.stranger.set_partner_sex.side_effect = SexError('foo_sex')
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
         self.stranger.set_partner_sex.assert_called_once_with('foo_text')
-        self.stranger_setup_wizard._send_invitation.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with(
             'Unknown sex: "{0}" -- is not a valid sex name.',
             'foo_sex',
@@ -234,22 +229,74 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         from randtalkbot.stranger_setup_wizard import LOGGER
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'unknown_step'
-        self.stranger_setup_wizard._send_invitation = CoroutineMock()
-        self.assertTrue((yield from self.stranger_setup_wizard.handle('foo_text')))
-        self.stranger_setup_wizard._send_invitation.assert_not_called()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.text = 'foo_text'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
+        self.stranger_setup_wizard._prompt.assert_not_called()
         self.sender.send_notification.assert_not_called()
         LOGGER.warning.assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
+
+    def test_handle_command__not_activated_handled(self):
+        self.stranger.wizard = 'none'
+        message = Mock()
+        message.command = 'begin'
+        self.stranger_setup_wizard.handle = CoroutineMock(return_value=True)
+        self.assertTrue((yield from self.stranger_setup_wizard.handle_command(message)))
+        self.stranger_setup_wizard.handle.assert_called_once_with(message)
+
+    def test_handle_command__not_activated_not_handled(self):
+        self.stranger.wizard = 'none'
+        message = Mock()
+        message.command = 'begin'
+        self.stranger_setup_wizard.handle = CoroutineMock(return_value=False)
+        self.assertFalse((yield from self.stranger_setup_wizard.handle_command(message)))
+        self.stranger_setup_wizard.handle.assert_called_once_with(message)
+
+    def test_handle_command__not_activated_command_start(self):
+        self.stranger.wizard = 'none'
+        message = Mock()
+        message.command = 'start'
+        self.stranger_setup_wizard.handle = CoroutineMock(return_value=True)
+        self.assertFalse((yield from self.stranger_setup_wizard.handle_command(message)))
+        self.stranger_setup_wizard.handle.assert_called_once_with(message)
+
+    def test_handle_command__full_stranger(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'sex'
+        self.stranger.is_full.return_value = True
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        self.stranger_setup_wizard.deactivate = CoroutineMock()
+        message = Mock()
+        message.command = 'begin'
+        self.assertFalse((yield from self.stranger_setup_wizard.handle_command(message)))
+        self.stranger.is_full.assert_called_once_with()
+        self.stranger_setup_wizard._prompt.assert_not_called()
+        self.stranger_setup_wizard.deactivate.assert_called_once_with()
+
+    def test_handle_command__not_full_stranger(self):
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'sex'
+        self.stranger.is_full.return_value = False
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.command = 'begin'
+        self.assertTrue((yield from self.stranger_setup_wizard.handle_command(message)))
+        self.sender.send_notification.assert_called_once_with(
+            'Finish setup process please. After that you can start using bot.',
+            )
+        self.stranger_setup_wizard._prompt.assert_called_once_with()
 
     @patch(
         'randtalkbot.stranger_setup_wizard.SUPPORTED_LANGUAGES_NAMES',
         ('English', 'Português', 'Italiano', 'Русский', ),
         )
     @asyncio.coroutine
-    def test_send_invitation__no_languages(self):
+    def test_prompt__no_languages(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         self.stranger.get_languages.return_value = []
-        yield from self.stranger_setup_wizard._send_invitation()
+        yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
             'Enumerate the languages you speak like this: "English, Italian" -- in descending ' + \
                 'order of your speaking convenience or just pick one at special keyboard.',
@@ -262,11 +309,11 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         ('English', 'Português', 'Italiano', 'Русский', ),
         )
     @asyncio.coroutine
-    def test_send_invitation__one_language(self):
+    def test_prompt__one_language(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         self.stranger.get_languages.return_value = ['pt']
-        yield from self.stranger_setup_wizard._send_invitation()
+        yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
             'Your current language is {0}. Enumerate the languages you speak like this: '
                 '"English, Italian" -- in descending order of your speaking convenience '
@@ -286,11 +333,11 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         ('English', 'Português', 'Italiano', 'Русский', ),
         )
     @asyncio.coroutine
-    def test_send_invitation__many_language(self):
+    def test_prompt__many_language(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         self.stranger.get_languages.return_value = ['pt', 'de', 'en']
-        yield from self.stranger_setup_wizard._send_invitation()
+        yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
             'Your current languages are: {0}. Enumerate the languages you speak the same way '
                 '-- in descending order of your speaking convenience or just pick one '
@@ -315,11 +362,11 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         )
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     @asyncio.coroutine
-    def test_send_invitation__unknown_languages(self):
+    def test_prompt__unknown_languages(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         self.stranger.get_languages.return_value = []
-        yield from self.stranger_setup_wizard._send_invitation()
+        yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
             'Enumerate the languages you speak like this: "English, Italian" -- in descending ' + \
                 'order of your speaking convenience or just pick one at special keyboard.',
@@ -327,26 +374,26 @@ class TestStrangerSetupWizard(asynctest.TestCase):
             reply_markup={'keyboard': [('English', 'Português'), ('Italiano', 'Русский')]},
             )
 
-    def test_send_invitation__sex(self):
+    def test_prompt__sex(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'sex'
-        yield from self.stranger_setup_wizard._send_invitation()
+        yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
             'Set up your sex. If you pick "Not Specified" you can\'t choose your partner\'s sex.',
             reply_markup={'keyboard': [('Female', 'Male'), ('Not specified',)]},
             )
 
-    def test_send_invitation__partner_sex(self):
+    def test_prompt__partner_sex(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'partner_sex'
-        yield from self.stranger_setup_wizard._send_invitation()
+        yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
             'Choose your partner\'s sex',
             reply_markup={'keyboard': [('Female', 'Male'), ('Not specified',)]},
             )
 
-    def test_send_invitation__other_step(self):
+    def test_prompt__other_step(self):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'foo_step'
-        yield from self.stranger_setup_wizard._send_invitation()
+        yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_not_called()

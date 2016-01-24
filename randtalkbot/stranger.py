@@ -8,12 +8,16 @@ import asyncio
 import datetime
 import json
 import logging
+import random
+import string
 from .i18n import get_languages_names, get_translations
 from .stranger_sender import StrangerSenderError
 from .stranger_sender_service import StrangerSenderService
 from peewee import *
 from telepot import TelegramError
 
+INVITATION_CHARS = string.ascii_letters + string.digits + string.punctuation
+INVITATION_LENGTH = 10
 LANGUAGES_MAX_LENGTH = 40
 LOGGER = logging.getLogger('randtalkbot')
 
@@ -62,6 +66,9 @@ class StrangerError(Exception):
     pass
 
 class Stranger(Model):
+    bonus_count = IntegerField(default=0)
+    invitation = CharField(max_length=INVITATION_LENGTH, unique=True)
+    invited_by = ForeignKeyField('self', null=True, related_name='invited')
     languages = CharField(max_length=LANGUAGES_MAX_LENGTH, null=True)
     looking_for_partner_from = DateTimeField(null=True)
     partner = ForeignKeyField('self', null=True)
@@ -81,12 +88,30 @@ class Stranger(Model):
             )
 
     @classmethod
+    def get_invitation(self):
+        return ''.join([random.choice(INVITATION_CHARS) for i in range(INVITATION_LENGTH)])
+
+    @classmethod
     def _get_sex_code(self, sex_name):
         sex = sex_name.strip().lower()
         try:
             return SEX_NAMES_TO_CODES[sex]
         except KeyError:
             raise SexError(sex_name)
+
+    @asyncio.coroutine
+    def add_bonus(self):
+        self.bonus_count += 1
+        self.save()
+        sender = self.get_sender()
+        try:
+            yield from sender.send_notification(
+                _('You\'ve received one bonus for inviting a person to the bot. You can use it to find '
+                    'a partner quickly. Total bonus count: {0}. Congratulations!'),
+                self.bonus_count,
+                )
+        except TelegramError as e:
+            LOGGER.warning('Add bonus. Can\'t notify stranger %d: %s', self.id, e)
 
     @asyncio.coroutine
     def _advertise(self):
@@ -322,8 +347,4 @@ class Stranger(Model):
         self.partner_sex = Stranger._get_sex_code(partner_sex_name)
 
     def speaks_on_language(self, language):
-        if self.languages:
-            languages = json.loads(self.languages)
-        else:
-            return False
-        return language in languages
+        return language in self.get_languages()

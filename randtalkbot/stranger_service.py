@@ -4,8 +4,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
 import logging
-from .stranger import Stranger
+from .stranger import INVITATION_LENGTH, Stranger
 from peewee import *
 from playhouse.shortcuts import RetryOperationalError
 from randtalkbot import stranger
@@ -104,7 +105,13 @@ class StrangerService:
 
     def get_or_create_stranger(self, telegram_id):
         try:
-            stranger, created = Stranger.get_or_create(telegram_id=telegram_id)
+            try:
+                stranger = Stranger.get(Stranger.telegram_id == telegram_id)
+            except DoesNotExist:
+                stranger = Stranger.create(
+                    invitation=Stranger.get_invitation(),
+                    telegram_id=telegram_id,
+                    )
         except DatabaseError as e:
             raise StrangerServiceError(
                 'Database problems during `get_or_create_stranger`: {0}'.format(e),
@@ -113,9 +120,22 @@ class StrangerService:
 
     def get_stranger(self, telegram_id):
         try:
-            stranger = Stranger.select().where(Stranger.telegram_id == telegram_id).get()
+            stranger = Stranger.get(Stranger.telegram_id == telegram_id)
         except (DatabaseError, DoesNotExist) as e:
             raise StrangerServiceError(
-                'Database problems during `get_or_create_stranger`: {0}'.format(e),
+                'Database problems during `get_stranger`: {0}'.format(e),
+                )
+        return self.get_cached_stranger(stranger)
+
+    def get_stranger_by_invitation(self, invitation):
+        if len(invitation) != INVITATION_LENGTH:
+            raise StrangerServiceError(
+                'Invitation length is wrong: \"{0}\"'.format(invitation),
+                )
+        try:
+            stranger = Stranger.get(Stranger.invitation == invitation)
+        except (DatabaseError, DoesNotExist) as e:
+            raise StrangerServiceError(
+                'Database problems during `get_stranger_by_invitation`: {0}'.format(e),
                 )
         return self.get_cached_stranger(stranger)

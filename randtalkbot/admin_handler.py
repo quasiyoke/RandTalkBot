@@ -13,23 +13,18 @@ from .stranger_service import StrangerServiceError
 LOGGER = logging.getLogger('randtalkbot')
 
 class AdminHandler(StrangerHandler):
-    COMMANDS = StrangerHandler.COMMANDS + ['clear']
-
     @asyncio.coroutine
-    def handle_command(self, command, args=None):
-        if command == 'clear':
-            try:
-                telegram_id = int(args)
-            except (ValueError, TypeError):
-                yield from self._sender.send_notification('Please specify Telegram ID like this: /clear 31416')
-                return
-            try:
-                stranger = self._stranger_service.get_stranger(telegram_id)
-            except StrangerServiceError as e:
-                yield from self._sender.send_notification('Stranger wasn\'t found: {0}', e)
-                return
-            yield from stranger.end_chatting()
-            yield from self._sender.send_notification('Stranger was cleared.')
-            LOGGER.debug('Clear: %d -> %d', self._stranger.id, telegram_id)
-        else:
-            yield from super(AdminHandler, self).handle_command(command, args)
+    def _handle_command_clear(self, message):
+        try:
+            telegram_id = int(message.command_args)
+        except (ValueError, TypeError):
+            yield from self._sender.send_notification('Please specify Telegram ID like this: /clear 31416')
+            return
+        try:
+            stranger = self._stranger_service.get_stranger(telegram_id)
+        except StrangerServiceError as e:
+            yield from self._sender.send_notification('Stranger wasn\'t found: {0}', e)
+            return
+        yield from stranger.end_chatting()
+        yield from self._sender.send_notification('Stranger was cleared.')
+        LOGGER.debug('Clear: %d -> %d', self._stranger.id, telegram_id)

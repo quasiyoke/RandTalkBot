@@ -36,8 +36,6 @@ class UnknownCommandError(Exception):
         self.command = command
 
 class StrangerHandler(telepot.helper.ChatHandler):
-    COMMAND_RE_PATTERN = re.compile('^/(\w+)\\b\s*(.*)$')
-    COMMANDS = ['begin', 'end', 'help', 'setup', 'start', ]
     HOUR_TIMEDELTA = datetime.timedelta(hours=1)
     LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=10)
 
@@ -58,85 +56,107 @@ class StrangerHandler(telepot.helper.ChatHandler):
         except StrangerServiceError as e:
             LOGGER.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
-        self._sender = StrangerSenderService.get_instance(bot) \
-            .get_or_create_stranger_sender(self._stranger)
+        self._sender = StrangerSenderService.get_instance(bot).get_or_create_stranger_sender(self._stranger)
         self._stranger_setup_wizard = StrangerSetupWizard(self._stranger)
         self._deferred_advertising = None
 
-    @classmethod
-    def _get_command(cls, message):
-        command_match = cls.COMMAND_RE_PATTERN.match(message)
-        if not command_match:
-            raise MissingCommandError()
-        command = command_match.group(1)
-        args = command_match.group(2)
-        if command not in cls.COMMANDS:
-            raise UnknownCommandError(command)
-        return command, args
+    @asyncio.coroutine
+    def handle_command(self, message):
+        try:
+            yield from getattr(self, '_handle_command_' + message.command)(message)
+        except AttributeError:
+            raise UnknownCommandError(message.command)
 
     @asyncio.coroutine
-    def handle_command(self, command, args=None):
-        if command == 'start':
-            LOGGER.debug('Start: %d', self._stranger.id)
+    def _handle_command_begin(self, message):
+        self._stranger.prevent_advertising()
+        try:
+            looked_for_partner_from = (yield from self._set_partner())
+        except PartnerObtainingError:
+            LOGGER.debug('Looking for partner: %d', self._stranger.id)
+            self._stranger.advertise_later()
+            yield from self._stranger.set_looking_for_partner()
+        except StrangerHandlerError as e:
+            LOGGER.warning('Can\'t notify seeking for partner stranger: %s', e)
+        except StrangerServiceError as e:
+            LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
+            yield from self._sender.send_notification(
+                _('Internal error. Admins are already notified about that'),
+                )
+        else:
+            looked_for_partner_for = datetime.datetime.utcnow() - looked_for_partner_from
+            if type(self).LONG_WAITING_TIMEDELTA < looked_for_partner_for:
+                # Notify Stranger if his partner did wait too much and could be asleep.
+                if type(self).HOUR_TIMEDELTA <= looked_for_partner_for:
+                    yield from self._sender.send_notification(
+                        _('Your partner\'s been looking for you for {0} hr. Say him \"Hello\" -- '
+                            'if he doesn\'t respond to you, launch search again by /begin command.'),
+                        round(looked_for_partner_for.total_seconds() / 3600),
+                        )
+                else:
+                    yield from self._sender.send_notification(
+                        _('Your partner\'s been looking for you for {0} min. Say him \"Hello\" -- '
+                            'if he doesn\'t respond to you, launch search again by /begin command.'),
+                        round(looked_for_partner_for.total_seconds() / 60),
+                        )
+
+    @asyncio.coroutine
+    def _handle_command_end(self, message):
+        LOGGER.debug(
+            '/end: %d -x-> %d',
+            self._stranger.id,
+            self._stranger.partner.id if self._stranger.partner else 0,
+            )
+        self._stranger.prevent_advertising()
+        yield from self._stranger.end_chatting()
+
+    @asyncio.coroutine
+    def _handle_command_help(self, message):
+        yield from self._sender.send_notification(
+            _('*Help*\n\nUse /begin to start looking for a conversational partner, once '
+                'you\'re matched you can use /end to end the conversation.\n\nIf you have any '
+                'suggestions or require help, please contact @quasiyoke. When asking questions, '
+                'please provide this number: {0}\n\nYou\'re welcome to inspect and improve '
+                '[Rand Talk\'s source code.](https://github.com/quasiyoke/RandTalkBot)\n\n'
+                'version {1}'),
+                self.chat_id,
+                __version__,
+            )
+
+    @asyncio.coroutine
+    def _handle_command_setup(self, message):
+        LOGGER.debug('/setup: %d', self._stranger.id)
+        self._stranger.prevent_advertising()
+        yield from self._stranger.end_chatting()
+        yield from self._stranger_setup_wizard.activate()
+
+    @asyncio.coroutine
+    def _handle_command_start(self, message):
+        LOGGER.debug('/start: %d', self._stranger.id)
+        if message.command_args and not self._stranger.invited_by:
+            try:
+                command_args = message.decode_command_args()
+            except UnsupportedContentError as e:
+                LOGGER.info('/start error. Can\'t decode invitation: %s', e)
+            else:
+                try:
+                    invitation = command_args['invitation']
+                except (KeyError, TypeError) as e:
+                    LOGGER.info('/start error. Can\'t obtain invitation: %s', e)
+                else:
+                    try:
+                        invited_by = self._stranger_service.get_stranger_by_invitation(invitation)
+                    except StrangerServiceError as e:
+                        LOGGER.info('/start error. Can\'t obtain stranger who did invite: %s', e)
+                    else:
+                        self._stranger.invited_by = invited_by
+                        self._stranger.save()
+                        yield from invited_by.add_bonus()
+        if self._stranger.wizard == 'none':
             yield from self._sender.send_notification(
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
-                    'you\'re matched you can use /end to end the conversation.')
+                    'you\'re matched you can use /end to end the conversation.'),
                 )
-        elif command == 'begin':
-            self._stranger.prevent_advertising()
-            try:
-                looked_for_partner_from = (yield from self._set_partner())
-            except PartnerObtainingError:
-                LOGGER.debug('Looking for partner: %d', self._stranger.id)
-                self._stranger.advertise_later()
-                yield from self._stranger.set_looking_for_partner()
-            except StrangerHandlerError as e:
-                LOGGER.warning('Can\'t notify seeking for partner stranger: %s', e)
-            except StrangerServiceError as e:
-                LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
-                yield from self._sender.send_notification(
-                    _('Internal error. Admins are already notified about that'),
-                    )
-            else:
-                looked_for_partner_for = datetime.datetime.utcnow() - looked_for_partner_from
-                if type(self).LONG_WAITING_TIMEDELTA < looked_for_partner_for:
-                    # Notify Stranger if his partner did wait too much and could be asleep.
-                    if type(self).HOUR_TIMEDELTA <= looked_for_partner_for:
-                        yield from self._sender.send_notification(
-                            _('Your partner\'s been looking for you for {0} hr. Say him \"Hello\" -- '
-                                'if he doesn\'t respond to you, launch search again by /begin command.'),
-                            round(looked_for_partner_for.total_seconds() / 3600),
-                            )
-                    else:
-                        yield from self._sender.send_notification(
-                            _('Your partner\'s been looking for you for {0} min. Say him \"Hello\" -- '
-                                'if he doesn\'t respond to you, launch search again by /begin command.'),
-                            round(looked_for_partner_for.total_seconds() / 60),
-                            )
-        elif command == 'end':
-            LOGGER.debug(
-                'Finished chatting: %d -x-> %d',
-                self._stranger.id,
-                self._stranger.partner.id if self._stranger.partner else 0,
-                )
-            self._stranger.prevent_advertising()
-            yield from self._stranger.end_chatting()
-        elif command == 'help':
-            yield from self._sender.send_notification(
-                _('*Help*\n\nUse /begin to start looking for a conversational partner, once '
-                    'you\'re matched you can use /end to end the conversation.\n\nIf you have any '
-                    'suggestions or require help, please contact @quasiyoke. When asking questions, '
-                    'please provide this number: {0}\n\nYou\'re welcome to inspect and improve '
-                    '[Rand Talk\'s source code.](https://github.com/quasiyoke/RandTalkBot)\n\n'
-                    'version {1}'),
-                    self.chat_id,
-                    __version__,
-                )
-        elif command == 'setup':
-            LOGGER.debug('Setup: %d', self._stranger.id)
-            self._stranger.prevent_advertising()
-            yield from self._stranger.end_chatting()
-            yield from self._stranger_setup_wizard.activate()
 
     @asyncio.coroutine
     def on_message(self, message_json):
@@ -151,36 +171,16 @@ class StrangerHandler(telepot.helper.ChatHandler):
             yield from self._sender.send_notification(_('Messages of this type aren\'t supported.'))
             return
 
-        if content_type == 'text':
-            if not (yield from self._stranger_setup_wizard.handle(message_json['text'])):
-                try:
-                    command, args = type(self)._get_command(message_json['text'])
-                except MissingCommandError:
-                    try:
-                        yield from self._stranger.send_to_partner(message)
-                    except MissingPartnerError:
-                        pass
-                    except StrangerError:
-                        yield from self._sender.send_notification(
-                            _('Messages of this type aren\'t supported.'),
-                            )
-                    except TelegramError:
-                        LOGGER.warning(
-                            'Send text. Can\'t send to partned: %d -> %d',
-                            self._stranger.id,
-                            self._stranger.partner.id,
-                            )
-                        yield from self._sender.send_notification(
-                            _('Your partner has blocked me! How did you do that?!'),
-                            )
-                        yield from self._stranger.end_chatting()
-                except UnknownCommandError as e:
-                    yield from self._sender.send_notification(
-                        _('Unknown command. Look /help for the full list of commands.'),
-                        )
-                else:
-                    yield from self.handle_command(command, args)
-        else:
+        if message.command:
+            if (yield from self._stranger_setup_wizard.handle_command(message)):
+                return
+            try:
+                yield from self.handle_command(message)
+            except UnknownCommandError as e:
+                yield from self._sender.send_notification(
+                    _('Unknown command. Look /help for the full list of commands.'),
+                    )
+        elif not (yield from self._stranger_setup_wizard.handle(message)):
             try:
                 yield from self._stranger.send_to_partner(message)
             except MissingPartnerError:
@@ -189,7 +189,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 yield from self._sender.send_notification(_('Messages of this type aren\'t supported.'))
             except TelegramError:
                 LOGGER.warning(
-                    'Send media. Can\'t send to partned: %d -> %d',
+                    'Send message. Can\'t send to partned: %d -> %d',
                     self._stranger.id,
                     self._stranger.partner.id,
                     )

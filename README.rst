@@ -7,7 +7,7 @@ Rand Talk
 .. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
 
-Bot matching you with a random person on Telegram. Chat with anonymous strangers `here <https://telegram.me/RandTalkBot>`_.
+Bot matching you with a random person on Telegram. Chat with anonymous strangers speaking on your language `here <https://telegram.me/RandTalkBot>`_.
 
 Deployment
 ----------
@@ -135,10 +135,11 @@ Roadmap
 * 0.3 Partner's sex, language choosing
 * 0.4 Translate interface to various languages
 * 1.0 Almost all messages types support except replies and forwards
-* 1.1 Customizable greetings message
-* 1.2 /oops -- return last partner!
-* 1.3 Don't talk with recent partners
-* 1.4 Replies
+* 1.1 Invitations
+* 1.2 Don't talk with recent partners
+* 1.3 Replies
+* 1.4 Customizable greetings message
+* 1.5 /oops -- return last partner!
 
 Contributing
 ------------

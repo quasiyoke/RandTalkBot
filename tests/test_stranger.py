@@ -23,12 +23,15 @@ class TestStranger(asynctest.TestCase):
     def setUp(self):
         database.create_tables([Stranger])
         self.stranger = Stranger.create(
+            invitation='foo',
             telegram_id=31416,
             )
         self.stranger2 = Stranger.create(
+            invitation='bar',
             telegram_id=27183,
             )
         self.stranger3 = Stranger.create(
+            invitation='baz',
             telegram_id=23571,
             )
 
@@ -40,6 +43,42 @@ class TestStranger(asynctest.TestCase):
         stranger = Stranger.get(Stranger.telegram_id == 31416)
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, None)
+
+    @patch('randtalkbot.stranger.INVITATION_LENGTH', 5)
+    @asynctest.ignore_loop
+    def test_get_invitation(self):
+        invitation = Stranger.get_invitation()
+        self.assertIsInstance(invitation, str)
+        self.assertEqual(len(invitation), 5)
+
+    def test_add_bonus__ok(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.bonus_count = 1000
+        self.stranger.save = Mock()
+        yield from self.stranger.add_bonus()
+        self.stranger.save.assert_called_once_with()
+        self.assertEqual(self.stranger.bonus_count, 1001)
+        sender.send_notification.assert_called_once_with(
+            'You\'ve received one bonus for inviting a person to the bot. You can use it to find '
+                'a partner quickly. Total bonus count: {0}. Congratulations!',
+            1001,
+            )
+
+    @patch('randtalkbot.stranger.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_add_bonus__telegram_error(self):
+        from randtalkbot.stranger import LOGGER
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.bonus_count = 1000
+        self.stranger.save = Mock()
+        error = TelegramError('foo_description', 123)
+        sender.send_notification.side_effect = error
+        yield from self.stranger.add_bonus()
+        self.stranger.save.assert_called_once_with()
+        self.assertEqual(self.stranger.bonus_count, 1001)
+        LOGGER.warning.assert_called_once_with('Add bonus. Can\'t notify stranger %d: %s', 1, error)
 
     @patch('randtalkbot.stranger.asyncio')
     @asyncio.coroutine

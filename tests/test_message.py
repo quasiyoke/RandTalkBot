@@ -40,6 +40,44 @@ class TestMessage(unittest.TestCase):
             'file_size': 34348,
             }
 
+    def test_decode_command_args__ok(self):
+        message = Mock()
+        message.command_args = 'eyJmb28iOiAiYmFyIn0='
+        self.assertEqual(
+            Message.decode_command_args(message),
+            {"foo": "bar"},
+            )
+
+    def test_decode_command_args__b64decode_type_error(self):
+        message = Mock()
+        message.command_args = None
+        with self.assertRaises(UnsupportedContentError):
+            Message.decode_command_args(message)
+
+    def test_decode_command_args__b64decode_incorrect_padding(self):
+        message = Mock()
+        message.command_args = 'NoonfowfVyZSwg'
+        with self.assertRaises(UnsupportedContentError):
+            Message.decode_command_args(message)
+
+    def test_decode_command_args__b64decode_value_error(self):
+        message = Mock()
+        message.command_args = 'кириллица'
+        with self.assertRaises(UnsupportedContentError):
+            Message.decode_command_args(message)
+
+    def test_decode_command_args__unicode_decode_error(self):
+        message = Mock()
+        message.command_args = '_w==' # b'\xff'
+        with self.assertRaises(UnsupportedContentError):
+            Message.decode_command_args(message)
+
+    def test_decode_command_args__loading_json_error(self):
+        message = Mock()
+        message.command_args = 'Ww==' # b'['
+        with self.assertRaises(UnsupportedContentError):
+            Message.decode_command_args(message)
+
     def test_init__audio(self):
         self.message_json['audio'] = {
             'file_id': 'foo',
@@ -78,6 +116,22 @@ class TestMessage(unittest.TestCase):
         telepot.glance2.return_value = 'audio', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
+
+    @patch('randtalkbot.message.telepot')
+    def test_init__command_with_args(self, telepot):
+        telepot.glance2.return_value = 'text', 'private', 31416
+        self.message_json['text'] = '/begin chat'
+        message = Message(self.message_json)
+        self.assertEqual(message.command, 'begin')
+        self.assertEqual(message.command_args, 'chat')
+
+    @patch('randtalkbot.message.telepot')
+    def test_init__command_without_args(self, telepot):
+        telepot.glance2.return_value = 'text', 'private', 31416
+        self.message_json['text'] = '/start'
+        message = Message(self.message_json)
+        self.assertEqual(message.command, 'start')
+        self.assertEqual(message.command_args, '')
 
     def test_init__document(self):
         self.message_json['document'] = {
@@ -133,6 +187,7 @@ class TestMessage(unittest.TestCase):
                 'photo': 'foo',
                 },
             )
+        self.assertEqual(message.text, None)
 
     def test_init__photo_with_caption(self):
         self.message_json['photo'] = [
@@ -176,12 +231,15 @@ class TestMessage(unittest.TestCase):
             message.sending_kwargs,
             {'text': 'foo'},
             )
+        self.assertEqual(message.text, 'foo')
 
     @patch('randtalkbot.message.telepot')
-    def test_init__text_invalid(self, telepot):
+    def test_init__text_without_command_has_empty_comand_field(self, telepot):
         telepot.glance2.return_value = 'text', 'private', 31416
-        with self.assertRaises(UnsupportedContentError):
-            Message(self.message_json)
+        self.message_json['text'] = 'foo'
+        message = Message(self.message_json)
+        self.assertEqual(message.command, None)
+        self.assertEqual(message.command_args, None)
 
     def test_init__video(self):
         self.message_json['video'] = {
