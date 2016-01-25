@@ -121,7 +121,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
             try:
                 command_args = message.decode_command_args()
             except UnsupportedContentError as e:
-                LOGGER.info('/start error. Can\'t decode invitation: %s', e)
+                LOGGER.info('/start error. Can\'t decode invitation %s: %s', message.command_args, e)
             else:
                 try:
                     invitation = command_args['i']
