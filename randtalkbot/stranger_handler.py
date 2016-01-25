@@ -128,7 +128,12 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 except (KeyError, TypeError) as e:
                     LOGGER.info('/start error. Can\'t obtain invitation: %s', e)
                 else:
-                    if self._stranger.invitation != invitation:
+                    if self._stranger.invitation == invitation:
+                        yield from self._sender.send_notification(
+                            _('Don\'t try to fool me. Forward message with the link to your friends and '
+                                'receive well-earned bonuses that will help you to find partner quickly.'),
+                            )
+                    else:
                         try:
                             invited_by = self._stranger_service.get_stranger_by_invitation(invitation)
                         except StrangerServiceError as e:

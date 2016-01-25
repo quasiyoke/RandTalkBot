@@ -242,9 +242,14 @@ class TestStrangerHandler(asynctest.TestCase):
         yield from self.stranger_handler.handle_command(message)
         self.stranger_service.get_stranger_by_invitation.assert_not_called()
         self.assertEqual(self.stranger.invited_by, None)
-        self.sender.send_notification.assert_called_once_with(
-            '*Manual*\n\nUse /begin to start looking for a conversational partner, once '
-                'you\'re matched you can use /end to end the conversation.'
+        self.assertEqual(
+            self.sender.send_notification.call_args_list,
+            [
+                call('Don\'t try to fool me. Forward message with the link to your friends and '
+                    'receive well-earned bonuses that will help you to find partner quickly.'),
+                call('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
+                    'you\'re matched you can use /end to end the conversation.'),
+                ],
             )
 
     def test_handle_command__start_has_invalid_invitation(self):

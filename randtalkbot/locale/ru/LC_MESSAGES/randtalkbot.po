@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-25 15:28+0300\n"
+"POT-Creation-Date: 2016-01-25 17:49+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: Russian\n"
@@ -180,7 +180,16 @@ msgstr ""
 "\n"
 "Версия {1}"
 
-#: randtalkbot/stranger_handler.py:141
+#: randtalkbot/stranger_handler.py:133
+msgid ""
+"Don't try to fool me. Forward message with the link to your friends and "
+"receive well-earned bonuses that will help you to find partner quickly."
+msgstr ""
+"Не пытайтесь меня обмануть. 😉 Разошлите сообщение со ссылкой своим друзьям и "
+"вы получите честнозаработанные бонусы, которые помогут вам находить "
+"собеседников быстрее."
+
+#: randtalkbot/stranger_handler.py:147
 msgid ""
 "*Manual*\n"
 "\n"
@@ -192,15 +201,15 @@ msgstr ""
 "Чтобы приступить к поиску собеседника, скомандуйте /begin. Когда ваш партнер "
 "будет найден, вы сможете закончить разговор, выполнив /end."
 
-#: randtalkbot/stranger_handler.py:155 randtalkbot/stranger_handler.py:173
+#: randtalkbot/stranger_handler.py:161 randtalkbot/stranger_handler.py:179
 msgid "Messages of this type aren't supported."
 msgstr "Сообщения такого типа не поддерживаются 😞"
 
-#: randtalkbot/stranger_handler.py:165
+#: randtalkbot/stranger_handler.py:171
 msgid "Unknown command. Look /help for the full list of commands."
 msgstr "Неизвестная команда. Чтобы посмотреть все команды, скомандуйте /help."
 
-#: randtalkbot/stranger_handler.py:181
+#: randtalkbot/stranger_handler.py:187
 msgid "Your partner has blocked me! How did you do that?!"
 msgstr "Ваш собеседник меня заблокировал! И как только вам это удается?! 😕"
 

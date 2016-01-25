@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-25 15:28+0300\n"
+"POT-Creation-Date: 2016-01-25 17:49+0300\n"
 "PO-Revision-Date: Wed Jan 20 2016 21:18:36 GMT+0100\n"
 "Last-Translator: Marco Giustetto <arducode@gmail.com>\n"
 "Language-Team: Italian\n"
@@ -182,7 +182,15 @@ msgstr ""
 "\n"
 "versione {1}"
 
-#: randtalkbot/stranger_handler.py:141
+#: randtalkbot/stranger_handler.py:133
+msgid ""
+"Don't try to fool me. Forward message with the link to your friends and "
+"receive well-earned bonuses that will help you to find partner quickly."
+msgstr ""
+"Non cercare di ingannare me. 😉 Messaggio inoltra con il link ai tuoi amici e "
+"ricevere i bonus meritate che vi aiuterà a trovare partner di fretta."
+
+#: randtalkbot/stranger_handler.py:147
 msgid ""
 "*Manual*\n"
 "\n"
@@ -195,17 +203,17 @@ msgstr ""
 "vuoi cambiare persona, chiudi la chat premendo o scrivendo /end e cerca "
 "un'altra persona."
 
-#: randtalkbot/stranger_handler.py:155 randtalkbot/stranger_handler.py:173
+#: randtalkbot/stranger_handler.py:161 randtalkbot/stranger_handler.py:179
 msgid "Messages of this type aren't supported."
 msgstr ""
 "Mi dispiace, il bot non supporta messaggi inoltrati o risposte ad altri "
 "messaggi 😞"
 
-#: randtalkbot/stranger_handler.py:165
+#: randtalkbot/stranger_handler.py:171
 msgid "Unknown command. Look /help for the full list of commands."
 msgstr "Comando sconosciuto. Premi /help per una lista di tutti i comandi."
 
-#: randtalkbot/stranger_handler.py:181
+#: randtalkbot/stranger_handler.py:187
 msgid "Your partner has blocked me! How did you do that?!"
 msgstr "L'altra persona mi ha bloccato. Cosa hai fatto?! 😕"
 
