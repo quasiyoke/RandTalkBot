@@ -285,7 +285,7 @@ class TestMessage(unittest.TestCase):
         self.assertEqual(
             message.sending_kwargs,
             {
-                'voice': 'foo',
+                'audio': 'foo',
                 'duration': None,
                 },
             )
@@ -299,7 +299,7 @@ class TestMessage(unittest.TestCase):
         self.assertEqual(
             message.sending_kwargs,
             {
-                'voice': 'foo',
+                'audio': 'foo',
                 'duration': 85,
                 },
             )
