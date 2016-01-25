@@ -197,7 +197,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 yield from partner.notify_partner_found(self._stranger)
             except StrangerError:
                 # Potential partner has blocked the bot. Let's look for next potential partner.
-                pass
+                yield from partner.end_chatting()
             else:
                 try:
                     yield from self._stranger.notify_partner_found(partner)
