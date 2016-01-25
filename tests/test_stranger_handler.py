@@ -84,22 +84,25 @@ class TestStrangerHandler(asynctest.TestCase):
         yield from self.stranger_handler.handle_command(message)
         self.stranger.prevent_advertising.assert_called_once_with()
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
-        self.stranger.set_partner.assert_called_once_with(partner)
+        self.stranger.notify_partner_found.assert_called_once_with(partner)
         partner.set_partner.assert_called_once_with(self.stranger)
+        self.stranger.set_partner.assert_called_once_with(partner)
+        partner.notify_partner_found.assert_called_once_with(self.stranger)
 
     @patch('randtalkbot.stranger_handler.LOGGER', Mock())
     @asyncio.coroutine
     def test_handle_command__begin_stranger_has_blocked_the_bot(self):
         partner = CoroutineMock()
         self.stranger_service.get_partner.return_value = partner
-        self.stranger.set_partner.side_effect = StrangerError()
+        self.stranger.notify_partner_found.side_effect = StrangerError()
         message = Mock()
         message.command = 'begin'
         yield from self.stranger_handler.handle_command(message)
         self.stranger_service.get_partner.assert_called_once_with(self.stranger)
-        self.stranger.set_partner.assert_called_once_with(partner)
-        partner.set_looking_for_partner.assert_called_once_with()
-        partner.set_partner.assert_called_once_with(self.stranger)
+        self.stranger.notify_partner_found.assert_called_once_with(partner)
+        partner.set_partner.assert_not_called()
+        self.stranger.set_partner.assert_not_called()
+        partner.notify_partner_found.assert_called_once_with(self.stranger)
 
     @patch('randtalkbot.stranger_handler.datetime', Mock())
     @asyncio.coroutine
@@ -109,7 +112,7 @@ class TestStrangerHandler(asynctest.TestCase):
         partner = CoroutineMock()
         partner.looking_for_partner_from = datetime.datetime(1970, 1, 1)
         self.stranger_service.get_partner.return_value = partner
-        partner.set_partner.side_effect = [StrangerError(), None]
+        partner.notify_partner_found.side_effect = [StrangerError(), None]
         message = Mock()
         message.command = 'begin'
         yield from self.stranger_handler.handle_command(message)
@@ -121,13 +124,13 @@ class TestStrangerHandler(asynctest.TestCase):
                 ],
             )
         self.assertEqual(
-            partner.set_partner.call_args_list,
+            partner.notify_partner_found.call_args_list,
             [
                 call(self.stranger),
                 call(self.stranger),
                 ],
             )
-        self.stranger.set_partner.assert_called_once_with(partner)
+        self.stranger.notify_partner_found.assert_called_once_with(partner)
 
     def test_handle_command__begin_partner_obtaining_error(self):
         from randtalkbot.stranger_service import PartnerObtainingError
@@ -158,40 +161,6 @@ class TestStrangerHandler(asynctest.TestCase):
             )
         self.sender.send_notification.assert_called_once_with(
             'Internal error. Admins are already notified about that',
-            )
-
-    @patch('randtalkbot.stranger_handler.datetime', Mock())
-    @asyncio.coroutine
-    def test_handle_command__begin_waiting_several_minutes(self):
-        from randtalkbot.stranger_handler import datetime as datetime_mock
-        datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1, 10, 11)
-        partner = CoroutineMock()
-        partner.looking_for_partner_from = datetime.datetime(1970, 1, 1, 10, 0)
-        self.stranger_service.get_partner.return_value = partner
-        message = Mock()
-        message.command = 'begin'
-        yield from self.stranger_handler.handle_command(message)
-        self.sender.send_notification.assert_called_once_with(
-            'Your partner\'s been looking for you for {0} min. Say him "Hello" -- if he doesn\'t '
-                'respond to you, launch search again by /begin command.',
-            11,
-            )
-
-    @patch('randtalkbot.stranger_handler.datetime', Mock())
-    @asyncio.coroutine
-    def test_handle_command__begin_waiting_several_hours(self):
-        from randtalkbot.stranger_handler import datetime as datetime_mock
-        datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1, 11, 0)
-        partner = CoroutineMock()
-        partner.looking_for_partner_from = datetime.datetime(1970, 1, 1, 10, 0)
-        self.stranger_service.get_partner.return_value = partner
-        message = Mock()
-        message.command = 'begin'
-        yield from self.stranger_handler.handle_command(message)
-        self.sender.send_notification.assert_called_once_with(
-            'Your partner\'s been looking for you for {0} hr. Say him "Hello" -- if he doesn\'t '
-                'respond to you, launch search again by /begin command.',
-            1,
             )
 
     def test_handle_command__end(self):
@@ -229,7 +198,7 @@ class TestStrangerHandler(asynctest.TestCase):
         message = Mock()
         message.command = 'start'
         message.command_args = 'foo_args'
-        message.decode_command_args.return_value = {'invitation': 'foo_invitation'}
+        message.decode_command_args.return_value = {'i': 'foo_invitation'}
         invited_by = CoroutineMock()
         self.stranger_service.get_stranger_by_invitation.return_value = invited_by
         self.stranger.wizard = 'none'
@@ -248,7 +217,7 @@ class TestStrangerHandler(asynctest.TestCase):
         message = Mock()
         message.command = 'start'
         message.command_args = 'foo_args'
-        message.decode_command_args.return_value = {'invitation': 'foo_invitation'}
+        message.decode_command_args.return_value = {'i': 'foo_invitation'}
         invited_by = CoroutineMock()
         self.stranger_service.get_stranger_by_invitation.return_value = invited_by
         self.stranger.wizard = 'none'
@@ -311,7 +280,7 @@ class TestStrangerHandler(asynctest.TestCase):
         message = Mock()
         message.command = 'start'
         message.command_args = 'foo_args'
-        message.decode_command_args.return_value = {'invitation': 'foo_invitation'}
+        message.decode_command_args.return_value = {'i': 'foo_invitation'}
         self.stranger_service.get_stranger_by_invitation.side_effect = StrangerServiceError()
         self.stranger.wizard = 'none'
         self.stranger.invited_by = None

@@ -23,10 +23,12 @@ class TestStrangerSender(asynctest.TestCase):
         self.translation = self.get_translation.return_value
         self.translation.reset_mock()
 
+    @patch('randtalkbot.stranger_sender.StrangerSender.update_translation', Mock())
     @asynctest.ignore_loop
     def test_init(self):
-        self.stranger.get_languages.assert_called_once_with()
-        self.get_translation.assert_called_once_with('foo_languages')
+        self.get_translation.reset_mock()
+        sender = StrangerSender(Mock(), Mock())
+        StrangerSender.update_translation.assert_called_once_with()
 
     def test_send_notification__no_reply_markup(self):
         self.translation.return_value = 'foo_translation'
@@ -123,3 +125,24 @@ class TestStrangerSender(asynctest.TestCase):
         with self.assertRaises(StrangerSenderError):
             yield from self.sender.send(message)
         self.sender.sendMessage.assert_not_called()
+
+    @patch('randtalkbot.stranger_sender.get_translation', Mock(return_value='foo_translation'))
+    @asynctest.ignore_loop
+    def test_update_translation__has_partner(self):
+        from randtalkbot.stranger_sender import get_translation
+        self.stranger.get_common_languages.reset_mock()
+        self.stranger.get_common_languages.return_value = 'foo_common_languages'
+        partner = Mock()
+        self.sender.update_translation(partner)
+        self.stranger.get_common_languages.assert_called_once_with(partner)
+        get_translation.assert_called_once_with('foo_common_languages')
+        self.assertEqual(self.sender._, 'foo_translation')
+
+    @patch('randtalkbot.stranger_sender.get_translation', Mock(return_value='foo_translation'))
+    @asynctest.ignore_loop
+    def test_update_translation__has_not_partner(self):
+        from randtalkbot.stranger_sender import get_translation
+        self.stranger.partner = None
+        self.sender.update_translation()
+        get_translation.assert_called_once_with('foo_languages')
+        self.assertEqual(self.sender._, 'foo_translation')

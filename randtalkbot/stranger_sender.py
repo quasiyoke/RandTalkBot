@@ -77,5 +77,9 @@ class StrangerSender(telepot.helper.Sender):
             reply_markup=reply_markup,
             )
 
-    def update_translation(self):
-        self._ = get_translation(self._stranger.get_languages())
+    def update_translation(self, partner=None):
+        if partner:
+            languages = self._stranger.get_common_languages(partner)
+        else:
+            languages = self._stranger.get_languages()
+        self._ = get_translation(languages)

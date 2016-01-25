@@ -158,30 +158,14 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
     def test_get_partner__returns_the_longest_waiting_stranger_1(self):
         self.stranger_0.languages = '["foo", "bar", "baz"]'
         self.stranger_0.save()
+        # The longest waiting stranger with max bonus count.
         self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.bonus_count = 1
         self.stranger_1.save()
-        # The longest waiting stranger.
         self.stranger_2.looking_for_partner_from = datetime.datetime(1980, 1, 1)
         self.stranger_2.save()
         self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
-        self.stranger_3.save()
-        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
-        self.stranger_4.save()
-        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
-        self.stranger_5.save()
-        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
-        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
-        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_2)
-
-    def test_get_partner__returns_the_longest_waiting_stranger_2(self):
-        self.stranger_0.languages = '["foo", "bar", "baz"]'
-        self.stranger_0.save()
-        # The longest waiting stranger.
-        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
-        self.stranger_1.save()
-        self.stranger_2.looking_for_partner_from = datetime.datetime(1994, 1, 1)
-        self.stranger_2.save()
-        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.bonus_count = 1
         self.stranger_3.save()
         self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
         self.stranger_4.save()
@@ -190,6 +174,26 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
         self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
         self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_1)
+
+    def test_get_partner__returns_the_longest_waiting_stranger_2(self):
+        self.stranger_0.languages = '["foo", "bar", "baz"]'
+        self.stranger_0.save()
+        self.stranger_1.looking_for_partner_from = datetime.datetime(1990, 1, 1)
+        self.stranger_1.save()
+        self.stranger_2.looking_for_partner_from = datetime.datetime(1994, 1, 1)
+        self.stranger_2.bonus_count = 1
+        self.stranger_2.save()
+        self.stranger_3.looking_for_partner_from = datetime.datetime(1991, 1, 1)
+        self.stranger_3.save()
+        # The longest waiting stranger with max bonus count.
+        self.stranger_4.looking_for_partner_from = datetime.datetime(1993, 1, 1)
+        self.stranger_4.bonus_count = 1
+        self.stranger_4.save()
+        self.stranger_5.looking_for_partner_from = datetime.datetime(1992, 1, 1)
+        self.stranger_5.save()
+        self.stranger_service.get_cached_stranger = Mock(return_value='cached_partner')
+        self.assertEqual(self.stranger_service.get_partner(self.stranger_0), 'cached_partner')
+        self.stranger_service.get_cached_stranger.assert_called_once_with(self.stranger_4)
 
     def test_get_partner__returns_stranger_with_proper_sex_1(self):
         self.stranger_0.languages = '["foo", "bar", "baz"]'

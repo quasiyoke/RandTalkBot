@@ -71,7 +71,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
     def _handle_command_begin(self, message):
         self._stranger.prevent_advertising()
         try:
-            looked_for_partner_from = (yield from self._set_partner())
+            yield from self._set_partner()
         except PartnerObtainingError:
             LOGGER.debug('Looking for partner: %d', self._stranger.id)
             self._stranger.advertise_later()
@@ -83,22 +83,6 @@ class StrangerHandler(telepot.helper.ChatHandler):
             yield from self._sender.send_notification(
                 _('Internal error. Admins are already notified about that'),
                 )
-        else:
-            looked_for_partner_for = datetime.datetime.utcnow() - looked_for_partner_from
-            if type(self).LONG_WAITING_TIMEDELTA < looked_for_partner_for:
-                # Notify Stranger if his partner did wait too much and could be asleep.
-                if type(self).HOUR_TIMEDELTA <= looked_for_partner_for:
-                    yield from self._sender.send_notification(
-                        _('Your partner\'s been looking for you for {0} hr. Say him \"Hello\" -- '
-                            'if he doesn\'t respond to you, launch search again by /begin command.'),
-                        round(looked_for_partner_for.total_seconds() / 3600),
-                        )
-                else:
-                    yield from self._sender.send_notification(
-                        _('Your partner\'s been looking for you for {0} min. Say him \"Hello\" -- '
-                            'if he doesn\'t respond to you, launch search again by /begin command.'),
-                        round(looked_for_partner_for.total_seconds() / 60),
-                        )
 
     @asyncio.coroutine
     def _handle_command_end(self, message):
@@ -140,7 +124,7 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 LOGGER.info('/start error. Can\'t decode invitation: %s', e)
             else:
                 try:
-                    invitation = command_args['invitation']
+                    invitation = command_args['i']
                 except (KeyError, TypeError) as e:
                     LOGGER.info('/start error. Can\'t obtain invitation: %s', e)
                 else:
@@ -206,25 +190,23 @@ class StrangerHandler(telepot.helper.ChatHandler):
         @raise PartnerObtainingError if there's no proper partners.
         @raise StrangerHandlerError if the stranger has blocked the bot.
         @raise StrangerServiceError if there're some DB troubles.
-        @return The datetime when partner started looking for the stranger.
         '''
         while True:
             partner = self._stranger_service.get_partner(self._stranger)
-            looked_for_partner_from = partner.looking_for_partner_from
             try:
-                yield from partner.set_partner(self._stranger)
+                yield from partner.notify_partner_found(self._stranger)
             except StrangerError:
                 # Potential partner has blocked the bot. Let's look for next potential partner.
                 pass
             else:
                 try:
-                    yield from self._stranger.set_partner(partner)
+                    yield from self._stranger.notify_partner_found(partner)
                 except StrangerError as e:
                     # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
                     # the cycle.
-                    yield from partner.set_looking_for_partner()
                     raise StrangerHandlerError('Can\'t notify seeking for partner stranger: {0}'.format(e))
                 else:
+                    yield from self._stranger.set_partner(partner)
+                    yield from partner.set_partner(self._stranger)
                     LOGGER.debug('Found partner: %d -> %d.', self._stranger.id, partner.id)
                     break
-        return looked_for_partner_from

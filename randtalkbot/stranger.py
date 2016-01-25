@@ -5,6 +5,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import base64
 import datetime
 import json
 import logging
@@ -79,12 +80,14 @@ class Stranger(Model):
     wizard_step = CharField(max_length=20, null=True)
 
     ADVERTISING_DELAY = 30
+    HOUR_TIMEDELTA = datetime.timedelta(hours=1)
+    LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=5)
 
     class Meta:
         database = database_proxy
         indexes = (
             (('partner', 'looking_for_partner_from'), False),
-            (('partner', 'sex', 'partner_sex', 'looking_for_partner_from'), False),
+            (('partner', 'sex', 'partner_sex', 'bonus_count', 'looking_for_partner_from'), False),
             )
 
     @classmethod
@@ -106,8 +109,9 @@ class Stranger(Model):
         sender = self.get_sender()
         try:
             yield from sender.send_notification(
-                _('You\'ve received one bonus for inviting a person to the bot. You can use it to find '
-                    'a partner quickly. Total bonus count: {0}. Congratulations!'),
+                _('You\'ve received one bonus for inviting a person to the bot. '
+                    'Bonuses will help you to find partners quickly. Total bonus count: {0}. '
+                    'Congratulations!'),
                 self.bonus_count,
                 )
         except TelegramError as e:
@@ -121,12 +125,17 @@ class Stranger(Model):
             .count()
         if searching_for_partner_count > 1:
             yield from self.get_sender().send_notification(
-                _('You\'re still searching for partner among {0} people. You can talk with some of them if you '
-                    'remove partner\'s sex restrictions or extend the list of languages you know using /setup '
-                    'command. You can share the link to the bot between your friends: telegram.me/RandTalkBot '
-                    'or [vote for Rand Talk](https://telegram.me/storebot?start=randtalkbot). More people '
-                    '-- more fun!'),
+                _('You\'re still searching for partner among {0} people. You can talk with some of them right '
+                    'now if you remove partner\'s sex restrictions or extend the list of languages you know '
+                    'using /setup command.\nMore people -- more fun! Spread Rand Talk between your friends. '
+                    'The more people will use your link -- the faster partner\'s search will be. Share the '
+                    'following message in your chats:'),
                 searching_for_partner_count,
+                )
+            yield from self.get_sender().send_notification(
+                _('I\'m the bot matching you with a random person. Chat with anonymous strangers '
+                    'speaking on your language. Visit: {0}'),
+                'telegram.me/RandTalkBot?start=' + self.get_start_args(),
                 )
 
     def advertise_later(self):
@@ -159,7 +168,8 @@ class Stranger(Model):
             self.save()
 
     def get_common_languages(self, partner):
-        return set(self.get_languages()).intersection(partner.get_languages())
+        partner_languages = partner.get_languages()
+        return [language for language in self.get_languages() if language in partner_languages]
 
     def get_languages(self):
         try:
@@ -173,6 +183,14 @@ class Stranger(Model):
 
     def get_sender(self):
         return StrangerSenderService.get_instance().get_or_create_stranger_sender(self)
+
+    def get_start_args(self):
+        args = {
+            'i': self.invitation,
+            }
+        args = json.dumps(args, separators=(',', ':'))
+        args = base64.urlsafe_b64encode(args.encode('utf-8'))
+        return args.decode('utf-8')
 
     def is_novice(self):
         return self.languages is None and \
@@ -196,6 +214,77 @@ class Stranger(Model):
         except TelegramError as e:
             LOGGER.warning('Kick. Can\'t notify stranger %d: %s', self.id, e)
 
+    def notify_partner_found(self, partner):
+        '''
+        @raise StrangerError If stranger we're changing has blocked the bot.
+        '''
+        self.prevent_advertising()
+        sender = self.get_sender()
+        notification_sentences = []
+
+        common_languages = self.get_common_languages(partner)
+        if len(self.get_languages()) > len(common_languages):
+            # To make the bot speak on common language.
+            sender.update_translation(partner)
+            # If the stranger knows any language which another partner doesn't, we should notify him
+            # especial way.
+            if len(common_languages) == 1:
+                languages_limitations = sender._(_('Use {0} please.')).format(
+                    get_languages_names(common_languages),
+                    )
+            else:
+                languages_limitations = sender._(_('You can use the following languages: {0}.')).format(
+                    get_languages_names(common_languages),
+                    )
+        else:
+            languages_limitations = None
+
+        if self.partner:
+            notification_sentences.append(sender._(_('Here\'s another stranger.')))
+        else:
+            notification_sentences.append(sender._(_('Your partner is here.')))
+
+        if self.looking_for_partner_from and self.bonus_count >= 1:
+            if self.bonus_count - 1:
+                bonuses_notification = sender._(_('You\'ve used one bonus. {0} bonus(es) left.')).format(
+                    self.bonus_count - 1,
+                    )
+            else:
+                bonuses_notification = sender._(_('You\'ve used your last bonus.'))
+            notification_sentences.append(bonuses_notification)
+
+        if languages_limitations:
+            notification_sentences.append(languages_limitations)
+
+        if partner.looking_for_partner_from:
+            looked_for_partner_for = datetime.datetime.utcnow() - partner.looking_for_partner_from
+            if looked_for_partner_for >= type(self).LONG_WAITING_TIMEDELTA:
+                # Notify Stranger if his partner did wait too much and could be asleep.
+                if type(self).HOUR_TIMEDELTA <= looked_for_partner_for:
+                    long_waiting_notification = sender._(
+                        _('Your partner\'s been looking for you for {0} hr. Say him \"Hello\" -- '
+                            'if he doesn\'t respond to you, launch search again by /begin command.'),
+                        ).format(round(looked_for_partner_for.total_seconds() / 3600))
+                else:
+                    long_waiting_notification = sender._(
+                        _('Your partner\'s been looking for you for {0} min. Say him \"Hello\" -- '
+                            'if he doesn\'t respond to you, launch search again by /begin command.'),
+                        ).format(round(looked_for_partner_for.total_seconds() / 60))
+                notification_sentences.append(long_waiting_notification)
+
+        if len(notification_sentences) == 1:
+            notification_sentences.append(sender._(_('Have a nice chat!')))
+
+        try:
+            yield from sender.send_notification(' '.join(notification_sentences))
+        except TelegramError as e:
+            LOGGER.info('Notify stranger partner found. Can\'t notify stranger %d: %s', self.id, e)
+            self.partner = None
+            raise StrangerError(e)
+        finally:
+            # To reset languages.
+            sender.update_translation()
+
     def prevent_advertising(self):
         try:
             if not self._deferred_advertising:
@@ -216,56 +305,6 @@ class Stranger(Model):
             yield from sender.send(message)
         except StrangerSenderError as e:
             raise StrangerError('Can\'t send content: {0}'.format(e))
-
-    @asyncio.coroutine
-    def send_notification_about_another_partner(self, partner):
-        '''
-        Notifies the stranger about retrieving a partner in case when (s)he DID HAS one.
-
-        @raise TelegramError if stranger has blocked the bot.
-        '''
-        sender = self.get_sender()
-        common_languages = self.get_common_languages(partner)
-        if set(self.get_languages()) > common_languages:
-            # If the stranger knows any language which another partner doesn't, we should notify him
-            # especial way.
-            if len(common_languages) == 1:
-                yield from sender.send_notification(
-                    _('Here\'s another stranger. Use {0} please.'),
-                    get_languages_names(common_languages),
-                    )
-            else:
-                yield from sender.send_notification(
-                    _('Here\'s another stranger. You can use the following languages: {0}.'),
-                    get_languages_names(common_languages),
-                    )
-        else:
-            yield from sender.send_notification(_('Here\'s another stranger. Have fun!'))
-
-    @asyncio.coroutine
-    def send_notification_about_retrieving_partner(self, partner):
-        '''
-        Notifies the stranger about retrieving a partner in case when (s)he DIDN'T HAS one.
-
-        @raise TelegramError if stranger has blocked the bot.
-        '''
-        sender = self.get_sender()
-        common_languages = self.get_common_languages(partner)
-        if set(self.get_languages()) > common_languages:
-            # If the stranger knows any language which another partner doesn't, we should notify him
-            # especial way.
-            if len(common_languages) == 1:
-                yield from sender.send_notification(
-                    _('Your partner is here. Use {0} please.'),
-                    get_languages_names(common_languages),
-                    )
-            else:
-                yield from sender.send_notification(
-                    _('Your partner is here. You can use the following languages: {0}.'),
-                    get_languages_names(common_languages),
-                    )
-        else:
-            yield from sender.send_notification(_('Your partner is here. Have a nice chat!'))
 
     @asyncio.coroutine
     def send_to_partner(self, message):
@@ -308,31 +347,14 @@ class Stranger(Model):
 
     @asyncio.coroutine
     def set_partner(self, partner):
-        '''
-        @raise StrangerError If stranger we're changing has blocked the bot.
-        '''
+        if self.looking_for_partner_from and self.bonus_count >= 1:
+            self.bonus_count -= 1
+        if self.partner and self.partner.partner == self:
+            # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
+            yield from self.partner.kick()
+        self.partner = partner
         self.looking_for_partner_from = None
-        self.prevent_advertising()
-        try:
-            if self.partner:
-                if self.partner.partner == self:
-                    # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
-                    yield from self.partner.kick()
-                try:
-                    yield from self.send_notification_about_another_partner(partner)
-                except TelegramError as e:
-                    LOGGER.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
-                    self.partner = None
-                    raise StrangerError(e)
-            else:
-                try:
-                    yield from self.send_notification_about_retrieving_partner(partner)
-                except TelegramError as e:
-                    LOGGER.warning('Set partner. Can\'t notify stranger %d: %s', self.id, e)
-                    raise StrangerError(e)
-            self.partner = partner
-        finally:
-            self.save()
+        self.save()
 
     def set_sex(self, sex_name):
         '''

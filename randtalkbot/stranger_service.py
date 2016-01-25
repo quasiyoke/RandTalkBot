@@ -82,7 +82,10 @@ class StrangerService:
                 possible_partners = possible_partners.where(
                     Stranger.sex == stranger.partner_sex,
                     )
-            possible_partners = possible_partners.order_by(Stranger.looking_for_partner_from)
+            possible_partners = possible_partners.order_by(
+                Stranger.bonus_count.desc(),
+                Stranger.looking_for_partner_from,
+                )
             partner = None
             partner_language_priority = 1000
             for possible_partner in possible_partners:
