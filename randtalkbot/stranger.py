@@ -86,7 +86,7 @@ class Stranger(Model):
     class Meta:
         database = database_proxy
         indexes = (
-            (('partner', 'looking_for_partner_from'), False),
+            (('partner', 'bonus_count', 'looking_for_partner_from'), False),
             (('partner', 'sex', 'partner_sex', 'bonus_count', 'looking_for_partner_from'), False),
             )
 

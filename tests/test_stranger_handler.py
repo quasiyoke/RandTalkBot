@@ -218,14 +218,30 @@ class TestStrangerHandler(asynctest.TestCase):
         message.command = 'start'
         message.command_args = 'foo_args'
         message.decode_command_args.return_value = {'i': 'foo_invitation'}
-        invited_by = CoroutineMock()
-        self.stranger_service.get_stranger_by_invitation.return_value = invited_by
+        new_invited_by = CoroutineMock()
+        self.stranger_service.get_stranger_by_invitation.return_value = new_invited_by
         self.stranger.wizard = 'none'
         invited_by = CoroutineMock()
         self.stranger.invited_by = invited_by
         yield from self.stranger_handler.handle_command(message)
         self.stranger_service.get_stranger_by_invitation.assert_not_called()
         self.assertEqual(self.stranger.invited_by, invited_by)
+        self.sender.send_notification.assert_called_once_with(
+            '*Manual*\n\nUse /begin to start looking for a conversational partner, once '
+                'you\'re matched you can use /end to end the conversation.'
+            )
+
+    def test_handle_command__start_has_invited_himself(self):
+        message = Mock()
+        message.command = 'start'
+        message.command_args = 'foo_args'
+        message.decode_command_args.return_value = {'i': 'foo_invitation'}
+        self.stranger.wizard = 'none'
+        self.stranger.invited_by = None
+        self.stranger.invitation = 'foo_invitation'
+        yield from self.stranger_handler.handle_command(message)
+        self.stranger_service.get_stranger_by_invitation.assert_not_called()
+        self.assertEqual(self.stranger.invited_by, None)
         self.sender.send_notification.assert_called_once_with(
             '*Manual*\n\nUse /begin to start looking for a conversational partner, once '
                 'you\'re matched you can use /end to end the conversation.'

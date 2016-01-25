@@ -128,14 +128,15 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 except (KeyError, TypeError) as e:
                     LOGGER.info('/start error. Can\'t obtain invitation: %s', e)
                 else:
-                    try:
-                        invited_by = self._stranger_service.get_stranger_by_invitation(invitation)
-                    except StrangerServiceError as e:
-                        LOGGER.info('/start error. Can\'t obtain stranger who did invite: %s', e)
-                    else:
-                        self._stranger.invited_by = invited_by
-                        self._stranger.save()
-                        yield from invited_by.add_bonus()
+                    if self._stranger.invitation != invitation:
+                        try:
+                            invited_by = self._stranger_service.get_stranger_by_invitation(invitation)
+                        except StrangerServiceError as e:
+                            LOGGER.info('/start error. Can\'t obtain stranger who did invite: %s', e)
+                        else:
+                            self._stranger.invited_by = invited_by
+                            self._stranger.save()
+                            yield from invited_by.add_bonus()
         if self._stranger.wizard == 'none':
             yield from self._sender.send_notification(
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
