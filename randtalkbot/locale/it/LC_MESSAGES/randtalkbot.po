@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-25 17:49+0300\n"
+"POT-Creation-Date: 2016-01-26 11:17+0300\n"
 "PO-Revision-Date: Wed Jan 20 2016 21:18:36 GMT+0100\n"
 "Last-Translator: Marco Giustetto <arducode@gmail.com>\n"
 "Language-Team: Italian\n"
@@ -75,53 +75,55 @@ msgstr ""
 #: randtalkbot/stranger.py:136
 #, python-brace-format
 msgid ""
-"I'm the bot matching you with a random person. Chat with anonymous strangers "
-"speaking on your language. Visit: {0}"
+"Do you want to talk with somebody, practice in foreign languages or you just "
+"want to have some fun? Rand Talk will help you! It's a bot matching you with "
+"a random stranger of desired sex speaking on your language. {0}"
 msgstr ""
-"Sono il ragazzo più adatti con una persona a caso. Chatta con gli "
-"sconosciuti anonimi che parlano della lingua. Visita: {0}"
+"Vuoi parlare con qualcuno, la pratica in lingue straniere o volete solo "
+"divertirsi un po '? Rand Talk vi aiuterà! E 'un ragazzo più adatti con uno "
+"sconosciuto casuale del sesso desiderato parlando la vostra lingua. {0}"
 
-#: randtalkbot/stranger.py:151
+#: randtalkbot/stranger.py:152
 msgid "Looking for partner was stopped."
 msgstr "Ricerca partner per la chat interrotta"
 
-#: randtalkbot/stranger.py:158
+#: randtalkbot/stranger.py:159
 msgid "Chat was finished. Feel free to /begin a new one."
 msgstr "Chat chiusa. Premi /begin per iniziarne un'altra!"
 
-#: randtalkbot/stranger.py:212
+#: randtalkbot/stranger.py:213
 msgid "Your partner has left chat. Feel free to /begin a new conversation."
 msgstr ""
 "L'altra persona ha lasciato la chat. 😿 Premi /begin per iniziarne un'altra!"
 
-#: randtalkbot/stranger.py:232
+#: randtalkbot/stranger.py:233
 #, python-brace-format
 msgid "Use {0} please."
 msgstr "Parla {0} per favore."
 
-#: randtalkbot/stranger.py:236
+#: randtalkbot/stranger.py:237
 #, python-brace-format
 msgid "You can use the following languages: {0}."
 msgstr "Si può parlare le seguenti lingue: {0}."
 
-#: randtalkbot/stranger.py:243
+#: randtalkbot/stranger.py:244
 msgid "Here's another stranger."
 msgstr "Ho trovato un'altra persona."
 
-#: randtalkbot/stranger.py:245
+#: randtalkbot/stranger.py:246
 msgid "Your partner is here."
 msgstr "Il vostro partner è qui."
 
-#: randtalkbot/stranger.py:249
+#: randtalkbot/stranger.py:250
 #, python-brace-format
 msgid "You've used one bonus. {0} bonus(es) left."
 msgstr "Hai usato un bonus. {0} bonus a sinistra."
 
-#: randtalkbot/stranger.py:253
+#: randtalkbot/stranger.py:254
 msgid "You've used your last bonus."
 msgstr "Hai usato il tuo ultimo bonus."
 
-#: randtalkbot/stranger.py:265
+#: randtalkbot/stranger.py:266
 #, python-brace-format
 msgid ""
 "Your partner's been looking for you for {0} hr. Say him \"Hello\" -- if he "
@@ -130,7 +132,7 @@ msgstr ""
 "Il vostro partner è stato alla ricerca di voi per {0} ore. Lui dire “Ciao” — "
 "se non risponde a voi, cercare lanciare nuovamente il comando /begin."
 
-#: randtalkbot/stranger.py:270
+#: randtalkbot/stranger.py:271
 #, python-brace-format
 msgid ""
 "Your partner's been looking for you for {0} min. Say him \"Hello\" -- if he "
@@ -139,11 +141,11 @@ msgstr ""
 "Il vostro partner è stato alla ricerca di voi per {0} min. Lui dire “Ciao” — "
 "se non risponde a voi, cercare lanciare nuovamente il comando /begin."
 
-#: randtalkbot/stranger.py:276
+#: randtalkbot/stranger.py:277
 msgid "Have a nice chat!"
 msgstr "Divertiti 🤗"
 
-#: randtalkbot/stranger.py:344
+#: randtalkbot/stranger.py:345
 msgid "Looking for a stranger for you."
 msgstr "Ricerca partner per la chat in corso... 🤔"
 

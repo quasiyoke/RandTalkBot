@@ -133,8 +133,9 @@ class Stranger(Model):
                 searching_for_partner_count,
                 )
             yield from self.get_sender().send_notification(
-                _('I\'m the bot matching you with a random person. Chat with anonymous strangers '
-                    'speaking on your language. Visit: {0}'),
+                _('Do you want to talk with somebody, practice in foreign languages or you just want '
+                    'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
+                    'a random stranger of desired sex speaking on your language. {0}'),
                 'telegram.me/RandTalkBot?start=' + self.get_start_args(),
                 )
 
