@@ -55,7 +55,7 @@ setup(
         'console_scripts': ['randtalkbot = randtalkbot.randtalkbot:main'],
         },
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
