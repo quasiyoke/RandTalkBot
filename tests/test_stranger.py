@@ -650,13 +650,14 @@ class TestStranger(asynctest.TestCase):
         self.stranger.get_sender = Mock(return_value=sender)
         self.stranger.bonus_count = 1000
         self.stranger.save = Mock()
-        yield from self.stranger.pay(31416)
+        yield from self.stranger.pay(31416, 'foo_gratitude')
         self.stranger.save.assert_called_once_with()
         self.assertEqual(self.stranger.bonus_count, 32416)
         sender.send_notification.assert_called_once_with(
-            'You\'ve received {0} bonuses for your work. Total bonus amount: {1}.',
+            'You\'ve earned {0} bonuses. Total bonus amount: {1}. {2}',
             31416,
             32416,
+            'foo_gratitude',
             )
 
     @patch('randtalkbot.stranger.LOGGER', Mock())
@@ -669,7 +670,7 @@ class TestStranger(asynctest.TestCase):
         self.stranger.save = Mock()
         error = TelegramError('foo_description', 123)
         sender.send_notification.side_effect = error
-        yield from self.stranger.pay(31416)
+        yield from self.stranger.pay(31416, 'foo_gratitude')
         self.stranger.save.assert_called_once_with()
         self.assertEqual(self.stranger.bonus_count, 32416)
         LOGGER.info.assert_called_once_with('Pay. Can\'t notify stranger %d: %s', 1, error)

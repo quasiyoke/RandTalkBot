@@ -287,15 +287,16 @@ class Stranger(Model):
             sender.update_translation()
 
     @asyncio.coroutine
-    def pay(self, delta):
+    def pay(self, delta, gratitude):
         self.bonus_count += delta
         self.save()
         sender = self.get_sender()
         try:
             yield from sender.send_notification(
-                'You\'ve received {0} bonuses for your work. Total bonus amount: {1}.',
+                'You\'ve earned {0} bonuses. Total bonus amount: {1}. {2}',
                 delta,
                 self.bonus_count,
+                gratitude,
                 )
         except TelegramError as e:
             LOGGER.info('Pay. Can\'t notify stranger %d: %s', self.id, e)

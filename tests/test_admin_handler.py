@@ -75,10 +75,10 @@ class TestAdminHandler(asynctest.TestCase):
         self.stranger_service.get_stranger.return_value = stranger
         message = Mock()
         message.command = 'pay'
-        message.command_args = '31416 27183'
+        message.command_args = '31416 27183 foo gratitude'
         yield from self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_called_once_with(31416)
-        stranger.pay.assert_called_once_with(27183)
+        stranger.pay.assert_called_once_with(27183, 'foo gratitude')
         self.sender.send_notification.assert_called_once_with('Success.')
 
     def test_handle_command__pay_incorrect_telegram_id(self):
@@ -88,7 +88,17 @@ class TestAdminHandler(asynctest.TestCase):
         yield from self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
-            'Please specify Telegram ID and bonus amount like this: /pay 31416 10',
+            'Please specify Telegram ID and bonus amount like this: `/pay 31416 10 Thanks!`',
+            )
+
+    def test_handle_command__pay_no_command_args(self):
+        message = Mock()
+        message.command = 'pay'
+        message.command_args = None
+        yield from self.admin_handler.handle_command(message)
+        self.stranger_service.get_stranger.assert_not_called()
+        self.sender.send_notification.assert_called_once_with(
+            'Please specify Telegram ID and bonus amount like this: `/pay 31416 10 Thanks!`',
             )
 
     def test_handle_command__pay_unknown_stranger(self):
