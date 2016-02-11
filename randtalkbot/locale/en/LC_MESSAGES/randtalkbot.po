@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-01-26 11:17+0300\n"
+"POT-Creation-Date: 2016-02-11 21:34+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: English\n"
@@ -143,7 +143,7 @@ msgstr ""
 msgid "Have a nice chat!"
 msgstr "Have a nice chat 🤗"
 
-#: randtalkbot/stranger.py:345
+#: randtalkbot/stranger.py:359
 msgid "Looking for a stranger for you."
 msgstr "Looking for a stranger for you 🤔"
 

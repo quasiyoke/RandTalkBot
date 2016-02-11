@@ -153,9 +153,9 @@ We are interested in growing the number of Rand Talk's translations. You can hel
 
 Here's the list of bot translators. Take your chance to be here!
 
-* English. Pyotr Ermishkin, quasiyoke@gmail.com
-* Italian. Marco Giustetto, arducode@gmail.com
-* Russian. Pyotr Ermishkin, quasiyoke@gmail.com
+* English. Pyotr Ermishkin <quasiyoke@gmail.com>
+* Italian. Marco Giustetto <arducode@gmail.com>, Leonardo Guida <leonardo.99.torino@gmail.com>
+* Russian. Pyotr Ermishkin <quasiyoke@gmail.com>
 
 Building gettext files
 ^^^^^^^^^^^^^^^^^^^^^^
