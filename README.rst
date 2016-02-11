@@ -27,7 +27,7 @@ After that write ``randtalkbotenv/configuration.json`` file like that::
             "name": "randtalk",
             "user": "randtalkbot",
             "password": "xwBUr3oobCXjqSvz4t"
-                },
+            },
         "logging": {
             "version": 1,
             "formatters": {
@@ -75,7 +75,7 @@ After that write ``randtalkbotenv/configuration.json`` file like that::
                 },
             "root": {
                 "level": "DEBUG",
-                "handlers": ["console"]
+                "handlers": ["console", "email"]
                 }
             },
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
@@ -143,6 +143,8 @@ Roadmap
 
 Contributing
 ------------
+
+We are glad to see your contributions to RandTalk. Our reward starts from 10 bonuses for you.
 
 Translations
 ^^^^^^^^^^^^

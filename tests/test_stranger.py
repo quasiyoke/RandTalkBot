@@ -645,6 +645,35 @@ class TestStranger(asynctest.TestCase):
             )
         sender.send_notification.assert_called_once_with('Your partner is here. Have a nice chat!')
 
+    def test_pay__ok(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.bonus_count = 1000
+        self.stranger.save = Mock()
+        yield from self.stranger.pay(31416)
+        self.stranger.save.assert_called_once_with()
+        self.assertEqual(self.stranger.bonus_count, 32416)
+        sender.send_notification.assert_called_once_with(
+            'You\'ve received {0} bonuses for your work. Total bonus amount: {1}.',
+            31416,
+            32416,
+            )
+
+    @patch('randtalkbot.stranger.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_pay__telegram_error(self):
+        from randtalkbot.stranger import LOGGER
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.bonus_count = 1000
+        self.stranger.save = Mock()
+        error = TelegramError('foo_description', 123)
+        sender.send_notification.side_effect = error
+        yield from self.stranger.pay(31416)
+        self.stranger.save.assert_called_once_with()
+        self.assertEqual(self.stranger.bonus_count, 32416)
+        LOGGER.info.assert_called_once_with('Pay. Can\'t notify stranger %d: %s', 1, error)
+
     def test_send_to_partner__chatting_stranger(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)

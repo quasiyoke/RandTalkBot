@@ -26,7 +26,7 @@ class StrangerSender(telepot.helper.Sender):
         'video': 'sendVideo',
         'voice': 'sendVoice',
         }
-    MARKDOWN_RE = re.compile('([\[*_`])')
+    MARKDOWN_RE = re.compile(r'([\[\*_`])')
 
     def __init__(self, bot, stranger):
         super(StrangerSender, self).__init__(bot, stranger.telegram_id)

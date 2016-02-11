@@ -286,6 +286,20 @@ class Stranger(Model):
             # To reset languages.
             sender.update_translation()
 
+    @asyncio.coroutine
+    def pay(self, delta):
+        self.bonus_count += delta
+        self.save()
+        sender = self.get_sender()
+        try:
+            yield from sender.send_notification(
+                'You\'ve received {0} bonuses for your work. Total bonus amount: {1}.',
+                delta,
+                self.bonus_count,
+                )
+        except TelegramError as e:
+            LOGGER.info('Pay. Can\'t notify stranger %d: %s', self.id, e)
+
     def prevent_advertising(self):
         try:
             if not self._deferred_advertising:

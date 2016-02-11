@@ -70,6 +70,40 @@ class TestAdminHandler(asynctest.TestCase):
             error,
             )
 
+    def test_handle_command__pay(self):
+        stranger = CoroutineMock()
+        self.stranger_service.get_stranger.return_value = stranger
+        message = Mock()
+        message.command = 'pay'
+        message.command_args = '31416 27183'
+        yield from self.admin_handler.handle_command(message)
+        self.stranger_service.get_stranger.assert_called_once_with(31416)
+        stranger.pay.assert_called_once_with(27183)
+        self.sender.send_notification.assert_called_once_with('Success.')
+
+    def test_handle_command__pay_incorrect_telegram_id(self):
+        message = Mock()
+        message.command = 'pay'
+        message.command_args = 'foo'
+        yield from self.admin_handler.handle_command(message)
+        self.stranger_service.get_stranger.assert_not_called()
+        self.sender.send_notification.assert_called_once_with(
+            'Please specify Telegram ID and bonus amount like this: /pay 31416 10',
+            )
+
+    def test_handle_command__pay_unknown_stranger(self):
+        error = StrangerServiceError()
+        self.stranger_service.get_stranger.side_effect = error
+        message = Mock()
+        message.command = 'pay'
+        message.command_args = '31416 27183'
+        yield from self.admin_handler.handle_command(message)
+        self.stranger_service.get_stranger.assert_called_once_with(31416)
+        self.sender.send_notification.assert_called_once_with(
+            'Stranger wasn\'t found: {0}',
+            error,
+            )
+
     @patch('randtalkbot.admin_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
     def test_handle_command__other_command(self, handle_command):
