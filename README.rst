@@ -111,7 +111,7 @@ I'm using such shell script for semi-automatic deployment::
     echo "y" | pip uninstall randtalkbot
     pip install https://github.com/quasiyoke/RandTalkBot/zipball/master
     killall randtalkbot
-    randtalkbot configuration.json
+    nohup randtalkbot configuration.json &
 
 Just launch::
 
