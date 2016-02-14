@@ -73,8 +73,7 @@ setup(
         'telepot>=5.0,<7.0',
         ],
     tests_require=[
-        'asynctest',
-        'coveralls',
+        'coveralls>=1.1,<2.0',
         ],
     cmdclass={
         'coverage': CoverageCommand,

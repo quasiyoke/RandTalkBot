@@ -10,6 +10,7 @@ install:
     - python setup.py install
 
 script:
+    - pip install "asynctest<0.6"
     - python setup.py test
 
 after_success: python setup.py coverage
