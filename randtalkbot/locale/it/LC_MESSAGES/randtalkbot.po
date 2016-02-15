@@ -97,7 +97,7 @@ msgstr ""
 "Hai ricevuto un bonus per aver invitato una persona al bot. I bonus vi "
 "aiuteranno a trovare partner in fretta. Conteggio totale dei bonus: {0}. "
 "Congratulazioni! 🤑\n"
-"Per disattivare questo notifiche, usare il /mute\\_bonuses."
+"Per disattivare questa notifica, usare il /mute\\_bonuses."
 
 #: randtalkbot/stranger.py:238
 #, python-brace-format
@@ -110,7 +110,7 @@ msgstr ""
 "Hai ricevuto {0} bonus per aver invitato una persona al bot. I bonus vi "
 "aiuteranno a trovare partner in fretta. Conteggio totale dei bonus: {1}. "
 "Congratulazioni! 🤑\n"
-"Per disattivare questo notifiche, usare il /mute\\_bonuses."
+"Per disattivare questa notifica, usare il /mute\\_bonuses."
 
 #: randtalkbot/stranger.py:264
 #, python-brace-format
