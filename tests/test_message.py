@@ -133,6 +133,14 @@ class TestMessage(unittest.TestCase):
         self.assertEqual(message.command, 'start')
         self.assertEqual(message.command_args, '')
 
+    @patch('randtalkbot.message.telepot')
+    def test_init__command_with_underscore(self, telepot):
+        telepot.glance2.return_value = 'text', 'private', 31416
+        self.message_json['text'] = '/begin_chat here'
+        message = Message(self.message_json)
+        self.assertEqual(message.command, 'begin_chat')
+        self.assertEqual(message.command_args, 'here')
+
     def test_init__document(self):
         self.message_json['document'] = {
             'file_id': 'foo',

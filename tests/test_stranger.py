@@ -52,34 +52,23 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(len(invitation), 5)
 
     def test_add_bonus__ok(self):
-        sender = CoroutineMock()
-        self.stranger.get_sender = Mock(return_value=sender)
         self.stranger.bonus_count = 1000
+        self.stranger._notify_about_bonuses = CoroutineMock()
         self.stranger.save = Mock()
         yield from self.stranger.add_bonus()
         self.stranger.save.assert_called_once_with()
         self.assertEqual(self.stranger.bonus_count, 1001)
-        sender.send_notification.assert_called_once_with(
-            'You\'ve received one bonus for inviting a person to the bot. '
-                'Bonuses will help you to find partners quickly. Total bonus count: {0}. '
-                'Congratulations!',
-            1001,
-            )
+        self.stranger._notify_about_bonuses.assert_called_once_with(1)
 
-    @patch('randtalkbot.stranger.LOGGER', Mock())
-    @asyncio.coroutine
-    def test_add_bonus__telegram_error(self):
-        from randtalkbot.stranger import LOGGER
-        sender = CoroutineMock()
-        self.stranger.get_sender = Mock(return_value=sender)
+    def test_add_bonus__muted(self):
         self.stranger.bonus_count = 1000
+        self.stranger._notify_about_bonuses = CoroutineMock()
         self.stranger.save = Mock()
-        error = TelegramError('foo_description', 123)
-        sender.send_notification.side_effect = error
+        self.stranger._bonuses_notifications_muted = True
         yield from self.stranger.add_bonus()
         self.stranger.save.assert_called_once_with()
         self.assertEqual(self.stranger.bonus_count, 1001)
-        LOGGER.warning.assert_called_once_with('Add bonus. Can\'t notify stranger %d: %s', 1, error)
+        self.stranger._notify_about_bonuses.assert_not_called()
 
     @patch('randtalkbot.stranger.asyncio')
     @asyncio.coroutine
@@ -320,42 +309,65 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.looking_for_partner_from, None)
         LOGGER.warning.assert_called_once_with('Kick. Can\'t notify stranger %d: %s', stranger.id, error)
 
-    @asynctest.ignore_loop
-    def test_prevent_advertising__ok(self):
-        deferred_advertising = Mock()
-        self.stranger._deferred_advertising = deferred_advertising
-        self.stranger.prevent_advertising()
-        deferred_advertising.cancel.assert_called_once_with()
-        self.assertEqual(self.stranger._deferred_advertising, None)
+    @patch('randtalkbot.stranger.asyncio')
+    @asyncio.coroutine
+    def test_mute_bonuses_notifications(self, asyncio_mock):
+        self.stranger._unmute_bonuses_notifications = Mock(return_value='foo')
+        self.stranger.mute_bonuses_notifications()
+        asyncio_mock.get_event_loop.return_value.create_task.assert_called_once_with('foo')
 
-    @asynctest.ignore_loop
-    def test_prevent_advertising__deferred_is_not_set(self):
-        self.stranger.prevent_advertising()
-        self.assertTrue(True)
+    @patch('randtalkbot.stranger.asyncio')
+    @asyncio.coroutine
+    def test_unmute_bonuses_notifications(self, asyncio_mock):
+        self.stranger.bonus_count = 1200
+        self.stranger._notify_about_bonuses = CoroutineMock()
+        yield from self.stranger._unmute_bonuses_notifications(1000)
+        asyncio_mock.sleep.assert_called_once_with(3600)
+        self.stranger._notify_about_bonuses.assert_called_once_with(200)
 
-    @asynctest.ignore_loop
-    def test_prevent_advertising__deferred_is_none(self):
-        self.stranger._deferred_advertising = None
-        self.stranger.prevent_advertising()
-        self.assertTrue(True)
-
-    def test_send__ok(self):
+    def test_notify_about_bonuses__zero(self):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
-        message = Mock()
-        yield from self.stranger.send(message)
-        sender.send.assert_called_once_with(message)
+        yield from self.stranger._notify_about_bonuses(0)
         sender.send_notification.assert_not_called()
 
-    def test_send__sender_error(self):
+    def test_notify_about_bonuses__one(self):
         sender = CoroutineMock()
-        sender.send.side_effect = StrangerSenderError()
         self.stranger.get_sender = Mock(return_value=sender)
-        message = Mock()
-        with self.assertRaises(StrangerError):
-            yield from self.stranger.send(message)
-        sender.send.assert_called_once_with(message)
-        sender.send_notification.assert_not_called()
+        self.stranger.bonus_count = 1000
+        yield from self.stranger._notify_about_bonuses(1)
+        sender.send_notification.assert_called_once_with(
+            'You\'ve received one bonus for inviting a person to the bot. '
+                'Bonuses will help you to find partners quickly. Total bonuses count: {0}. '
+                'Congratulations!\n'
+                'To mute this notifications, use /mute\\_bonuses.',
+            1000,
+            )
+
+    def test_notify_about_bonuses__many(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.bonus_count = 1000
+        yield from self.stranger._notify_about_bonuses(2)
+        sender.send_notification.assert_called_once_with(
+            'You\'ve received {0} bonuses for inviting a person to the bot. '
+                'Bonuses will help you to find partners quickly. Total bonuses count: {1}. '
+                'Congratulations!\n'
+                'To mute this notifications, use /mute\\_bonuses.',
+            2,
+            1000,
+            )
+
+    @patch('randtalkbot.stranger.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_notify_about_bonuses__telegram_error(self):
+        from randtalkbot.stranger import LOGGER
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        error = TelegramError('foo_description', 123)
+        sender.send_notification.side_effect = error
+        yield from self.stranger._notify_about_bonuses(1)
+        LOGGER.info.assert_called_once_with('Can\'t notify stranger %d about bonuses: %s', 1, error)
 
     @patch('randtalkbot.stranger.get_languages_names', Mock())
     @asyncio.coroutine
@@ -674,6 +686,43 @@ class TestStranger(asynctest.TestCase):
         self.stranger.save.assert_called_once_with()
         self.assertEqual(self.stranger.bonus_count, 32416)
         LOGGER.info.assert_called_once_with('Pay. Can\'t notify stranger %d: %s', 1, error)
+
+    @asynctest.ignore_loop
+    def test_prevent_advertising__ok(self):
+        deferred_advertising = Mock()
+        self.stranger._deferred_advertising = deferred_advertising
+        self.stranger.prevent_advertising()
+        deferred_advertising.cancel.assert_called_once_with()
+        self.assertEqual(self.stranger._deferred_advertising, None)
+
+    @asynctest.ignore_loop
+    def test_prevent_advertising__deferred_is_not_set(self):
+        self.stranger.prevent_advertising()
+        self.assertEqual(getattr(stranger, '_deferred_advertising', None), None)
+
+    @asynctest.ignore_loop
+    def test_prevent_advertising__deferred_is_none(self):
+        self.stranger._deferred_advertising = None
+        self.stranger.prevent_advertising()
+        self.assertEqual(self.stranger._deferred_advertising, None)
+
+    def test_send__ok(self):
+        sender = CoroutineMock()
+        self.stranger.get_sender = Mock(return_value=sender)
+        message = Mock()
+        yield from self.stranger.send(message)
+        sender.send.assert_called_once_with(message)
+        sender.send_notification.assert_not_called()
+
+    def test_send__sender_error(self):
+        sender = CoroutineMock()
+        sender.send.side_effect = StrangerSenderError()
+        self.stranger.get_sender = Mock(return_value=sender)
+        message = Mock()
+        with self.assertRaises(StrangerError):
+            yield from self.stranger.send(message)
+        sender.send.assert_called_once_with(message)
+        sender.send_notification.assert_not_called()
 
     def test_send_to_partner__chatting_stranger(self):
         sender = CoroutineMock()

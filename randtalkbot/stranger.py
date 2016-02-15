@@ -82,6 +82,7 @@ class Stranger(Model):
     ADVERTISING_DELAY = 30
     HOUR_TIMEDELTA = datetime.timedelta(hours=1)
     LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=5)
+    UNMUTE_BONUSES_NOTIFICATIONS_DELAY = 60 * 60
 
     class Meta:
         database = database_proxy
@@ -104,18 +105,12 @@ class Stranger(Model):
 
     @asyncio.coroutine
     def add_bonus(self):
-        self.bonus_count += 1
+        bonuses_delta = 1
+        self.bonus_count += bonuses_delta
         self.save()
-        sender = self.get_sender()
-        try:
-            yield from sender.send_notification(
-                _('You\'ve received one bonus for inviting a person to the bot. '
-                    'Bonuses will help you to find partners quickly. Total bonus count: {0}. '
-                    'Congratulations!'),
-                self.bonus_count,
-                )
-        except TelegramError as e:
-            LOGGER.warning('Add bonus. Can\'t notify stranger %d: %s', self.id, e)
+        bonuses_notifications_muted = getattr(self, '_bonuses_notifications_muted', False)
+        if not bonuses_notifications_muted:
+            yield from self._notify_about_bonuses(bonuses_delta)
 
     @asyncio.coroutine
     def _advertise(self):
@@ -214,6 +209,42 @@ class Stranger(Model):
                 )
         except TelegramError as e:
             LOGGER.warning('Kick. Can\'t notify stranger %d: %s', self.id, e)
+
+    def mute_bonuses_notifications(self):
+        self._bonuses_notifications_muted = True
+        asyncio.get_event_loop().create_task(self._unmute_bonuses_notifications(self.bonus_count))
+
+    @asyncio.coroutine
+    def _unmute_bonuses_notifications(self, last_bonuses_count):
+        yield from asyncio.sleep(type(self).UNMUTE_BONUSES_NOTIFICATIONS_DELAY)
+        yield from self._notify_about_bonuses(self.bonus_count - last_bonuses_count)
+        self._bonuses_notifications_muted = False
+
+    @asyncio.coroutine
+    def _notify_about_bonuses(self, bonuses_delta):
+        sender = self.get_sender()
+        try:
+            if bonuses_delta == 1:
+                yield from sender.send_notification(
+                    _('You\'ve received one bonus for inviting a person to the bot. '
+                        'Bonuses will help you to find partners quickly. Total bonuses count: {0}. '
+                        'Congratulations!\n'
+                        'To mute this notifications, use /mute\\_bonuses.'
+                        ),
+                    self.bonus_count,
+                    )
+            elif bonuses_delta > 1:
+                yield from sender.send_notification(
+                    _('You\'ve received {0} bonuses for inviting a person to the bot. '
+                        'Bonuses will help you to find partners quickly. Total bonuses count: {1}. '
+                        'Congratulations!\n'
+                        'To mute this notifications, use /mute\\_bonuses.'
+                        ),
+                    bonuses_delta,
+                    self.bonus_count,
+                    )
+        except TelegramError as e:
+            LOGGER.info('Can\'t notify stranger %d about bonuses: %s', self.id, e)
 
     def notify_partner_found(self, partner):
         '''

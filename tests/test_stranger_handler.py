@@ -177,14 +177,25 @@ class TestStrangerHandler(asynctest.TestCase):
         message.command = 'help'
         yield from self.stranger_handler.handle_command(message)
         self.sender.send_notification.assert_called_once_with(
-            '*Help*\n\nUse /begin to start looking for a conversational partner, once '
-                'you\'re matched you can use /end to end the conversation.\n\nIf you have any '
-                'suggestions or require help, please contact @quasiyoke. When asking questions, '
-                'please provide this number: {0}\n\nYou\'re welcome to inspect and improve '
-                '[Rand Talk\'s source code.](https://github.com/quasiyoke/RandTalkBot)\n\n'
-                'version {1}',
+            '*Help*\n\n'
+                'Use /begin to start looking for a conversational partner, once '
+                'you\'re matched you can use /end to finish the conversation. '
+                'To choose your settings, apply /setup.\n\n'
+                'If you have any suggestions or require help, please contact @quasiyoke. '
+                'When asking questions, please provide this number: {0}.\n\n'
+                'You\'re welcome to inspect and improve '
+                '[Rand Talk v. {1} source code](https://github.com/quasiyoke/RandTalkBot).',
             31416,
             '0.0.0',
+            )
+
+    def test_handle_command_mute_bonuses(self):
+        message = Mock()
+        message.command = 'mute_bonuses'
+        yield from self.stranger_handler.handle_command(message)
+        self.stranger.mute_bonuses_notifications.assert_called_once_with()
+        self.sender.send_notification.assert_called_once_with(
+            'Notifications about bonuses were muted for 1 hour',
             )
 
     def test_handle_command__setup(self):

@@ -97,14 +97,23 @@ class StrangerHandler(telepot.helper.ChatHandler):
     @asyncio.coroutine
     def _handle_command_help(self, message):
         yield from self._sender.send_notification(
-            _('*Help*\n\nUse /begin to start looking for a conversational partner, once '
-                'you\'re matched you can use /end to end the conversation.\n\nIf you have any '
-                'suggestions or require help, please contact @quasiyoke. When asking questions, '
-                'please provide this number: {0}\n\nYou\'re welcome to inspect and improve '
-                '[Rand Talk\'s source code.](https://github.com/quasiyoke/RandTalkBot)\n\n'
-                'version {1}'),
-                self.chat_id,
-                __version__,
+            _('*Help*\n\n'
+                'Use /begin to start looking for a conversational partner, once '
+                'you\'re matched you can use /end to finish the conversation. '
+                'To choose your settings, apply /setup.\n\n'
+                'If you have any suggestions or require help, please contact @quasiyoke. '
+                'When asking questions, please provide this number: {0}.\n\n'
+                'You\'re welcome to inspect and improve '
+                '[Rand Talk v. {1} source code](https://github.com/quasiyoke/RandTalkBot).'),
+            self.chat_id,
+            __version__,
+            )
+
+    @asyncio.coroutine
+    def _handle_command_mute_bonuses(self, message):
+        self._stranger.mute_bonuses_notifications()
+        yield from self._sender.send_notification(
+            _('Notifications about bonuses were muted for 1 hour'),
             )
 
     @asyncio.coroutine

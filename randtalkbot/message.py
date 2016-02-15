@@ -17,7 +17,7 @@ class UnsupportedContentError(Exception):
     pass
 
 class Message:
-    COMMAND_RE_PATTERN = re.compile('^/([a-z]+)\\b\s*(.*)$')
+    COMMAND_RE_PATTERN = re.compile('^/([a-z_]+)\\b\s*(.*)$')
 
     def __init__(self, message_json):
         try:
