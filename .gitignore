@@ -55,5 +55,5 @@ docs/_build/
 target/
 
 # Bot
-configuration.json
+conf*.json
 *.sh

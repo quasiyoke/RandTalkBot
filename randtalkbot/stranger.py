@@ -30,9 +30,11 @@ SEX_CHOICES = (
     ('not_specified', _('Not specified')),
     )
 ADDITIONAL_SEX_NAMES_TO_CODES = {
+    'm': 'male',
     _('boy'): 'male',
     _('man'): 'male',
     'men': 'male',
+    'f': 'female',
     _('girl'): 'female',
     _('woman'): 'female',
 }

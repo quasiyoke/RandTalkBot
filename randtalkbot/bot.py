@@ -30,20 +30,16 @@ class Bot:
         telegram_id = message_json['chat']['id']
         # If the bot isn't chatting with an admin, skip, so for this chat will be used another handler,
         # not AdminHandler.
-        if telegram_id not in self._admins_telegram_ids:
-            return None
-        return telegram_id
+        return telegram_id if telegram_id in self._admins_telegram_ids else None
 
     def _calculate_stranger_seed(self, message_json):
         telegram_id = message_json['chat']['id']
         # If the bot is chatting with an admin, skip, so for this chat will be used another handler,
         # not StrangerHandler.
-        if telegram_id in self._admins_telegram_ids:
-            return None
-        return telegram_id
+        return None if telegram_id in self._admins_telegram_ids else telegram_id
 
     def start_listening(self):
         loop = asyncio.get_event_loop()
         loop.create_task(self._delegator_bot.messageLoop())
-        LOGGER.info('Listening...')
+        LOGGER.info('Listening')
         loop.run_forever()
