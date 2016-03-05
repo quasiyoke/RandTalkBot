@@ -136,10 +136,12 @@ Roadmap
 * 0.4 Translate interface to various languages
 * 1.0 Almost all messages types support except replies and forwards
 * 1.1 Invitations
-* 1.2 Don't talk with recent partners
-* 1.3 Replies
-* 1.4 Customizable greetings message
-* 1.5 /oops -- return last partner!
+* 1.2 Collecting bot's stats
+* 1.3 Don't talk with recent partners
+* 1.4 Reports
+* 1.5 Replies
+* 1.6 Customizable greetings message
+* 1.7 /oops -- return last partner!
 
 Contributing
 ------------

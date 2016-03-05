@@ -55,4 +55,4 @@ class AdminHandler(StrangerHandler):
             return
         yield from stranger.pay(delta, match.group('gratitude'))
         yield from self._sender.send_notification('Success.')
-        LOGGER.debug('Clear: %d -> %d', self._stranger.id, telegram_id)
+        LOGGER.debug('Pay: {} -({})-> {}'.format(self._stranger.id, delta, telegram_id))
