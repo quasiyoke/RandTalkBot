@@ -183,8 +183,9 @@ class TestStrangerHandler(asynctest.TestCase):
                 'To choose your settings, apply /setup.\n\n'
                 'If you have any suggestions or require help, please contact @quasiyoke. '
                 'When asking questions, please provide this number: {0}.\n\n'
-                'You\'re welcome to inspect and improve '
-                '[Rand Talk v. {1} source code](https://github.com/quasiyoke/RandTalkBot).',
+                'Subscribe to [our news](https://telegram.me/RandTalk). You\'re welcome '
+                'to inspect and improve [Rand Talk v. {1} source code]'
+                '(https://github.com/quasiyoke/RandTalkBot).',
             31416,
             '0.0.0',
             )

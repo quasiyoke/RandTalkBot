@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-26 05:46+0300\n"
+"POT-Creation-Date: 2016-03-05 07:25+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: English\n"
@@ -180,8 +180,9 @@ msgid ""
 "If you have any suggestions or require help, please contact @quasiyoke. When "
 "asking questions, please provide this number: {0}.\n"
 "\n"
-"You're welcome to inspect and improve [Rand Talk v. {1} source code](https://"
-"github.com/quasiyoke/RandTalkBot)."
+"Subscribe to [our news](https://telegram.me/RandTalk). You're welcome to "
+"inspect and improve [Rand Talk v. {1} source code](https://github.com/"
+"quasiyoke/RandTalkBot)."
 msgstr ""
 "*Help*\n"
 "\n"
@@ -192,14 +193,15 @@ msgstr ""
 "If you have any suggestions or require help, please contact @quasiyoke. When "
 "asking questions, please provide this number: {0}.\n"
 "\n"
-"You're welcome to inspect and improve [Rand Talk v. {1} source code](https://"
-"github.com/quasiyoke/RandTalkBot)."
+"Subscribe to [our news](https://telegram.me/RandTalk). You're welcome to "
+"inspect and improve [Rand Talk v. {1} source code](https://github.com/"
+"quasiyoke/RandTalkBot)."
 
-#: randtalkbot/stranger_handler.py:116
+#: randtalkbot/stranger_handler.py:117
 msgid "Notifications about bonuses were muted for 1 hour"
 msgstr "Notifications about bonuses were muted for 1 hour 🤐"
 
-#: randtalkbot/stranger_handler.py:142
+#: randtalkbot/stranger_handler.py:143
 msgid ""
 "Don't try to fool me. Forward message with the link to your friends and "
 "receive well-earned bonuses that will help you to find partner quickly."
@@ -207,7 +209,7 @@ msgstr ""
 "Don't try to fool me. 😉 Forward message with the link to your friends and "
 "receive well-earned bonuses that will help you to find partner quickly."
 
-#: randtalkbot/stranger_handler.py:156
+#: randtalkbot/stranger_handler.py:157
 msgid ""
 "*Manual*\n"
 "\n"
@@ -219,15 +221,15 @@ msgstr ""
 "Use /begin to start looking for a conversational partner, once you're "
 "matched you can use /end to finish the conversation."
 
-#: randtalkbot/stranger_handler.py:170 randtalkbot/stranger_handler.py:188
+#: randtalkbot/stranger_handler.py:171 randtalkbot/stranger_handler.py:189
 msgid "Messages of this type aren't supported."
 msgstr "Messages of this type aren't supported 😞"
 
-#: randtalkbot/stranger_handler.py:180
+#: randtalkbot/stranger_handler.py:181
 msgid "Unknown command. Look /help for the full list of commands."
 msgstr "Unknown command. Look /help for the full list of commands."
 
-#: randtalkbot/stranger_handler.py:196
+#: randtalkbot/stranger_handler.py:197
 msgid "Your partner has blocked me! How did you do that?!"
 msgstr "Your partner has blocked me! How did you do that?! 😕"
 

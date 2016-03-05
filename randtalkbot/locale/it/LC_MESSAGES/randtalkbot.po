@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-02-26 05:46+0300\n"
+"POT-Creation-Date: 2016-03-05 07:25+0300\n"
 "PO-Revision-Date: 2016-02-25 23:50+0100\n"
 "Last-Translator: Benedetta Facchinetti <zoidberglupin@gmail.com>\n"
 "Language-Team: Italian\n"
@@ -181,8 +181,9 @@ msgid ""
 "If you have any suggestions or require help, please contact @quasiyoke. When "
 "asking questions, please provide this number: {0}.\n"
 "\n"
-"You're welcome to inspect and improve [Rand Talk v. {1} source code](https://"
-"github.com/quasiyoke/RandTalkBot)."
+"Subscribe to [our news](https://telegram.me/RandTalk). You're welcome to "
+"inspect and improve [Rand Talk v. {1} source code](https://github.com/"
+"quasiyoke/RandTalkBot)."
 msgstr ""
 "*Aiuto*\n"
 "\n"
@@ -193,14 +194,15 @@ msgstr ""
 "Se hai suggerimenti o hai bisogno di aiuto scrivi pure all'admin del bot, "
 "@quasiyoke. Nel messaggio, per favore, includi questo numero: {0}.\n"
 "\n"
-"Sei il benvenuto per controllare e migliorare il [codice sorgente del Rand "
-"Talk v. {1}](https://github.com/quasiyoke/RandTalkBot)."
+"Iscriviti alle [nostre notizie (en)](https://telegram.me/RandTalk). Sei il "
+"benvenuto per controllare e migliorare il [codice sorgente del Rand Talk v. "
+"{1}](https://github.com/quasiyoke/RandTalkBot)."
 
-#: randtalkbot/stranger_handler.py:116
+#: randtalkbot/stranger_handler.py:117
 msgid "Notifications about bonuses were muted for 1 hour"
 msgstr "Le notifiche bonus sono stati disattivati per 1 ora 🤐"
 
-#: randtalkbot/stranger_handler.py:142
+#: randtalkbot/stranger_handler.py:143
 msgid ""
 "Don't try to fool me. Forward message with the link to your friends and "
 "receive well-earned bonuses that will help you to find partner quickly."
@@ -208,7 +210,7 @@ msgstr ""
 "Non cercare di ingannarmi. 😉 Inoltra questo messaggio ai tuoi amici e "
 "riceverai un bonus che ti aiuterà a trovare un partner più in fretta."
 
-#: randtalkbot/stranger_handler.py:156
+#: randtalkbot/stranger_handler.py:157
 msgid ""
 "*Manual*\n"
 "\n"
@@ -220,15 +222,15 @@ msgstr ""
 "Premi (o scrivi) /begin per cercare una persona con cui iniziare la chat; se "
 "vuoi terminare la conversazione premi /end e cerca un'altra persona."
 
-#: randtalkbot/stranger_handler.py:170 randtalkbot/stranger_handler.py:188
+#: randtalkbot/stranger_handler.py:171 randtalkbot/stranger_handler.py:189
 msgid "Messages of this type aren't supported."
 msgstr "Mi dispiace, il bot non supporta messaggi di questo tipo  😞"
 
-#: randtalkbot/stranger_handler.py:180
+#: randtalkbot/stranger_handler.py:181
 msgid "Unknown command. Look /help for the full list of commands."
 msgstr "Comando sconosciuto. Premi /help per la lista di tutti i comandi."
 
-#: randtalkbot/stranger_handler.py:196
+#: randtalkbot/stranger_handler.py:197
 msgid "Your partner has blocked me! How did you do that?!"
 msgstr "L'altra persona mi ha bloccato. Come hai osato farlo?! 😕"
 
