@@ -79,7 +79,7 @@ After that write ``randtalkbotenv/configuration.json`` file like that::
                 }
             },
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
-    }
+        }
 
 Where:
 

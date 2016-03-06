@@ -6,13 +6,17 @@
 
 '''randtalkbot.randtalkbot: provides entry point main().'''
 
+import asyncio
 import logging
 import logging.config
 import sys
 from .bot import Bot
 from .configuration import Configuration, ConfigurationObtainingError
+from .db import DB
+from .errors import DBError
+from .stats_service import StatsService
 from .stranger_sender_service import StrangerSenderService
-from .stranger_service import StrangerService, StrangerServiceError
+from .stranger_service import StrangerService
 from .utils import __version__
 from docopt import docopt
 from randtalkbot import stranger, stranger_service
@@ -36,28 +40,33 @@ def main():
     try:
         configuration = Configuration(arguments['CONFIGURATION'])
     except ConfigurationObtainingError as e:
-        LOGGER.error('Can\'t obtain configuration: %s', e)
-        sys.exit('Can\'t obtain configuration: %s' % e)
+        sys.exit('Can\'t obtain configuration. {}'.format(e))
 
     logging.config.dictConfig(configuration.logging)
 
     try:
-        stranger_service = StrangerService(configuration)
-    except StrangerServiceError as e:
-        LOGGER.error('Can\'t construct StrangerService: %s', e)
-        sys.exit('Can\'t construct StrangerService: %s' % e)
+        db = DB(configuration)
+    except DBError as e:
+        sys.exit('Can\'t construct DB. {}'.format(e))
 
     if arguments['install']:
-        LOGGER.info('Installing RandTalkBot.')
+        LOGGER.info('Installing RandTalkBot')
         try:
-            stranger_service.install()
-        except StrangerServiceError as e:
-            LOGGER.error('Can\'t install StrangerService: %s', e)
-            sys.exit('Can\'t install StrangerService: %s' % e)
+            db.install()
+        except DBError as e:
+            sys.exit('Can\'t install databases. {}'.format(e))
     else:
-        LOGGER.info('Executing RandTalkBot.')
+        LOGGER.info('Executing RandTalkBot')
+        loop = asyncio.get_event_loop()
+        stranger_service = StrangerService()
+
+        stats_service = StatsService(stranger_service)
+        loop.create_task(stats_service.run())
+
         bot = Bot(configuration, stranger_service)
+        loop.create_task(bot.run())
+
         try:
-            bot.start_listening()
+            loop.run_forever()
         except KeyboardInterrupt:
-            LOGGER.info('Execution was finished by keyboard interrupt.')
+            LOGGER.info('Execution was finished by keyboard interrupt')

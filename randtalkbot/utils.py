@@ -6,6 +6,6 @@
 
 from os import path
 
-__version__ = '1.1.4'
+__version__ = '1.2'
 RANDTALKBOT_DIR = path.abspath(path.dirname(__file__))
 LOCALE_DIR = path.join(RANDTALKBOT_DIR, 'locale')
