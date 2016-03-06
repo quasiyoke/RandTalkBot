@@ -4,50 +4,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import logging
+from .errors import PartnerObtainingError, StrangerServiceError
 from .stranger import INVITATION_LENGTH, Stranger
 from peewee import *
-from playhouse.shortcuts import RetryOperationalError
-from randtalkbot import stranger
 
-LOGGER = logging.getLogger('randtalkbot')
-
-class PartnerObtainingError(Exception):
-    pass
-
-class StrangerServiceError(Exception):
-    pass
-
-class RetryingMySQLDatabase(RetryOperationalError, MySQLDatabase):
-    '''
-    Automatically reconnecting database class.
-    @see http://docs.peewee-orm.com/en/latest/peewee/database.html#automatic-reconnect
-    '''
-    pass
+LOGGER = logging.getLogger('randtalkbot.stranger_service')
 
 class StrangerService:
-    def __init__(self, configuration):
+    def __init__(self):
         self._strangers_cache = {}
-        self._database = RetryingMySQLDatabase(
-            configuration.database_name,
-            host=configuration.database_host,
-            user=configuration.database_user,
-            password=configuration.database_password,
-            )
-        # Connect to database just to check if configuration has errors.
-        try:
-            self._database.connect()
-        except DatabaseError as e:
-            raise StrangerServiceError('DatabaseError during connecting to database: {0}'.format(e))
-        self._database.close()
-        stranger.database_proxy.initialize(self._database)
-
-    def install(self):
-        try:
-            self._database.create_tables([Stranger])
-        except DatabaseError as e:
-            raise StrangerServiceError('DatabaseError during creating tables: {0}'.format(e))
 
     def get_cached_stranger(self, stranger):
         try:
@@ -57,6 +23,11 @@ class StrangerService:
             if stranger.partner is not None:
                 stranger.partner = self.get_cached_stranger(stranger.partner)
             return stranger
+
+    def get_full_strangers(self):
+        for stranger in Stranger.select():
+            if stranger.is_full():
+                yield stranger
 
     def get_partner(self, stranger):
         '''

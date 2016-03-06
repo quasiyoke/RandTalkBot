@@ -4,81 +4,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import datetime
 import unittest
-from asynctest.mock import CoroutineMock
 from peewee import *
 from playhouse.test_utils import test_database
 from randtalkbot import stranger
+from randtalkbot.errors import StrangerServiceError, PartnerObtainingError
 from randtalkbot.stranger import Stranger
-from randtalkbot.stranger_service import \
-    StrangerService, StrangerServiceError, PartnerObtainingError, RetryingMySQLDatabase
+from randtalkbot.stranger_service import StrangerService
 from unittest.mock import create_autospec, patch, Mock
 
-class TestStrangerServiceMocked(unittest.TestCase):
-    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', create_autospec(RetryingMySQLDatabase))
-    @patch('randtalkbot.stranger_service.stranger')
-    def setUp(self, stranger_module_mock):
-        from randtalkbot.stranger_service import RetryingMySQLDatabase
-        self.stranger_module_mock = stranger_module_mock
-        self.database = Mock()
-        self.RetryingMySQLDatabase = RetryingMySQLDatabase
-        self.RetryingMySQLDatabase.return_value = self.database
-        self.configuration = Mock()
-        self.configuration.database_host = 'foo_host'
-        self.configuration.database_name = 'foo_name'
-        self.configuration.database_user = 'foo_user'
-        self.configuration.database_password = 'foo_password'
-        self.RetryingMySQLDatabase.reset_mock()
-        self.stranger_service = StrangerService(self.configuration)
-
-    def test_init__ok(self):
-        self.RetryingMySQLDatabase.assert_called_once_with(
-            'foo_name',
-            host='foo_host',
-            user='foo_user',
-            password='foo_password',
-            )
-        self.stranger_module_mock.database_proxy.initialize.assert_called_once_with(self.database)
-
-    def test_init__database_troubles(self):
-        self.RetryingMySQLDatabase.return_value.connect.side_effect = DatabaseError()
-        with self.assertRaises(StrangerServiceError):
-            StrangerService(self.configuration)
-        self.RetryingMySQLDatabase.assert_called_once_with(
-            'foo_name',
-            host='foo_host',
-            user='foo_user',
-            password='foo_password',
-            )
-        self.stranger_module_mock.database_proxy.initialize.assert_not_called()
-
-    def test_install__ok(self):
-        self.stranger_service.install()
-        self.database.create_tables.assert_called_once_with([Stranger])
-
-    def test_install__database_error(self):
-        self.database.create_tables.side_effect = DatabaseError()
-        with self.assertRaises(StrangerServiceError):
-            self.stranger_service.install()
-        self.database.create_tables.assert_called_once_with([Stranger])
-
-class TestStrangerServiceIntegrational(unittest.TestCase):
+class TestStrangerService(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        super(TestStrangerServiceIntegrational, self).__init__(*args, **kwargs)
+        super(TestStrangerService, self).__init__(*args, **kwargs)
         self.database = SqliteDatabase(':memory:')
 
-    @patch('randtalkbot.stranger_service.RetryingMySQLDatabase', create_autospec(RetryingMySQLDatabase))
-    @patch('randtalkbot.stranger_service.stranger')
-    def setUp(self, stranger_module_mock):
-        from randtalkbot.stranger_service import RetryingMySQLDatabase
-        configuration = Mock()
-        configuration.database_host = 'foo_host'
-        configuration.database_name = 'foo_name'
-        configuration.database_user = 'foo_user'
-        configuration.database_password = 'foo_password'
-        self.stranger_service = StrangerService(configuration)
+    def setUp(self):
+        self.stranger_service = StrangerService()
         stranger.database_proxy.initialize(self.database)
         self.database.create_tables([Stranger])
         self.stranger_0 = Stranger.create(
@@ -123,6 +65,13 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
             sex='male',
             partner_sex='female',
             )
+        self.stranger_6 = Stranger.create(
+            invitation='zom',
+            languages=None,
+            telegram_id=0,
+            sex=None,
+            partner_sex=None
+            )
 
     def tearDown(self):
         self.database.drop_tables([Stranger])
@@ -154,6 +103,10 @@ class TestStrangerServiceIntegrational(unittest.TestCase):
         self.assertEqual(self.stranger_service._strangers_cache[31416], stranger)
         self.assertEqual(self.stranger_service.get_cached_stranger.call_count, 2)
         self.stranger_service.get_cached_stranger.assert_called_with(partner)
+
+    def test_get_full_strangers(self):
+        full_strangers = list(self.stranger_service.get_full_strangers())
+        self.assertEqual(len(full_strangers), 6)
 
     def test_get_partner__returns_the_longest_waiting_stranger_1(self):
         self.stranger_0.languages = '["foo", "bar", "baz"]'
