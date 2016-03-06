@@ -24,7 +24,7 @@ class StatsService:
     def __init__(self, stranger_service):
         self._stranger_service = stranger_service
         try:
-            self._stats = Stats.select().order_by(Stats.created).get()
+            self._stats = Stats.select().order_by(Stats.created.desc()).get()
         except DoesNotExist:
             self._update_stats()
 

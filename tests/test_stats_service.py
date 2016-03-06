@@ -153,10 +153,18 @@ class TestStatsService(asynctest.TestCase):
         self.stats_service._update_stats.assert_called_once_with()
 
     @asynctest.ignore_loop
-    def test_init__some_stats_in_db(self):
-        stats = Stats.create(data_json='')
+    def test_init__some_stats_in_db_1(self):
+        stats1 = Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
+        stats2 = Stats.create(data_json='', created=datetime.datetime(1990, 1, 1))
         stats_service = StatsService(self.stranger_service)
-        self.assertEqual(stats_service._stats, stats)
+        self.assertEqual(stats_service._stats, stats2)
+
+    @asynctest.ignore_loop
+    def test_init__some_stats_in_db_2(self):
+        stats1 = Stats.create(data_json='', created=datetime.datetime(1990, 1, 1))
+        stats2 = Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
+        stats_service = StatsService(self.stranger_service)
+        self.assertEqual(stats_service._stats, stats1)
 
     @asynctest.ignore_loop
     def test_get_stats(self):
