@@ -83,7 +83,7 @@ After that write ``randtalkbotenv/configuration.json`` file like that::
 
 Where:
 
-* ``admins`` -- list of admins' Telegram IDs. Optional. Default is ``[]``.
+* ``admins`` -- list of admins' Telegram IDs. Admins are able to use extended list of bot commands. Optional. Default is ``[]``.
 * ``logging`` -- logging setup as described in `this howto <https://docs.python.org/3/howto/logging.html>`_.
 
 Create MySQL DB::
@@ -126,6 +126,11 @@ In @BotFather compatible format::
     end - End talking
     setup - Choose sex and languages
     help - Help for Rand Talk
+
+Admins specified at ``admins`` configuration property are able to use the following additional commands::
+
+    clear TELEGRAM_ID - "Clear" specified user. Stop her coversation or clear "looking for partner" flag.
+    pay TELEGRAM_ID AMOUNT GRATITUDE - Pay AMOUNT bonuses to TELEGRAM_ID and notify her with GRATITUDE
 
 Roadmap
 -------
