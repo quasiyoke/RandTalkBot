@@ -12,6 +12,7 @@ import logging
 import random
 import string
 from .i18n import get_languages_names, get_translations
+from .stats_service import StatsService
 from .stranger_sender import StrangerSenderError
 from .stranger_sender_service import StrangerSenderService
 from peewee import *
@@ -20,7 +21,7 @@ from telepot import TelegramError
 INVITATION_CHARS = string.ascii_letters + string.digits + string.punctuation
 INVITATION_LENGTH = 10
 LANGUAGES_MAX_LENGTH = 40
-LOGGER = logging.getLogger('randtalkbot')
+LOGGER = logging.getLogger('randtalkbot.stranger')
 
 def _(s): return s
 
@@ -38,6 +39,7 @@ ADDITIONAL_SEX_NAMES_TO_CODES = {
     _('girl'): 'female',
     _('woman'): 'female',
 }
+SEX_MAX_LENGTH = 20
 SEX_NAMES_TO_CODES = {}
 SEX_NAMES = list(zip(*SEX_CHOICES))[1]
 for translation in get_translations():
@@ -75,15 +77,18 @@ class Stranger(Model):
     languages = CharField(max_length=LANGUAGES_MAX_LENGTH, null=True)
     looking_for_partner_from = DateTimeField(null=True)
     partner = ForeignKeyField('self', null=True)
-    partner_sex = CharField(choices=SEX_CHOICES, max_length=20, null=True)
-    sex = CharField(choices=SEX_CHOICES, max_length=20, null=True)
+    partner_sex = CharField(choices=SEX_CHOICES, max_length=SEX_MAX_LENGTH, null=True)
+    sex = CharField(choices=SEX_CHOICES, max_length=SEX_MAX_LENGTH, null=True)
     telegram_id = IntegerField(unique=True)
+    was_invited_as = CharField(choices=SEX_CHOICES, max_length=SEX_MAX_LENGTH, null=True)
     wizard = CharField(choices=WIZARD_CHOICES, default='none', max_length=20)
     wizard_step = CharField(max_length=20, null=True)
 
     ADVERTISING_DELAY = 30
     HOUR_TIMEDELTA = datetime.timedelta(hours=1)
     LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=5)
+    REWARD_BIG = 3
+    REWARD_SMALL = 1
     UNMUTE_BONUSES_NOTIFICATIONS_DELAY = 60 * 60
 
     class Meta:
@@ -106,8 +111,7 @@ class Stranger(Model):
             raise SexError(sex_name)
 
     @asyncio.coroutine
-    def add_bonus(self):
-        bonuses_delta = 1
+    def _add_bonuses(self, bonuses_delta):
         self.bonus_count += bonuses_delta
         self.save()
         bonuses_notifications_muted = getattr(self, '_bonuses_notifications_muted', False)
@@ -121,19 +125,29 @@ class Stranger(Model):
         searching_for_partner_count = Stranger.select().where(Stranger.looking_for_partner_from != None) \
             .count()
         if searching_for_partner_count > 1:
+            if StatsService.get_instance().get_stats().get_sex_ratio() >= 1:
+                message = _('The search is going on. {0} users are looking for partner -- change your '
+                    'preferences (languages, partner\'s sex) using /setup command to talk with them.\n'
+                    'Chat *lacks females!* Send the link to your friends and earn {1} bonuses for every '
+                    'invited female and {2} bonus for each male (the more bonuses you have -- the faster '
+                    'partner\'s search will be):')
+            else:
+                message = _('The search is going on. {0} users are looking for partner -- change your '
+                    'preferences (languages, partner\'s sex) using /setup command to talk with them.\n'
+                    'Chat *lacks males!* Send the link to your friends and earn {1} bonuses for every '
+                    'invited male and {2} bonus for each female (the more bonuses you have -- the faster '
+                    'partner\'s search will be):')
             yield from self.get_sender().send_notification(
-                _('You\'re still searching for partner among {0} people. You can talk with some of them right '
-                    'now if you remove partner\'s sex restrictions or extend the list of languages you know '
-                    'using /setup command.\nMore people -- more fun! Spread Rand Talk between your friends. '
-                    'The more people will use your link -- the faster partner\'s search will be. Share the '
-                    'following message in your chats:'),
+                message,
                 searching_for_partner_count,
+                type(self).REWARD_BIG,
+                type(self).REWARD_SMALL,
                 )
             yield from self.get_sender().send_notification(
                 _('Do you want to talk with somebody, practice in foreign languages or you just want '
                     'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
                     'a random stranger of desired sex speaking on your language. {0}'),
-                'telegram.me/RandTalkBot?start=' + self.get_start_args(),
+                'https://telegram.me/RandTalkBot?start=' + self.get_start_args(),
                 )
 
     def advertise_later(self):
@@ -344,10 +358,21 @@ class Stranger(Model):
         self._deferred_advertising = None
 
     @asyncio.coroutine
+    def _reward_inviter(self):
+        self.was_invited_as = self.sex
+        self.save()
+        sex_ratio = StatsService.get_instance().get_stats().get_sex_ratio()
+        LOGGER.debug(sex_ratio)
+        yield from self.invited_by._add_bonuses(
+            type(self).REWARD_BIG if (self.sex == 'female' and sex_ratio >= 1) or 
+                (self.sex == 'male' and sex_ratio < 1) else type(self).REWARD_SMALL,
+            )
+
+    @asyncio.coroutine
     def send(self, message):
         '''
-        @raises StrangerError if can't send message because of unknown content type.
-        @raises TelegramError if stranger has blocked the bot.
+        @raise StrangerError if can't send message because of unknown content type.
+        @raise TelegramError if stranger has blocked the bot.
         '''
         sender = self.get_sender()
         try:
@@ -358,18 +383,26 @@ class Stranger(Model):
     @asyncio.coroutine
     def send_to_partner(self, message):
         '''
-        @raises StrangerError if can't send content.
-        @raises MissingPartnerError if there's no partner for this stranger.
+        @raise MissingPartnerError if there's no partner for this stranger.
+        @raise StrangerError if can't send content.
+        @raise TelegramError if the partner has blocked the bot.
         '''
         if self.partner:
-            yield from self.partner.send(message)
+            try:
+                yield from self.partner.send(message)
+            except:
+                raise
+            else:
+                # Invitee should reward inviter if it's her first message.
+                if self.invited_by is not None and self.was_invited_as is None:
+                    yield from self._reward_inviter()
         else:
             raise MissingPartnerError()
 
     def set_languages(self, languages):
         '''
-        @EmptyLanguagesError if no languages were specified.
-        @StrangerError if too much languages were specified.
+        @raise EmptyLanguagesError if no languages were specified.
+        @raise StrangerError if too much languages were specified.
         '''
         if languages == ['same']:
             languages = self.get_languages()

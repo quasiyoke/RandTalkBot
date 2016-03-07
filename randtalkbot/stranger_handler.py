@@ -151,7 +151,6 @@ class StrangerHandler(telepot.helper.ChatHandler):
                         else:
                             self._stranger.invited_by = invited_by
                             self._stranger.save()
-                            yield from invited_by.add_bonus()
         if self._stranger.wizard == 'none':
             yield from self._sender.send_notification(
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '

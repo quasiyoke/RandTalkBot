@@ -217,7 +217,6 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger.invited_by = None
         yield from self.stranger_handler.handle_command(message)
         self.stranger_service.get_stranger_by_invitation.assert_called_once_with('foo_invitation')
-        invited_by.add_bonus.assert_called_once_with()
         self.assertEqual(self.stranger.invited_by, invited_by)
         self.stranger.save.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with(
