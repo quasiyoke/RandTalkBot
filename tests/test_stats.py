@@ -19,3 +19,15 @@ class TestStats(unittest.TestCase):
     def test_set_data(self):
         self.stats.set_data({'bar': 'boo'})
         self.assertEqual(self.stats.data_json, '{"bar": "boo"}')
+
+    def test_get_sex_ratio(self):
+        stats = Stats(data_json='{"sex_distribution": {"male": 2000, "female": 1000}}')
+        self.assertEqual(stats.get_sex_ratio(), 2)
+        stats = Stats(data_json='{"sex_distribution": {"female": 1000}}')
+        self.assertEqual(stats.get_sex_ratio(), 0.1)
+        stats = Stats(data_json='{"sex_distribution": {"male": 2000}}')
+        self.assertEqual(stats.get_sex_ratio(), 10)
+        stats = Stats(data_json='{"sex_distribution": {}}')
+        self.assertEqual(stats.get_sex_ratio(), 1)
+        stats = Stats(data_json='[]')
+        self.assertEqual(stats.get_sex_ratio(), 1)

@@ -23,7 +23,32 @@ class Stats(Model):
         database = database_proxy
 
     def get_data(self):
-        return json.loads(self.data_json)
+        try:
+            return self._data_cache
+        except AttributeError:
+            self._data_cache = json.loads(self.data_json)
+            return self._data_cache
 
     def set_data(self, data):
+        self._data_cache = data
         self.data_json = json.dumps(data)
+
+    def get_sex_ratio(self):
+        '''
+        @return Ratio of males to females.
+        @see https://en.wikipedia.org/wiki/Human_sex_ratio
+        '''
+        try:
+            sex_data = self.get_data()['sex_distribution']
+        except (KeyError, TypeError):
+            return 1
+        males_count = sex_data.get('male', 0)
+        females_count = sex_data.get('female', 0)
+        if males_count > 0 and females_count > 0:
+            return males_count / females_count
+        elif males_count > 0:
+            return 10
+        elif females_count > 0:
+            return 0.1
+        else:
+            return 1
