@@ -167,6 +167,16 @@ class TestStatsService(asynctest.TestCase):
         self.assertEqual(stats_service._stats, stats1)
 
     @asynctest.ignore_loop
+    def test_get_instance__ok(self):
+        self.assertEqual(StatsService.get_instance(), self.stats_service)
+
+    @asynctest.ignore_loop
+    def test_get_instance__runtime_error(self):
+        del StatsService._instance
+        with self.assertRaises(RuntimeError):
+            StatsService.get_instance()
+
+    @asynctest.ignore_loop
     def test_get_stats(self):
         self.assertEqual(self.stats_service.get_stats(), self.stats)
 

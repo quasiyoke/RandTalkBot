@@ -19,14 +19,22 @@ def increment(d, key):
         d[key] = 1
 
 class StatsService:
-    INTERVAL = datetime.timedelta(seconds=4 * 60 * 60)
+    INTERVAL = datetime.timedelta(hours=4)
 
     def __init__(self, stranger_service):
+        type(self)._instance = self
         self._stranger_service = stranger_service
         try:
             self._stats = Stats.select().order_by(Stats.created.desc()).get()
         except DoesNotExist:
             self._update_stats()
+
+    @classmethod
+    def get_instance(cls):
+        try:
+            return cls._instance
+        except AttributeError:
+            raise RuntimeError('StatsService was not initialized')
 
     def get_stats(self):
         return self._stats
