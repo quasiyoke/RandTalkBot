@@ -43,6 +43,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.sender.send_notification.assert_called_once_with(
             'Thank you. Use /begin to start looking for a conversational partner, ' + \
                 'once you\'re matched you can use /end to end the conversation.',
+            reply_markup={'hide_keyboard': True},
             )
         self.stranger_setup_wizard._prompt.assert_not_called()
 

@@ -49,6 +49,7 @@ class StrangerSetupWizard(Wizard):
         yield from self._sender.send_notification(
             _('Thank you. Use /begin to start looking for a conversational partner, '
                 'once you\'re matched you can use /end to end the conversation.'),
+            reply_markup={'hide_keyboard': True},
             )
 
     @asyncio.coroutine

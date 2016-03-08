@@ -160,7 +160,7 @@ class TestStrangerHandler(asynctest.TestCase):
             '',
             )
         self.sender.send_notification.assert_called_once_with(
-            'Internal error. Admins are already notified about that',
+            'Internal error. Admins are already notified about that.',
             )
 
     def test_handle_command__end(self):
