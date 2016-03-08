@@ -7,8 +7,38 @@
 class DBError(Exception):
     pass
 
+class EmptyLanguagesError(Exception):
+    pass
+
+class MissingCommandError(Exception):
+    pass
+
+class MissingPartnerError(Exception):
+    pass
+
 class PartnerObtainingError(Exception):
+    pass
+
+class SexError(Exception):
+    def __init__(self, sex):
+        super(SexError, self).__init__(
+            'Unknown sex: \"{}\" -- is not a valid sex name.'.format(sex),
+            )
+        self.name = sex
+
+class StrangerError(Exception):
+    pass
+
+class StrangerHandlerError(Exception):
+    pass
+
+class StrangerSenderError(Exception):
     pass
 
 class StrangerServiceError(Exception):
     pass
+
+class UnknownCommandError(Exception):
+    def __init__(self, command):
+        super(UnknownCommandError, self).__init__()
+        self.command = command

@@ -11,7 +11,8 @@ from asynctest.mock import call,create_autospec, patch, Mock, CoroutineMock
 from peewee import *
 from playhouse.test_utils import test_database
 from randtalkbot import stranger
-from randtalkbot.stranger import Stranger, MissingPartnerError, StrangerError
+from randtalkbot.errors import MissingPartnerError, StrangerError
+from randtalkbot.stranger import Stranger
 from randtalkbot.stranger_sender import StrangerSenderError
 from randtalkbot.stranger_sender_service import StrangerSenderService
 from telepot import TelegramError
@@ -112,7 +113,7 @@ class TestStranger(asynctest.TestCase):
     def test_advertise__people_are_searching_chat_lacks_females(self, stats_service_mock, asyncio_mock):
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
-        self.stranger.get_start_args = Mock(return_value='foo_start_args')
+        self.stranger.get_invitation_link = Mock(return_value='foo_invitation_link')
         self.stranger.looking_for_partner_from = datetime.datetime.utcnow()
         self.stranger.save()
         self.stranger2.looking_for_partner_from = datetime.datetime.utcnow()
@@ -137,7 +138,7 @@ class TestStranger(asynctest.TestCase):
                     'Do you want to talk with somebody, practice in foreign languages or you just want '
                         'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
                         'a random stranger of desired sex speaking on your language. {0}',
-                    'https://telegram.me/RandTalkBot?start=foo_start_args',
+                    'foo_invitation_link',
                     ),
                 ],
             )
@@ -260,6 +261,14 @@ class TestStranger(asynctest.TestCase):
         self.stranger.languages = '["zen", "bar", "baz", "foo", "boo"]'
         self.stranger2.languages = '["zen", "baz", "zig", "foo", "zam", "baz"]'
         self.assertEqual(self.stranger.get_common_languages(self.stranger2), ["zen", "baz", "foo"])
+
+    @asynctest.ignore_loop
+    def test_get_invitation_link(self):
+        self.stranger.get_start_args = Mock(return_value='foo_start_args')
+        self.assertEqual(
+            self.stranger.get_invitation_link(),
+            'https://telegram.me/RandTalkBot?start=foo_start_args',
+            )
 
     @asynctest.ignore_loop
     def test_get_languages__has_languages(self):
@@ -843,20 +852,20 @@ class TestStranger(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_set_languages__empty(self):
-        from randtalkbot.stranger import EmptyLanguagesError
+        from randtalkbot.errors import EmptyLanguagesError
         with self.assertRaises(EmptyLanguagesError):
             self.stranger.set_languages([])
 
     @asynctest.ignore_loop
     def test_set_languages__same_empty(self):
-        from randtalkbot.stranger import EmptyLanguagesError
+        from randtalkbot.errors import EmptyLanguagesError
         self.stranger.languages = None
         with self.assertRaises(EmptyLanguagesError):
             self.stranger.set_languages(['same'])
 
     @asynctest.ignore_loop
     def test_set_languages__too_much(self):
-        from randtalkbot.stranger import StrangerError
+        from randtalkbot.errors import StrangerError
         self.stranger.languages = None
         with self.assertRaises(StrangerError):
             # 7 languages.
@@ -956,7 +965,7 @@ class TestStranger(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_set_sex__incorrect(self):
-        from randtalkbot.stranger import SexError
+        from randtalkbot.errors import SexError
         self.stranger.sex = 'foo'
         with self.assertRaises(SexError):
             self.stranger.set_sex('not_a_sex')
@@ -974,7 +983,7 @@ class TestStranger(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_set_partner_sex__incorrect(self):
-        from randtalkbot.stranger import SexError
+        from randtalkbot.errors import SexError
         self.stranger.partner_sex = 'foo'
         with self.assertRaises(SexError):
             self.stranger.set_partner_sex('not_a_sex')

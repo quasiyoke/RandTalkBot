@@ -11,9 +11,9 @@ import json
 import logging
 import random
 import string
+from .errors import EmptyLanguagesError, MissingPartnerError, SexError, StrangerError, StrangerSenderError
 from .i18n import get_languages_names, get_translations
 from .stats_service import StatsService
-from .stranger_sender import StrangerSenderError
 from .stranger_sender_service import StrangerSenderService
 from peewee import *
 from telepot import TelegramError
@@ -53,22 +53,6 @@ WIZARD_CHOICES = (
     )
 
 database_proxy = Proxy()
-
-class EmptyLanguagesError(Exception):
-    pass
-
-class MissingPartnerError(Exception):
-    pass
-
-class SexError(Exception):
-    def __init__(self, sex):
-        super(SexError, self).__init__(
-            'Unknown sex: \"{0}\" -- is not a valid sex name.'.format(sex),
-            )
-        self.name = sex
-
-class StrangerError(Exception):
-    pass
 
 class Stranger(Model):
     bonus_count = IntegerField(default=0)
@@ -147,7 +131,7 @@ class Stranger(Model):
                 _('Do you want to talk with somebody, practice in foreign languages or you just want '
                     'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
                     'a random stranger of desired sex speaking on your language. {0}'),
-                'https://telegram.me/RandTalkBot?start=' + self.get_start_args(),
+                self.get_invitation_link(),
                 )
 
     def advertise_later(self):
@@ -182,6 +166,9 @@ class Stranger(Model):
     def get_common_languages(self, partner):
         partner_languages = partner.get_languages()
         return [language for language in self.get_languages() if language in partner_languages]
+
+    def get_invitation_link(self):
+        return 'https://telegram.me/RandTalkBot?start=' + self.get_start_args()
 
     def get_languages(self):
         try:
@@ -362,7 +349,6 @@ class Stranger(Model):
         self.was_invited_as = self.sex
         self.save()
         sex_ratio = StatsService.get_instance().get_stats().get_sex_ratio()
-        LOGGER.debug(sex_ratio)
         yield from self.invited_by._add_bonuses(
             type(self).REWARD_BIG if (self.sex == 'female' and sex_ratio >= 1) or 
                 (self.sex == 'male' and sex_ratio < 1) else type(self).REWARD_SMALL,
