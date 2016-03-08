@@ -74,7 +74,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
         except StrangerServiceError as e:
             LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
             yield from self._sender.send_notification(
-                _('Internal error. Admins are already notified about that'),
+                _('Internal error. Admins are already notified about that.'),
                 )
 
     @asyncio.coroutine

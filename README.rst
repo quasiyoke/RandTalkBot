@@ -162,13 +162,15 @@ Here's the list of bot translators. Take your chance to be here!
 
 * English. Pyotr Ermishkin <quasiyoke@gmail.com>
 
-* Italian.
+* Italian
 
-    * Marco Giustetto <arducode@gmail.com>
-    * Leonardo Guida <leonardo.99.torino@gmail.com>
-    * Benedetta Facchinetti <zoidberglupin@gmail.com>
+  * Marco Giustetto <arducode@gmail.com>
+  * Leonardo Guida <leonardo.99.torino@gmail.com>
+  * Benedetta Facchinetti <zoidberglupin@gmail.com>
 
 * Russian. Pyotr Ermishkin <quasiyoke@gmail.com>
+
+* Spanish. Benedetta Facchinetti <zoidberglupin@gmail.com>
 
 Building gettext files
 ^^^^^^^^^^^^^^^^^^^^^^
