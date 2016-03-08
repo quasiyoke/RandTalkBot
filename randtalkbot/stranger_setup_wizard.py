@@ -9,9 +9,10 @@ import logging
 import re
 import sys
 import telepot
+from .errors import EmptyLanguagesError, MissingPartnerError, SexError, StrangerError
 from .i18n import get_languages_codes, get_languages_names, LanguageNotFoundError, \
     SUPPORTED_LANGUAGES_NAMES
-from .stranger import EmptyLanguagesError, MissingPartnerError, SexError, SEX_NAMES, StrangerError
+from .stranger import SEX_NAMES
 from .stranger_sender_service import StrangerSenderService
 from .wizard import Wizard
 
@@ -48,7 +49,6 @@ class StrangerSetupWizard(Wizard):
         yield from self._sender.send_notification(
             _('Thank you. Use /begin to start looking for a conversational partner, '
                 'once you\'re matched you can use /end to end the conversation.'),
-            reply_markup={'hide_keyboard': True},
             )
 
     @asyncio.coroutine

@@ -6,6 +6,7 @@
 
 import asyncio
 import asynctest
+from randtalkbot.errors import *
 from randtalkbot.stranger_handler import *
 from randtalkbot.stranger_sender_service import *
 from randtalkbot.stranger_service import StrangerServiceError
@@ -42,7 +43,6 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.sender.send_notification.assert_called_once_with(
             'Thank you. Use /begin to start looking for a conversational partner, ' + \
                 'once you\'re matched you can use /end to end the conversation.',
-            reply_markup={'hide_keyboard': True},
             )
         self.stranger_setup_wizard._prompt.assert_not_called()
 
@@ -94,7 +94,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     @asyncio.coroutine
     def test_handle__languages_empty_languages_error(self):
         from randtalkbot.stranger_setup_wizard import get_languages_codes
-        from randtalkbot.stranger import EmptyLanguagesError
+        from randtalkbot.errors import EmptyLanguagesError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         get_languages_codes.side_effect = EmptyLanguagesError()
@@ -133,7 +133,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     def test_handle__languages_too_much(self):
         from randtalkbot.stranger_setup_wizard import get_languages_codes
         from randtalkbot.stranger_setup_wizard import LOGGER
-        from randtalkbot.stranger import StrangerError
+        from randtalkbot.errors import StrangerError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         get_languages_codes.return_value = 'languages_codes'
@@ -177,7 +177,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.save.assert_not_called()
 
     def test_handle__sex_sex_error(self):
-        from randtalkbot.stranger import SexError
+        from randtalkbot.errors import SexError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'sex'
         self.stranger_setup_wizard._prompt = CoroutineMock()
@@ -208,7 +208,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.save.assert_not_called()
 
     def test_handle__partner_sex_sex_error(self):
-        from randtalkbot.stranger import SexError
+        from randtalkbot.errors import SexError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'partner_sex'
         self.stranger_setup_wizard._prompt = CoroutineMock()
