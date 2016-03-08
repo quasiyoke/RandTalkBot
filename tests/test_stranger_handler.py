@@ -8,9 +8,9 @@ import asyncio
 import asynctest
 import datetime
 from asynctest.mock import call, create_autospec, patch, Mock, CoroutineMock
+from randtalkbot.errors import MissingCommandError, StrangerError, UnknownCommandError
 from randtalkbot.message import Message, UnsupportedContentError
-from randtalkbot.stranger import StrangerError
-from randtalkbot.stranger_handler import StrangerHandler, MissingCommandError, UnknownCommandError
+from randtalkbot.stranger_handler import StrangerHandler
 from randtalkbot.stranger_sender_service import StrangerSenderService
 from randtalkbot.stranger_service import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
@@ -31,7 +31,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger_setup_wizard.handle = CoroutineMock()
         self.stranger_setup_wizard.handle_command = CoroutineMock()
         self.initial_msg = {
-            'chat': {
+            'from': {
                 'id': 31416,
                 },
             }
@@ -45,7 +45,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_init__ok(self):
-        self.assertEqual(self.stranger_handler._chat_id, 31416)
+        self.assertEqual(self.stranger_handler._from_id, 31416)
         self.assertEqual(self.stranger_handler._stranger, self.stranger)
         self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
         self.assertEqual(self.stranger_handler._stranger_setup_wizard, self.stranger_setup_wizard)
@@ -63,7 +63,7 @@ class TestStrangerHandler(asynctest.TestCase):
                 (Mock(), self.initial_msg, 31416),
                 self.stranger_service,
                 )
-        self.assertEqual(self.stranger_handler._chat_id, 31416)
+        self.assertEqual(self.stranger_handler._from_id, 31416)
         self.assertEqual(self.stranger_handler._stranger, self.stranger)
         self.assertEqual(self.stranger_handler._stranger_service, self.stranger_service)
         self.assertEqual(self.stranger_handler._stranger_setup_wizard, self.stranger_setup_wizard)
@@ -177,15 +177,14 @@ class TestStrangerHandler(asynctest.TestCase):
         message.command = 'help'
         yield from self.stranger_handler.handle_command(message)
         self.sender.send_notification.assert_called_once_with(
-            '*Help*\n\n'
-                'Use /begin to start looking for a conversational partner, once '
-                'you\'re matched you can use /end to finish the conversation. '
-                'To choose your settings, apply /setup.\n\n'
+            '*Help*\n\nUse /begin to start looking for a conversational partner, once you\'re matched '
+                'you can use /end to finish the conversation. To choose your settings, apply /setup.\n\n'
                 'If you have any suggestions or require help, please contact @quasiyoke. '
                 'When asking questions, please provide this number: {0}.\n\n'
-                'Subscribe to [our news](https://telegram.me/RandTalk). You\'re welcome '
-                'to inspect and improve [Rand Talk v. {1} source code]'
-                '(https://github.com/quasiyoke/RandTalkBot).',
+                'Subscribe to [our news](https://telegram.me/RandTalk). '
+                'You\'re welcome to inspect and improve [Rand Talk v. {1} source code]'
+                '(https://github.com/quasiyoke/RandTalkBot) or to [give us 5 stars]'
+                '(https://telegram.me/storebot?start=randtalkbot).',
             31416,
             '0.0.0',
             )
@@ -355,10 +354,10 @@ class TestStrangerHandler(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_handler.telepot', Mock())
     @asyncio.coroutine
-    def test_on_message__not_private(self):
+    def test_on_chat_message__not_private(self):
         from randtalkbot.stranger_handler import telepot
-        telepot.glance2.return_value = 'text', 'not_private', 31416
-        yield from self.stranger_handler.on_message('message')
+        telepot.glance.return_value = 'text', 'not_private', 31416
+        yield from self.stranger_handler.on_chat_message('message')
         self.stranger.send_to_partner.assert_not_called()
         self.assertFalse(self.stranger_setup_wizard.handle.called)
 
@@ -366,17 +365,17 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', create_autospec(Message))
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__text(self, handle_command_mock):
+    def test_on_chat_message__text(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.stranger_setup_wizard.handle.return_value = False
         message_json = {
             'text': 'message_text'
             }
         message = Message.return_value
         message.command = None
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger.send_to_partner.assert_called_once_with(Message.return_value)
         self.stranger_setup_wizard.handle.assert_called_once_with(message)
         Message.assert_called_once_with(message_json)
@@ -386,11 +385,11 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', create_autospec(Message))
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__text_no_partner(self, handle_command_mock):
+    def test_on_chat_message__text_no_partner(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
-        from randtalkbot.stranger import MissingPartnerError
-        telepot.glance2.return_value = 'text', 'private', 31416
+        from randtalkbot.errors import MissingPartnerError
+        telepot.glance.return_value = 'text', 'private', 31416
         self.stranger_setup_wizard.handle.return_value = False
         message_json = {
             'text': 'message_text',
@@ -398,7 +397,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger.send_to_partner = CoroutineMock(side_effect=MissingPartnerError())
         message = Message.return_value
         message.command = None
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger.send_to_partner.assert_called_once_with(message)
         self.stranger_setup_wizard.handle.assert_called_once_with(message)
         Message.assert_called_once_with(message_json)
@@ -408,18 +407,18 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', Mock())
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__text_stranger_error(self, handle_command_mock):
+    def test_on_chat_message__text_stranger_error(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
         from randtalkbot.stranger_handler import StrangerError
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.stranger_setup_wizard.handle.return_value = False
         message_json = {
             'text': 'message_text',
             }
         Message.return_value.command = None
         self.stranger.send_to_partner = CoroutineMock(side_effect=StrangerError())
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger.send_to_partner.assert_called_once_with(Message.return_value)
         self.sender.send_notification.assert_called_once_with(
             'Messages of this type aren\'t supported.',
@@ -432,12 +431,12 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', Mock())
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__text_stranger_has_blocked_the_bot(self, handle_command_mock):
+    def test_on_chat_message__text_stranger_has_blocked_the_bot(self, handle_command_mock):
         from randtalkbot.stranger_handler import LOGGER
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
         from randtalkbot.stranger_handler import StrangerError
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.stranger_setup_wizard.handle.return_value = False
         message_json = {
             'text': 'message_text',
@@ -446,7 +445,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger.id = 31416
         self.stranger.partner.id = 27183
         self.stranger.send_to_partner = CoroutineMock(side_effect=TelegramError('foo_description', 123))
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         LOGGER.warning(
             'Send text. Can\'t send to partned: %d -> %d',
             31416,
@@ -460,10 +459,10 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @patch('randtalkbot.stranger_handler.Message', create_autospec(Message))
     @asyncio.coroutine
-    def test_on_message__command(self, handle_command_mock):
+    def test_on_chat_message__command(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         message_json = {
             'text': 'some_command_text'
             }
@@ -471,7 +470,7 @@ class TestStrangerHandler(asynctest.TestCase):
         message.command = 'foo_command'
         Message.return_value = message
         self.stranger_setup_wizard.handle_command.return_value = False
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger.send_to_partner.assert_not_called()
         Message.assert_called_once_with(message_json)
         self.stranger_setup_wizard.handle_command.assert_called_once_with(message)
@@ -481,10 +480,10 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @patch('randtalkbot.stranger_handler.Message', create_autospec(Message))
     @asyncio.coroutine
-    def test_on_message__command_setup(self, handle_command_mock):
+    def test_on_chat_message__command_setup(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         message_json = {
             'text': 'some_command_text'
             }
@@ -492,7 +491,7 @@ class TestStrangerHandler(asynctest.TestCase):
         message.command = 'foo_command'
         Message.return_value = message
         self.stranger_setup_wizard.handle_command.return_value = True
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger.send_to_partner.assert_not_called()
         Message.assert_called_once_with(message_json)
         handle_command_mock.assert_not_called()
@@ -501,10 +500,10 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', create_autospec(Message))
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__command_unknown(self, handle_command_mock):
+    def test_on_chat_message__command_unknown(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.stranger_setup_wizard.handle.return_value = False
         message_json = {
             'text': 'message_text',
@@ -513,7 +512,7 @@ class TestStrangerHandler(asynctest.TestCase):
         message.command = 'foo_command'
         handle_command_mock.side_effect = UnknownCommandError('foo_command')
         self.stranger_setup_wizard.handle_command.return_value = False
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.sender.send_notification.assert_called_once_with(
             'Unknown command. Look /help for the full list of commands.',
             )
@@ -522,17 +521,17 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', Mock())
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__not_supported_by_stranger_content(self, handle_command_mock):
+    def test_on_chat_message__not_supported_by_stranger_content(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
         from randtalkbot.stranger_handler import StrangerError
-        telepot.glance2.return_value = 'unsupported_content', 'private', 31416
+        telepot.glance.return_value = 'unsupported_content', 'private', 31416
         message_json = Mock()
         message = Message.return_value
         message.command = None
         self.stranger.send_to_partner = CoroutineMock(side_effect=StrangerError())
         self.stranger_setup_wizard.handle.return_value = False
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger.send_to_partner.assert_called_once_with(message)
         self.sender.send_notification.assert_called_once_with(
             'Messages of this type aren\'t supported.',
@@ -544,17 +543,17 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', Mock(side_effect=UnsupportedContentError))
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__not_supported_by_message_cls_content(self, handle_command_mock):
+    def test_on_chat_message__not_supported_by_message_cls_content(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
         from randtalkbot.stranger_handler import StrangerError
-        telepot.glance2.return_value = 'unsupported_content', 'private', 31416
+        telepot.glance.return_value = 'unsupported_content', 'private', 31416
         message_json = Mock()
         message = Message.return_value
         message.command = None
         self.stranger.send_to_partner = CoroutineMock()
         self.stranger_setup_wizard.handle.return_value = False
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger.send_to_partner.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Messages of this type aren\'t supported.',
@@ -566,10 +565,10 @@ class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.Message', Mock())
     @patch('randtalkbot.stranger_handler.StrangerHandler.handle_command')
     @asyncio.coroutine
-    def test_on_message__setup(self, handle_command_mock):
+    def test_on_chat_message__setup(self, handle_command_mock):
         from randtalkbot.stranger_handler import Message
         from randtalkbot.stranger_handler import telepot
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         # This means, message was handled by StrangerSetupWizard.
         self.stranger_setup_wizard.handle.return_value = True
         message_json = {
@@ -578,7 +577,33 @@ class TestStrangerHandler(asynctest.TestCase):
         message = Message.return_value
         message.command = None
         self.stranger_setup_wizard.handle.return_value = True
-        yield from self.stranger_handler.on_message(message_json)
+        yield from self.stranger_handler.on_chat_message(message_json)
         self.stranger_setup_wizard.handle.assert_called_once_with(message)
         Message.assert_called_once_with(message_json)
         handle_command_mock.assert_not_called()
+
+    @patch('randtalkbot.stranger_handler.telepot', Mock())
+    @asyncio.coroutine
+    def test_on_inline_query(self):
+        from randtalkbot.stranger_handler import telepot
+        telepot.glance.return_value = 31416, 27183, 'foo_query_string'
+        message_json = 'foo_message'
+        self.stranger.get_invitation_link = Mock()
+        yield from self.stranger_handler.on_inline_query(message_json)
+        self.sender.answer_inline_query.assert_called_once_with(
+            31416,
+            [{
+                'type': 'article',
+                'id': 'invitation_link',
+                'title': 'Rand Talk Invitation Link',
+                'description': 'The more friends\'ll use your link -- the faster the search will be',
+                'thumb_url': 'http://randtalk.ml/static/img/logo-500x500.png',
+                'message_text': (
+                    'Do you want to talk with somebody, practice in foreign languages or you just want '
+                        'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
+                        'a random stranger of desired sex speaking on your language. {0}',
+                    self.stranger.get_invitation_link.return_value,
+                    ),
+                'parse_mode': 'Markdown',
+                }],
+            )

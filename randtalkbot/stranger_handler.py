@@ -10,32 +10,23 @@ import logging
 import re
 import sys
 import telepot
-from .i18n import get_languages_codes, LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
+import telepot.async
+from .errors import MissingPartnerError, StrangerError, StrangerHandlerError, UnknownCommandError
+from .i18n import get_languages_codes, get_translation, LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
 from .message import Message, UnsupportedContentError
-from .stranger import MissingPartnerError, SEX_NAMES, StrangerError
+from .stranger import SEX_NAMES
 from .stranger_sender import StrangerSender
 from .stranger_sender_service import StrangerSenderService
 from .stranger_service import PartnerObtainingError, StrangerServiceError
 from .stranger_setup_wizard import StrangerSetupWizard
-from telepot import TelegramError
 from .utils import __version__
+from telepot import TelegramError
 
-LOGGER = logging.getLogger('randtalkbot')
+LOGGER = logging.getLogger('randtalkbot.stranger_handler')
 
 def _(s): return s
 
-class MissingCommandError(Exception):
-    pass
-
-class StrangerHandlerError(Exception):
-    pass
-
-class UnknownCommandError(Exception):
-    def __init__(self, command):
-        super(UnknownCommandError, self).__init__()
-        self.command = command
-
-class StrangerHandler(telepot.helper.ChatHandler):
+class StrangerHandler(telepot.async.helper.UserHandler):
     HOUR_TIMEDELTA = datetime.timedelta(hours=1)
     LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=10)
 
@@ -46,13 +37,13 @@ class StrangerHandler(telepot.helper.ChatHandler):
         '''
         bot, initial_msg, seed = seed_tuple
         telepot.helper.ListenerContext.__init__(self, bot, seed)
-        chat_id = initial_msg['chat']['id']
-        self._chat_id = chat_id
+        from_id = initial_msg['from']['id']
+        self._from_id = from_id
         self.listener.set_options()
-        self.listener.capture(chat__id=chat_id)
+        self.listener.capture(from__id=from_id)
         self._stranger_service = stranger_service
         try:
-            self._stranger = self._stranger_service.get_or_create_stranger(self.chat_id)
+            self._stranger = self._stranger_service.get_or_create_stranger(self._from_id)
         except StrangerServiceError as e:
             LOGGER.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
@@ -62,10 +53,12 @@ class StrangerHandler(telepot.helper.ChatHandler):
 
     @asyncio.coroutine
     def handle_command(self, message):
+        handler_name = '_handle_command_' + message.command
         try:
-            yield from getattr(self, '_handle_command_' + message.command)(message)
+            handler = getattr(self, handler_name)
         except AttributeError:
             raise UnknownCommandError(message.command)
+        yield from handler(message)
 
     @asyncio.coroutine
     def _handle_command_begin(self, message):
@@ -105,8 +98,9 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 'When asking questions, please provide this number: {0}.\n\n'
                 'Subscribe to [our news](https://telegram.me/RandTalk). You\'re welcome '
                 'to inspect and improve [Rand Talk v. {1} source code]'
-                '(https://github.com/quasiyoke/RandTalkBot).'),
-            self.chat_id,
+                '(https://github.com/quasiyoke/RandTalkBot) or to [give us 5 stars]'
+                '(https://telegram.me/storebot?start=randtalkbot).'),
+            self._from_id,
             __version__,
             )
 
@@ -158,8 +152,8 @@ class StrangerHandler(telepot.helper.ChatHandler):
                 )
 
     @asyncio.coroutine
-    def on_message(self, message_json):
-        content_type, chat_type, chat_id = telepot.glance2(message_json)
+    def on_chat_message(self, message_json):
+        content_type, chat_type, chat_id = telepot.glance(message_json)
 
         if chat_type != 'private':
             return
@@ -196,6 +190,26 @@ class StrangerHandler(telepot.helper.ChatHandler):
                     _('Your partner has blocked me! How did you do that?!'),
                     )
                 yield from self._stranger.end_chatting()
+
+    @asyncio.coroutine
+    def on_inline_query(self, query):
+        query_id, from_id, query_string = telepot.glance(query, flavor='inline_query')
+        LOGGER.debug('Inline query from {}: {}'.format(self._stranger.id, query_string))
+        response = [{
+            'type': 'article',
+            'id': 'invitation_link',
+            'title': _('Rand Talk Invitation Link'),
+            'description': _('The more friends\'ll use your link -- the faster the search will be'),
+            'thumb_url': 'http://randtalk.ml/static/img/logo-500x500.png',
+            'message_text': (
+                _('Do you want to talk with somebody, practice in foreign languages or you just want '
+                    'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
+                    'a random stranger of desired sex speaking on your language. {0}'),
+                self._stranger.get_invitation_link(),
+                ),
+            'parse_mode': 'Markdown',
+            }]
+        yield from self._sender.answer_inline_query(query_id, response)
 
     @asyncio.coroutine
     def _set_partner(self):

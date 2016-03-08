@@ -25,7 +25,7 @@ class TestAdminHandler(asynctest.TestCase):
         self.stranger_setup_wizard = StrangerSetupWizard.return_value
         self.stranger_setup_wizard.handle = CoroutineMock()
         self.initial_msg = {
-            'chat': {
+            'from': {
                 'id': 31416,
                 },
             }

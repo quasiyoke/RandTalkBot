@@ -130,7 +130,7 @@ In @BotFather compatible format::
 Admins specified at ``admins`` configuration property are able to use the following additional commands::
 
     clear TELEGRAM_ID - "Clear" specified user. Stop her coversation or clear "looking for partner" flag.
-    pay TELEGRAM_ID AMOUNT GRATITUDE - Pay AMOUNT bonuses to TELEGRAM_ID and notify her with GRATITUDE
+    pay TELEGRAM_ID AMOUNT GRATITUDE - Pay AMOUNT bonuses to TELEGRAM_ID and notify her with GRATITUDE.
 
 Roadmap
 -------
@@ -163,6 +163,7 @@ Here's the list of bot translators. Take your chance to be here!
 * English. Pyotr Ermishkin <quasiyoke@gmail.com>
 
 * Italian.
+
     * Marco Giustetto <arducode@gmail.com>
     * Leonardo Guida <leonardo.99.torino@gmail.com>
     * Benedetta Facchinetti <zoidberglupin@gmail.com>
