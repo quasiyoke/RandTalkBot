@@ -8,12 +8,10 @@ import asyncio
 import logging
 import re
 import telepot
+from .errors import StrangerSenderError
 from .i18n import get_translation
 
-LOGGER = logging.getLogger('randtalkbot')
-
-class StrangerSenderError(Exception):
-    pass
+LOGGER = logging.getLogger('randtalkbot.stranger_sender')
 
 class StrangerSender(telepot.helper.Sender):
     MESSAGE_TYPE_TO_METHOD_NAME = {
@@ -30,6 +28,7 @@ class StrangerSender(telepot.helper.Sender):
 
     def __init__(self, bot, stranger):
         super(StrangerSender, self).__init__(bot, stranger.telegram_id)
+        self._bot = bot
         self._stranger = stranger
         self.update_translation()
 
@@ -43,6 +42,18 @@ class StrangerSender(telepot.helper.Sender):
             s = str(s)
         s = cls.MARKDOWN_RE.sub(r'\\\1', s)
         return s
+
+    @asyncio.coroutine
+    def answer_inline_query(self, query_id, answers):
+        def translate(item):
+            return self._(item) if isinstance(item, str) else self._(item[0]).format(*item[1:])
+
+        for answer in answers:
+            if answer['type'] == 'article':
+                answer['title'] = translate(answer['title'])
+                answer['description'] = translate(answer['description'])
+                answer['message_text'] = translate(answer['message_text'])
+        yield from self._bot.answerInlineQuery(query_id, answers, is_personal=True)
 
     @asyncio.coroutine
     def send(self, message):
@@ -70,6 +81,7 @@ class StrangerSender(telepot.helper.Sender):
                     [self._(key) for key in row]
                     for row in reply_markup['keyboard']
                     ],
+                'one_time_keyboard': True,
                 }
         yield from self.sendMessage(
             '*Rand Talk:* {0}'.format(message),

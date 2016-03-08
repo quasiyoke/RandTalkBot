@@ -6,7 +6,8 @@
 
 import asyncio
 import asynctest
-from randtalkbot.stranger_sender import StrangerSender, StrangerSenderError
+from randtalkbot.errors import StrangerSenderError
+from randtalkbot.stranger_sender import StrangerSender
 from asynctest.mock import call, patch, Mock, CoroutineMock
 
 class TestStrangerSender(asynctest.TestCase):
@@ -29,6 +30,30 @@ class TestStrangerSender(asynctest.TestCase):
         self.get_translation.reset_mock()
         sender = StrangerSender(Mock(), Mock())
         StrangerSender.update_translation.assert_called_once_with()
+
+    def test_answer_inline_query(self):
+        self.translation.return_value = 'foo {} {}'
+        yield from self.sender.answer_inline_query(
+            31416,
+            [{
+                'type': 'article',
+                'bar': 'baz',
+                'title': 'bim',
+                'description': 'zig',
+                'message_text': ('zam', 1, 2),
+                }],
+            )
+        self.bot.answerInlineQuery.assert_called_once_with(
+            31416,
+            [{
+                'type': 'article',
+                'bar': 'baz',
+                'title': 'foo {} {}',
+                'description': 'foo {} {}',
+                'message_text': 'foo 1 2',
+                }],
+            is_personal=True,
+            )
 
     def test_send_notification__no_reply_markup(self):
         self.translation.return_value = 'foo_translation'
@@ -106,6 +131,7 @@ class TestStrangerSender(asynctest.TestCase):
                     ['foo_translation', 'foo_translation'],
                     ['foo_translation', 'foo_translation'],
                     ],
+                'one_time_keyboard': True,
                 },
             )
 
