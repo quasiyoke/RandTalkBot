@@ -408,9 +408,13 @@ class Stranger(Model):
         # priority.
         if not self.looking_for_partner_from:
             self.looking_for_partner_from = datetime.datetime.utcnow()
-        yield from self.get_sender().send_notification(
-            _('Looking for a stranger for you.'),
-            )
+        try:
+            yield from self.get_sender().send_notification(
+                _('Looking for a stranger for you.'),
+                )
+        except TelegramError as e:
+            LOGGER.debug('Set looking for partner. Can\'t notify stranger. %s', e)
+            self.looking_for_partner_from = None
         self.save()
 
     @asyncio.coroutine

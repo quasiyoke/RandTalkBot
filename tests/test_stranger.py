@@ -909,6 +909,19 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(stranger.partner, None)
         self.assertEqual(stranger.looking_for_partner_from, datetime.datetime(1980, 1, 1))
 
+    def test_set_looking_for_partner__bot_was_blocked(self):
+        self.stranger.get_sender = Mock()
+        self.stranger.get_sender.return_value.send_notification = CoroutineMock(
+            side_effect=TelegramError('', 0),
+            )
+        self.stranger.partner = self.stranger2
+        self.stranger2.kick = CoroutineMock()
+        self.stranger.save()
+        yield from self.stranger.set_looking_for_partner()
+        stranger = Stranger.get(Stranger.telegram_id == 31416)
+        self.assertEqual(stranger.partner, None)
+        self.assertEqual(stranger.looking_for_partner_from, None)
+
     def test_set_partner__chatting_stranger(self):
         self.stranger2.partner = self.stranger
         self.stranger2.kick = CoroutineMock()
