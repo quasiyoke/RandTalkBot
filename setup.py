@@ -34,8 +34,8 @@ class TestCommand(SetuptoolsTestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        import coverage.cmdline
-        coverage.cmdline.main(argv=['run', '--source=randtalkbot', '-m', 'unittest'])
+        import sys, coverage.cmdline
+        sys.exit(coverage.cmdline.main(argv=['run', '--source=randtalkbot', '-m', 'unittest']))
 
 setup(
     name='RandTalkBot',
