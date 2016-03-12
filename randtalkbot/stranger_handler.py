@@ -73,9 +73,12 @@ class StrangerHandler(telepot.async.helper.UserHandler):
             LOGGER.warning('Can\'t notify seeking for partner stranger: %s', e)
         except StrangerServiceError as e:
             LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
-            yield from self._sender.send_notification(
-                _('Internal error. Admins are already notified about that.'),
-                )
+            try:
+                yield from self._sender.send_notification(
+                    _('Internal error. Admins are already notified about that.'),
+                    )
+            except TelegramError as e:
+                LOGGER.warning('Handle /begin command. Can\'t notify stranger about error. %s', e)
 
     @asyncio.coroutine
     def _handle_command_end(self, message):
@@ -89,27 +92,33 @@ class StrangerHandler(telepot.async.helper.UserHandler):
 
     @asyncio.coroutine
     def _handle_command_help(self, message):
-        yield from self._sender.send_notification(
-            _('*Help*\n\n'
-                'Use /begin to start looking for a conversational partner, once '
-                'you\'re matched you can use /end to finish the conversation. '
-                'To choose your settings, apply /setup.\n\n'
-                'If you have any suggestions or require help, please contact @quasiyoke. '
-                'When asking questions, please provide this number: {0}.\n\n'
-                'Subscribe to [our news](https://telegram.me/RandTalk). You\'re welcome '
-                'to inspect and improve [Rand Talk v. {1} source code]'
-                '(https://github.com/quasiyoke/RandTalkBot) or to [give us 5 stars]'
-                '(https://telegram.me/storebot?start=randtalkbot).'),
-            self._from_id,
-            __version__,
-            )
+        try:
+            yield from self._sender.send_notification(
+                _('*Help*\n\n'
+                    'Use /begin to start looking for a conversational partner, once '
+                    'you\'re matched you can use /end to finish the conversation. '
+                    'To choose your settings, apply /setup.\n\n'
+                    'If you have any suggestions or require help, please contact @quasiyoke. '
+                    'When asking questions, please provide this number: {0}.\n\n'
+                    'Subscribe to [our news](https://telegram.me/RandTalk). You\'re welcome '
+                    'to inspect and improve [Rand Talk v. {1} source code]'
+                    '(https://github.com/quasiyoke/RandTalkBot) or to [give us 5 stars]'
+                    '(https://telegram.me/storebot?start=randtalkbot).'),
+                self._from_id,
+                __version__,
+                )
+        except TelegramError as e:
+            LOGGER.warning('Handle /help command. Can\'t notify stranger. %s', e)
 
     @asyncio.coroutine
     def _handle_command_mute_bonuses(self, message):
         self._stranger.mute_bonuses_notifications()
-        yield from self._sender.send_notification(
-            _('Notifications about bonuses were muted for 1 hour'),
-            )
+        try:
+            yield from self._sender.send_notification(
+                _('Notifications about bonuses were muted for 1 hour'),
+                )
+        except TelegramError as e:
+            LOGGER.warning('Handle /mute_bonuses command. Can\'t notify stranger. %s', e)
 
     @asyncio.coroutine
     def _handle_command_setup(self, message):

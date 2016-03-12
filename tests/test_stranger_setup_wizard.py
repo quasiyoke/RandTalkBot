@@ -6,12 +6,13 @@
 
 import asyncio
 import asynctest
+from asynctest.mock import create_autospec, patch, Mock, CoroutineMock
 from randtalkbot.errors import *
 from randtalkbot.stranger_handler import *
 from randtalkbot.stranger_sender_service import *
 from randtalkbot.stranger_service import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
-from asynctest.mock import create_autospec, patch, Mock, CoroutineMock
+from telepot import TelegramError
 
 class TestStrangerSetupWizard(asynctest.TestCase):
     @patch('randtalkbot.stranger_sender_service.StrangerSenderService._instance')
@@ -35,7 +36,6 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger_setup_wizard._prompt.assert_called_once_with()
 
     def test_deactivate(self):
-        self.stranger_setup_wizard._prompt = CoroutineMock()
         yield from self.stranger_setup_wizard.deactivate()
         self.assertEqual(self.stranger.wizard, 'none')
         self.assertEqual(self.stranger.wizard_step, None)
@@ -45,7 +45,14 @@ class TestStrangerSetupWizard(asynctest.TestCase):
                 'once you\'re matched you can use /end to end the conversation.',
             reply_markup={'hide_keyboard': True},
             )
-        self.stranger_setup_wizard._prompt.assert_not_called()
+
+    @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_deactivate__telegram_error(self):
+        from randtalkbot.stranger_setup_wizard import LOGGER
+        self.sender.send_notification.side_effect = TelegramError('', 0)
+        yield from self.stranger_setup_wizard.deactivate()
+        self.assertTrue(LOGGER.warning.called)
 
     def test_handle__deactivated_novice(self):
         self.stranger.wizard = 'none'
@@ -238,6 +245,22 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.sender.send_notification.assert_not_called()
         LOGGER.warning.assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
 
+    @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
+    @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
+    @asyncio.coroutine
+    def test_handle__telegram_error(self):
+        from randtalkbot.stranger_setup_wizard import LOGGER
+        from randtalkbot.stranger_setup_wizard import get_languages_codes
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'languages'
+        get_languages_codes.side_effect = EmptyLanguagesError()
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.text = 'foo_text'
+        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.assertTrue((yield from self.stranger_setup_wizard.handle(message)))
+        self.assertTrue(LOGGER.warning.called)
+
     def test_handle_command__not_activated_handled(self):
         self.stranger.wizard = 'none'
         message = Mock()
@@ -287,6 +310,20 @@ class TestStrangerSetupWizard(asynctest.TestCase):
             'Finish setup process please. After that you can start using bot.',
             )
         self.stranger_setup_wizard._prompt.assert_called_once_with()
+
+    @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_handle_command__telegram_error(self):
+        from randtalkbot.stranger_setup_wizard import LOGGER
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'sex'
+        self.stranger.is_full.return_value = False
+        self.stranger_setup_wizard._prompt = CoroutineMock()
+        message = Mock()
+        message.command = 'begin'
+        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.assertTrue((yield from self.stranger_setup_wizard.handle_command(message)))
+        self.assertTrue(LOGGER.warning.called)
 
     @patch(
         'randtalkbot.stranger_setup_wizard.SUPPORTED_LANGUAGES_NAMES',
@@ -398,3 +435,14 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard_step = 'foo_step'
         yield from self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_not_called()
+
+    @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_prompt__telegram_error(self):
+        from randtalkbot.stranger_setup_wizard import LOGGER
+        self.stranger.wizard = 'setup'
+        self.stranger.wizard_step = 'languages'
+        self.stranger.get_languages.return_value = []
+        self.sender.send_notification.side_effect = TelegramError('', 0)
+        yield from self.stranger_setup_wizard._prompt()
+        self.assertTrue(LOGGER.warning.called)

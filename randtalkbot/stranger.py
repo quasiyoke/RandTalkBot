@@ -121,18 +121,22 @@ class Stranger(Model):
                     'Chat *lacks males!* Send the link to your friends and earn {1} bonuses for every '
                     'invited male and {2} bonus for each female (the more bonuses you have -- the faster '
                     'partner\'s search will be):')
-            yield from self.get_sender().send_notification(
-                message,
-                searching_for_partner_count,
-                type(self).REWARD_BIG,
-                type(self).REWARD_SMALL,
-                )
-            yield from self.get_sender().send_notification(
-                _('Do you want to talk with somebody, practice in foreign languages or you just want '
-                    'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
-                    'a random stranger of desired sex speaking on your language. {0}'),
-                self.get_invitation_link(),
-                )
+            sender = self.get_sender()
+            try:
+                yield from sender.send_notification(
+                    message,
+                    searching_for_partner_count,
+                    type(self).REWARD_BIG,
+                    type(self).REWARD_SMALL,
+                    )
+                yield from sender.send_notification(
+                    _('Do you want to talk with somebody, practice in foreign languages or you just want '
+                        'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
+                        'a random stranger of desired sex speaking on your language. {0}'),
+                    self.get_invitation_link(),
+                    )
+            except TelegramError as e:
+                LOGGER.warning('Advertise. Can\'t notify the stranger. %s', e)
 
     def advertise_later(self):
         self._deferred_advertising = asyncio.get_event_loop().create_task(self._advertise())

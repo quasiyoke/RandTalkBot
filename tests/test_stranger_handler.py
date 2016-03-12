@@ -73,7 +73,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_handler.datetime', Mock())
     @asyncio.coroutine
-    def test_handle_command__begin(self):
+    def test_handle_command_begin(self):
         from randtalkbot.stranger_handler import datetime as datetime_mock
         datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1)
         partner = CoroutineMock()
@@ -91,7 +91,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_handler.LOGGER', Mock())
     @asyncio.coroutine
-    def test_handle_command__begin_stranger_has_blocked_the_bot(self):
+    def test_handle_command_begin__stranger_has_blocked_the_bot(self):
         partner = CoroutineMock()
         self.stranger_service.get_partner.return_value = partner
         self.stranger.notify_partner_found.side_effect = StrangerError()
@@ -106,7 +106,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_handler.datetime', Mock())
     @asyncio.coroutine
-    def test_handle_command__begin_first_partner_has_blocked_the_bot(self):
+    def test_handle_command_begin__first_partner_has_blocked_the_bot(self):
         from randtalkbot.stranger_handler import datetime as datetime_mock
         datetime_mock.datetime.utcnow.return_value = datetime.datetime(1970, 1, 1)
         partner = CoroutineMock()
@@ -132,7 +132,7 @@ class TestStrangerHandler(asynctest.TestCase):
             )
         self.stranger.notify_partner_found.assert_called_once_with(partner)
 
-    def test_handle_command__begin_partner_obtaining_error(self):
+    def test_handle_command_begin__partner_obtaining_error(self):
         from randtalkbot.stranger_service import PartnerObtainingError
         partner = CoroutineMock()
         self.stranger_service.get_partner.side_effect = PartnerObtainingError()
@@ -145,7 +145,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_handler.LOGGER', Mock())
     @asyncio.coroutine
-    def test_handle_command__begin_stranger_service_error(self):
+    def test_handle_command_begin__stranger_service_error(self):
         from randtalkbot.stranger_handler import LOGGER
         from randtalkbot.stranger_service import StrangerServiceError
         partner = CoroutineMock()
@@ -163,6 +163,25 @@ class TestStrangerHandler(asynctest.TestCase):
             'Internal error. Admins are already notified about that.',
             )
 
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_handle_command_begin__telegram_error(self):
+        from randtalkbot.stranger_handler import LOGGER
+        from randtalkbot.stranger_service import StrangerServiceError
+        partner = CoroutineMock()
+        self.stranger_service.get_partner.side_effect = StrangerServiceError()
+        self.stranger.id = 31416
+        message = Mock()
+        message.command = 'begin'
+        self.sender.send_notification.side_effect = TelegramError('', 0)
+        yield from self.stranger_handler.handle_command(message)
+        LOGGER.error.assert_called_once_with(
+            'Problems with handling /begin command for %d: %s',
+            31416,
+            '',
+            )
+        self.assertTrue(LOGGER.warning.called)
+
     def test_handle_command__end(self):
         message = Mock()
         message.command = 'end'
@@ -172,7 +191,7 @@ class TestStrangerHandler(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_handler.__version__', '0.0.0')
     @asyncio.coroutine
-    def test_handle_command__help(self):
+    def test_handle_command_help(self):
         message = Mock()
         message.command = 'help'
         yield from self.stranger_handler.handle_command(message)
@@ -189,6 +208,16 @@ class TestStrangerHandler(asynctest.TestCase):
             '0.0.0',
             )
 
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_handle_command_help__telegram_error(self):
+        from randtalkbot.stranger_handler import LOGGER
+        message = Mock()
+        message.command = 'help'
+        self.sender.send_notification.side_effect = TelegramError('', 0)
+        yield from self.stranger_handler.handle_command(message)
+        self.assertTrue(LOGGER.warning.called)
+
     def test_handle_command_mute_bonuses(self):
         message = Mock()
         message.command = 'mute_bonuses'
@@ -197,6 +226,16 @@ class TestStrangerHandler(asynctest.TestCase):
         self.sender.send_notification.assert_called_once_with(
             'Notifications about bonuses were muted for 1 hour',
             )
+
+    @patch('randtalkbot.stranger_handler.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_handle_command_mute_bonuses__telegram_error(self):
+        from randtalkbot.stranger_handler import LOGGER
+        message = Mock()
+        message.command = 'mute_bonuses'
+        self.sender.send_notification.side_effect = TelegramError('', 0)
+        yield from self.stranger_handler.handle_command(message)
+        self.assertTrue(LOGGER.warning.called)
 
     def test_handle_command__setup(self):
         message = Mock()

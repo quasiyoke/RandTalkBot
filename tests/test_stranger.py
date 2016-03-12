@@ -154,6 +154,25 @@ class TestStranger(asynctest.TestCase):
         sender.send_notification.assert_not_called()
 
     @patch('randtalkbot.stranger.asyncio')
+    @patch('randtalkbot.stranger.StatsService')
+    @patch('randtalkbot.stranger.LOGGER', Mock())
+    @asyncio.coroutine
+    def test_advertise__stranger_has_blocked_the_bot(self, stats_service_mock, asyncio_mock):
+        from randtalkbot.stranger import LOGGER
+        self.stranger.get_sender = Mock()
+        self.stranger.get_sender.return_value.send_notification = CoroutineMock(
+            side_effect=TelegramError('', 0),
+            )
+        self.stranger.get_invitation_link = Mock(return_value='foo_invitation_link')
+        self.stranger.looking_for_partner_from = datetime.datetime.utcnow()
+        self.stranger.save()
+        self.stranger2.looking_for_partner_from = datetime.datetime.utcnow()
+        self.stranger2.save()
+        stats_service_mock.get_instance.return_value.get_stats.return_value.get_sex_ratio.return_value = 1.1
+        yield from self.stranger._advertise()
+        self.assertTrue(LOGGER.warning.called)
+
+    @patch('randtalkbot.stranger.asyncio')
     @asyncio.coroutine
     def test_advertise_later(self, asyncio_mock):
         self.stranger._advertise = Mock(return_value='foo')
