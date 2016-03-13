@@ -167,10 +167,14 @@ Here's the list of bot translators. Take your chance to be here!
   * Marco Giustetto <arducode@gmail.com>
   * Leonardo Guida <leonardo.99.torino@gmail.com>
   * Benedetta Facchinetti <zoidberglupin@gmail.com>
+  * Martin Ligabue <martinligabue@gmail.com>
 
 * Russian. Pyotr Ermishkin <quasiyoke@gmail.com>
 
-* Spanish. Benedetta Facchinetti <zoidberglupin@gmail.com>
+* Spanish
+
+  * Benedetta Facchinetti <zoidberglupin@gmail.com>
+  * Martin Ligabue <martinligabue@gmail.com>
 
 Building gettext files
 ^^^^^^^^^^^^^^^^^^^^^^
