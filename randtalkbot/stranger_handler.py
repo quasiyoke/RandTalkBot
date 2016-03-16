@@ -106,6 +106,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                     '(https://telegram.me/storebot?start=randtalkbot).'),
                 self._from_id,
                 __version__,
+                disable_web_page_preview=True,
                 )
         except TelegramError as e:
             LOGGER.warning('Handle /help command. Can\'t notify stranger. %s', e)

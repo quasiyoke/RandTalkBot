@@ -206,6 +206,7 @@ class TestStrangerHandler(asynctest.TestCase):
                 '(https://telegram.me/storebot?start=randtalkbot).',
             31416,
             '0.0.0',
+            disable_web_page_preview=True,
             )
 
     @patch('randtalkbot.stranger_handler.LOGGER', Mock())
