@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-13 07:10+0300\n"
+"POT-Creation-Date: 2016-03-16 10:52+0300\n"
 "PO-Revision-Date: 2016-02-25 23:50+0100\n"
 "Last-Translator: Martin Ligabue <martinligabue@gmail.com>\n"
 "Language-Team: Italian\n"
@@ -89,7 +89,7 @@ msgstr ""
 "Vuoi[ ](http://randtalk.ml/static/img/logo-125x125.png) parlare con "
 "qualcuno, esercitarti in altre lingue o vuoi soltanto divertirti? Rand Talk "
 "fa al caso tuo! Verrete abbinati con una persona del sesso scelto da voi "
-"nella lingua che desiderate. [Provare!]({0})"
+"nella lingua che desiderate. [Prova!]({0})"
 
 #: randtalkbot/stranger.py:151
 msgid "Looking for partner was stopped."
@@ -151,7 +151,7 @@ msgstr "Il vostro partner è qui."
 #: randtalkbot/stranger.py:288
 #, python-brace-format
 msgid "You've used one bonus. {0} bonus(es) left."
-msgstr "Hai usato un bonus. {0} bonus a sinistra."
+msgstr "Hai usato un bonus. {0} bonus rimasti."
 
 #: randtalkbot/stranger.py:292
 msgid "You've used your last bonus."
