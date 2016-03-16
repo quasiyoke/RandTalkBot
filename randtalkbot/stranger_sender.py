@@ -69,7 +69,8 @@ class StrangerSender(telepot.helper.Sender):
             yield from getattr(self, method_name)(**message.sending_kwargs)
 
     @asyncio.coroutine
-    def send_notification(self, message, *args, reply_markup=None):
+    def send_notification(self, message, *args, disable_notification=None, disable_web_page_preview=None,
+        reply_markup=None):
         '''
         @raise TelegramError if stranger has blocked the bot.
         '''
@@ -85,6 +86,8 @@ class StrangerSender(telepot.helper.Sender):
                 }
         yield from self.sendMessage(
             '*Rand Talk:* {}'.format(message),
+            disable_notification=disable_notification,
+            disable_web_page_preview=disable_web_page_preview,
             parse_mode='Markdown',
             reply_markup=reply_markup,
             )

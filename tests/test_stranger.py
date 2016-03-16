@@ -97,12 +97,15 @@ class TestStranger(asynctest.TestCase):
                     2,
                     3,
                     1,
+                    disable_notification=True,
                     ),
                 call(
                     'Do you want to talk with somebody, practice in foreign languages or you just want '
                         'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
                         'a random stranger of desired sex speaking on your language. {0}',
                     'https://telegram.me/RandTalkBot?start=foo_start_args',
+                    disable_notification=True,
+                    disable_web_page_preview=True,
                     ),
                 ],
             )
@@ -133,12 +136,15 @@ class TestStranger(asynctest.TestCase):
                     2,
                     3,
                     1,
+                    disable_notification=True,
                     ),
                 call(
                     'Do you want to talk with somebody, practice in foreign languages or you just want '
                         'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
                         'a random stranger of desired sex speaking on your language. {0}',
                     'foo_invitation_link',
+                    disable_notification=True,
+                    disable_web_page_preview=True,
                     ),
                 ],
             )

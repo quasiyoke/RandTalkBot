@@ -61,6 +61,8 @@ class TestStrangerSender(asynctest.TestCase):
         self.translation.assert_called_once_with('foo')
         self.sender.sendMessage.assert_called_once_with(
             '*Rand Talk:* foo_translation',
+            disable_notification=None,
+            disable_web_page_preview=None,
             parse_mode='Markdown',
             reply_markup=None,
             )
@@ -76,6 +78,8 @@ class TestStrangerSender(asynctest.TestCase):
         self.translation.assert_called_once_with('foo')
         self.sender.sendMessage.assert_called_once_with(
             '*Rand Talk:* zero 2 foo_translation one',
+            disable_notification=None,
+            disable_web_page_preview=None,
             parse_mode='Markdown',
             reply_markup=None,
             )
@@ -90,6 +94,8 @@ class TestStrangerSender(asynctest.TestCase):
         self.sender.sendMessage.assert_called_once_with(
             '*Rand Talk:* \\*foo\\* \\_bar\\_ \\[baz](http://boo.com) '
                 'foo\\\\\\` \\`bar baz\\\\boo foo\\`\\`',
+            disable_notification=None,
+            disable_web_page_preview=None,
             parse_mode='Markdown',
             reply_markup=None,
             )
@@ -105,10 +111,27 @@ class TestStrangerSender(asynctest.TestCase):
         self.translation.assert_called_once_with('foo')
         self.sender.sendMessage.assert_called_once_with(
             '*Rand Talk:* foo_translation',
+            disable_notification=None,
+            disable_web_page_preview=None,
             parse_mode='Markdown',
             reply_markup={
                 'no_keyboard': True,
                 },
+            )
+
+    def test_send_notification__disable_notification_and_preview(self):
+        self.translation.return_value = 'foo_translation'
+        yield from self.sender.send_notification(
+            'foo',
+            disable_notification=True,
+            disable_web_page_preview=True,
+            )
+        self.sender.sendMessage.assert_called_once_with(
+            '*Rand Talk:* foo_translation',
+            disable_notification=True,
+            disable_web_page_preview=True,
+            parse_mode='Markdown',
+            reply_markup=None,
             )
 
     def test_send_notification__with_reply_markup_with_keyboard(self):
@@ -125,6 +148,8 @@ class TestStrangerSender(asynctest.TestCase):
             )
         self.sender.sendMessage.assert_called_once_with(
             '*Rand Talk:* foo_translation',
+            disable_notification=None,
+            disable_web_page_preview=None,
             parse_mode='Markdown',
             reply_markup={
                 'keyboard': [
