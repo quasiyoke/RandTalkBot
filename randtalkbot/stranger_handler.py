@@ -242,7 +242,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                 except StrangerError as e:
                     # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
                     # the cycle.
-                    raise StrangerHandlerError('Can\'t notify seeking for partner stranger: {0}'.format(e))
+                    raise StrangerHandlerError('Can\'t notify seeking for partner stranger: {}'.format(e))
                 else:
                     yield from self._stranger.set_partner(partner)
                     yield from partner.set_partner(self._stranger)

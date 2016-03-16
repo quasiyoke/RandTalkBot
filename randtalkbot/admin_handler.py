@@ -12,7 +12,7 @@ from .stranger_handler import StrangerHandler
 from .stranger_service import StrangerServiceError
 from telepot import TelegramError
 
-LOGGER = logging.getLogger('randtalkbot')
+LOGGER = logging.getLogger('randtalkbot.admin_handler')
 
 class AdminHandler(StrangerHandler):
     @asyncio.coroutine

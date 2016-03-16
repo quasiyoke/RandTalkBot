@@ -64,7 +64,7 @@ class StrangerSender(telepot.helper.Sender):
         try:
             method_name = StrangerSender.MESSAGE_TYPE_TO_METHOD_NAME[message.type]
         except KeyError:
-            raise StrangerSenderError('Unsupported content_type: {0}'.format(message.type))
+            raise StrangerSenderError('Unsupported content_type: {}'.format(message.type))
         else:
             yield from getattr(self, method_name)(**message.sending_kwargs)
 
@@ -84,7 +84,7 @@ class StrangerSender(telepot.helper.Sender):
                 'one_time_keyboard': True,
                 }
         yield from self.sendMessage(
-            '*Rand Talk:* {0}'.format(message),
+            '*Rand Talk:* {}'.format(message),
             parse_mode='Markdown',
             reply_markup=reply_markup,
             )

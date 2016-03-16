@@ -8,7 +8,7 @@ import codecs
 import json
 import logging
 
-LOGGER = logging.getLogger('randtalkbot')
+LOGGER = logging.getLogger('randtalkbot.configuration')
 
 class ConfigurationObtainingError(Exception):
     pass

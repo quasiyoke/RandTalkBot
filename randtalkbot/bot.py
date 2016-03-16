@@ -26,7 +26,7 @@ class Bot:
                 # If the bot is chatting with an admin, skip, so for this chat will be used another handler,
                 # not StrangerHandler.
                 (per_from_id_except(self._admins_telegram_ids), create_open(StrangerHandler, stranger_service)),
-                ]
+                ],
             )
         self._stranger_service = stranger_service
 

@@ -11,7 +11,7 @@ import json
 import re
 import telepot
 
-LOGGER = logging.getLogger('randtalkbot')
+LOGGER = logging.getLogger('randtalkbot.message')
 
 class UnsupportedContentError(Exception):
     pass
