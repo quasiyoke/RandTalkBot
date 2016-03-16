@@ -121,7 +121,7 @@ class Message:
         try:
             voice = message_json['voice']
             self.sending_kwargs = {
-                'audio': voice['file_id'],
+                'voice': voice['file_id'],
                 }
         except (KeyError, TypeError):
             raise UnsupportedContentError()
