@@ -57,3 +57,8 @@ target/
 # Bot
 conf*.json
 *.sh
+
+#Virtualenv
+bin/
+lib64
+pip-selfcheck.json

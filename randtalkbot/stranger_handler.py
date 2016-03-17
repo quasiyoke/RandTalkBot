@@ -51,49 +51,45 @@ class StrangerHandler(telepot.async.helper.UserHandler):
         self._stranger_setup_wizard = StrangerSetupWizard(self._stranger)
         self._deferred_advertising = None
 
-    @asyncio.coroutine
-    def handle_command(self, message):
+    async def handle_command(self, message):
         handler_name = '_handle_command_' + message.command
         try:
             handler = getattr(self, handler_name)
         except AttributeError:
             raise UnknownCommandError(message.command)
-        yield from handler(message)
+        await handler(message)
 
-    @asyncio.coroutine
-    def _handle_command_begin(self, message):
+    async def _handle_command_begin(self, message):
         self._stranger.prevent_advertising()
         try:
-            yield from self._set_partner()
+            await self._set_partner()
         except PartnerObtainingError:
             LOGGER.debug('Looking for partner: %d', self._stranger.id)
             self._stranger.advertise_later()
-            yield from self._stranger.set_looking_for_partner()
+            await self._stranger.set_looking_for_partner()
         except StrangerHandlerError as e:
             LOGGER.warning('Can\'t notify seeking for partner stranger: %s', e)
         except StrangerServiceError as e:
             LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
             try:
-                yield from self._sender.send_notification(
+                await self._sender.send_notification(
                     _('Internal error. Admins are already notified about that.'),
                     )
             except TelegramError as e:
                 LOGGER.warning('Handle /begin command. Can\'t notify stranger about error. %s', e)
 
-    @asyncio.coroutine
-    def _handle_command_end(self, message):
+    async def _handle_command_end(self, message):
         LOGGER.debug(
             '/end: %d -x-> %d',
             self._stranger.id,
             self._stranger.partner.id if self._stranger.partner else 0,
             )
         self._stranger.prevent_advertising()
-        yield from self._stranger.end_chatting()
+        await self._stranger.end_chatting()
 
-    @asyncio.coroutine
-    def _handle_command_help(self, message):
+    async def _handle_command_help(self, message):
         try:
-            yield from self._sender.send_notification(
+            await self._sender.send_notification(
                 _('*Help*\n\n'
                     'Use /begin to start looking for a conversational partner, once '
                     'you\'re matched you can use /end to finish the conversation. '
@@ -111,25 +107,22 @@ class StrangerHandler(telepot.async.helper.UserHandler):
         except TelegramError as e:
             LOGGER.warning('Handle /help command. Can\'t notify stranger. %s', e)
 
-    @asyncio.coroutine
-    def _handle_command_mute_bonuses(self, message):
+    async def _handle_command_mute_bonuses(self, message):
         self._stranger.mute_bonuses_notifications()
         try:
-            yield from self._sender.send_notification(
+            await self._sender.send_notification(
                 _('Notifications about bonuses were muted for 1 hour'),
                 )
         except TelegramError as e:
             LOGGER.warning('Handle /mute_bonuses command. Can\'t notify stranger. %s', e)
 
-    @asyncio.coroutine
-    def _handle_command_setup(self, message):
+    async def _handle_command_setup(self, message):
         LOGGER.debug('/setup: %d', self._stranger.id)
         self._stranger.prevent_advertising()
-        yield from self._stranger.end_chatting()
-        yield from self._stranger_setup_wizard.activate()
+        await self._stranger.end_chatting()
+        await self._stranger_setup_wizard.activate()
 
-    @asyncio.coroutine
-    def _handle_command_start(self, message):
+    async def _handle_command_start(self, message):
         LOGGER.debug('/start: %d', self._stranger.id)
         if message.command_args and not self._stranger.invited_by:
             try:
@@ -143,7 +136,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                     LOGGER.info('/start error. Can\'t obtain invitation: %s', e)
                 else:
                     if self._stranger.invitation == invitation:
-                        yield from self._sender.send_notification(
+                        await self._sender.send_notification(
                             _('Don\'t try to fool me. Forward message with the link to your friends and '
                                 'receive well-earned bonuses that will help you to find partner quickly.'),
                             )
@@ -156,13 +149,12 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                             self._stranger.invited_by = invited_by
                             self._stranger.save()
         if self._stranger.wizard == 'none':
-            yield from self._sender.send_notification(
+            await self._sender.send_notification(
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
                     'you\'re matched you can use /end to end the conversation.'),
                 )
 
-    @asyncio.coroutine
-    def on_chat_message(self, message_json):
+    async def on_chat_message(self, message_json):
         content_type, chat_type, chat_id = telepot.glance(message_json)
 
         if chat_type != 'private':
@@ -171,38 +163,37 @@ class StrangerHandler(telepot.async.helper.UserHandler):
         try:
             message = Message(message_json)
         except UnsupportedContentError:
-            yield from self._sender.send_notification(_('Messages of this type aren\'t supported.'))
+            await self._sender.send_notification(_('Messages of this type aren\'t supported.'))
             return
 
         if message.command:
-            if (yield from self._stranger_setup_wizard.handle_command(message)):
+            if (await self._stranger_setup_wizard.handle_command(message)):
                 return
             try:
-                yield from self.handle_command(message)
+                await self.handle_command(message)
             except UnknownCommandError as e:
-                yield from self._sender.send_notification(
+                await self._sender.send_notification(
                     _('Unknown command. Look /help for the full list of commands.'),
                     )
-        elif not (yield from self._stranger_setup_wizard.handle(message)):
+        elif not (await self._stranger_setup_wizard.handle(message)):
             try:
-                yield from self._stranger.send_to_partner(message)
+                await self._stranger.send_to_partner(message)
             except MissingPartnerError:
                 pass
             except StrangerError:
-                yield from self._sender.send_notification(_('Messages of this type aren\'t supported.'))
+                await self._sender.send_notification(_('Messages of this type aren\'t supported.'))
             except TelegramError:
                 LOGGER.warning(
                     'Send message. Can\'t send to partned: %d -> %d',
                     self._stranger.id,
                     self._stranger.partner.id,
                     )
-                yield from self._sender.send_notification(
+                await self._sender.send_notification(
                     _('Your partner has blocked me! How did you do that?!'),
                     )
-                yield from self._stranger.end_chatting()
+                await self._stranger.end_chatting()
 
-    @asyncio.coroutine
-    def on_inline_query(self, query):
+    async def on_inline_query(self, query):
         query_id, from_id, query_string = telepot.glance(query, flavor='inline_query')
         LOGGER.debug('Inline query from {}: {}'.format(self._stranger.id, query_string))
         response = [{
@@ -219,10 +210,9 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                 ),
             'parse_mode': 'Markdown',
             }]
-        yield from self._sender.answer_inline_query(query_id, response)
+        await self._sender.answer_inline_query(query_id, response)
 
-    @asyncio.coroutine
-    def _set_partner(self):
+    async def _set_partner(self):
         '''
         Finds partner for the stranger. Does handling of strangers who have blocked the bot.
 
@@ -233,19 +223,19 @@ class StrangerHandler(telepot.async.helper.UserHandler):
         while True:
             partner = self._stranger_service.get_partner(self._stranger)
             try:
-                yield from partner.notify_partner_found(self._stranger)
+                await partner.notify_partner_found(self._stranger)
             except StrangerError:
                 # Potential partner has blocked the bot. Let's look for next potential partner.
-                yield from partner.end_chatting()
+                await partner.end_chatting()
             else:
                 try:
-                    yield from self._stranger.notify_partner_found(partner)
+                    await self._stranger.notify_partner_found(partner)
                 except StrangerError as e:
                     # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
                     # the cycle.
                     raise StrangerHandlerError('Can\'t notify seeking for partner stranger: {}'.format(e))
                 else:
-                    yield from self._stranger.set_partner(partner)
-                    yield from partner.set_partner(self._stranger)
+                    await self._stranger.set_partner(partner)
+                    await partner.set_partner(self._stranger)
                     LOGGER.debug('Found partner: %d -> %d.', self._stranger.id, partner.id)
                     break

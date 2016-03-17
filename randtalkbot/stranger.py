@@ -94,17 +94,15 @@ class Stranger(Model):
         except KeyError:
             raise SexError(sex_name)
 
-    @asyncio.coroutine
-    def _add_bonuses(self, bonuses_delta):
+    async def _add_bonuses(self, bonuses_delta):
         self.bonus_count += bonuses_delta
         self.save()
         bonuses_notifications_muted = getattr(self, '_bonuses_notifications_muted', False)
         if not bonuses_notifications_muted:
-            yield from self._notify_about_bonuses(bonuses_delta)
+            await self._notify_about_bonuses(bonuses_delta)
 
-    @asyncio.coroutine
-    def _advertise(self):
-        yield from asyncio.sleep(type(self).ADVERTISING_DELAY)
+    async def _advertise(self):
+        await asyncio.sleep(type(self).ADVERTISING_DELAY)
         self._deferred_advertising = None
         searching_for_partner_count = Stranger.select().where(Stranger.looking_for_partner_from != None) \
             .count()
@@ -123,14 +121,14 @@ class Stranger(Model):
                     'partner\'s search will be):')
             sender = self.get_sender()
             try:
-                yield from sender.send_notification(
+                await sender.send_notification(
                     message,
                     searching_for_partner_count,
                     type(self).REWARD_BIG,
                     type(self).REWARD_SMALL,
                     disable_notification=True,
                     )
-                yield from sender.send_notification(
+                await sender.send_notification(
                     _('Do you want to talk with somebody, practice in foreign languages or you just want '
                         'to have some fun? Rand Talk will help you! It\'s a bot matching you with '
                         'a random stranger of desired sex speaking on your language. {0}'),
@@ -144,27 +142,26 @@ class Stranger(Model):
     def advertise_later(self):
         self._deferred_advertising = asyncio.get_event_loop().create_task(self._advertise())
 
-    @asyncio.coroutine
-    def end_chatting(self):
+    async def end_chatting(self):
         try:
             sender = self.get_sender()
             if self.looking_for_partner_from:
                 # If stranger is looking for partner
                 try:
-                    yield from sender.send_notification(_('Looking for partner was stopped.'))
+                    await sender.send_notification(_('Looking for partner was stopped.'))
                 except TelegramError as e:
                     LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
             elif self.partner:
                 # If stranger is chatting now
                 try:
-                    yield from sender.send_notification(
+                    await sender.send_notification(
                         _('Chat was finished. Feel free to /begin a new one.'),
                         )
                 except TelegramError as e:
                     LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
                 if self.partner.partner == self:
                     # If partner isn't taking with the stranger because of some error, we shouldn't kick him.
-                    yield from self.partner.kick()
+                    await self.partner.kick()
         finally:
             self.partner = None
             self.looking_for_partner_from = None
@@ -208,13 +205,12 @@ class Stranger(Model):
             self.sex is not None and \
             self.partner_sex is not None
 
-    @asyncio.coroutine
-    def kick(self):
+    async def kick(self):
         self.partner = None
         self.save()
         sender = self.get_sender()
         try:
-            yield from sender.send_notification(
+            await sender.send_notification(
                 _('Your partner has left chat. Feel free to /begin a new conversation.'),
                 )
         except TelegramError as e:
@@ -224,18 +220,16 @@ class Stranger(Model):
         self._bonuses_notifications_muted = True
         asyncio.get_event_loop().create_task(self._unmute_bonuses_notifications(self.bonus_count))
 
-    @asyncio.coroutine
-    def _unmute_bonuses_notifications(self, last_bonuses_count):
-        yield from asyncio.sleep(type(self).UNMUTE_BONUSES_NOTIFICATIONS_DELAY)
-        yield from self._notify_about_bonuses(self.bonus_count - last_bonuses_count)
+    async def _unmute_bonuses_notifications(self, last_bonuses_count):
+        await asyncio.sleep(type(self).UNMUTE_BONUSES_NOTIFICATIONS_DELAY)
+        await self._notify_about_bonuses(self.bonus_count - last_bonuses_count)
         self._bonuses_notifications_muted = False
 
-    @asyncio.coroutine
-    def _notify_about_bonuses(self, bonuses_delta):
+    async def _notify_about_bonuses(self, bonuses_delta):
         sender = self.get_sender()
         try:
             if bonuses_delta == 1:
-                yield from sender.send_notification(
+                await sender.send_notification(
                     _('You\'ve received one bonus for inviting a person to the bot. '
                         'Bonuses will help you to find partners quickly. Total bonuses count: {0}. '
                         'Congratulations!\n'
@@ -244,7 +238,7 @@ class Stranger(Model):
                     self.bonus_count,
                     )
             elif bonuses_delta > 1:
-                yield from sender.send_notification(
+                await sender.send_notification(
                     _('You\'ve received {0} bonuses for inviting a person to the bot. '
                         'Bonuses will help you to find partners quickly. Total bonuses count: {1}. '
                         'Congratulations!\n'
@@ -256,7 +250,7 @@ class Stranger(Model):
         except TelegramError as e:
             LOGGER.info('Can\'t notify stranger %d about bonuses: %s', self.id, e)
 
-    def notify_partner_found(self, partner):
+    async def notify_partner_found(self, partner):
         '''
         @raise StrangerError If stranger we're changing has blocked the bot.
         '''
@@ -318,7 +312,7 @@ class Stranger(Model):
             notification_sentences.append(sender._(_('Have a nice chat!')))
 
         try:
-            yield from sender.send_notification(' '.join(notification_sentences))
+            await sender.send_notification(' '.join(notification_sentences))
         except TelegramError as e:
             LOGGER.info('Notify stranger partner found. Can\'t notify stranger %d: %s', self.id, e)
             self.partner = None
@@ -327,13 +321,12 @@ class Stranger(Model):
             # To reset languages.
             sender.update_translation()
 
-    @asyncio.coroutine
-    def pay(self, delta, gratitude):
+    async def pay(self, delta, gratitude):
         self.bonus_count += delta
         self.save()
         sender = self.get_sender()
         try:
-            yield from sender.send_notification(
+            await sender.send_notification(
                 'You\'ve earned {0} bonuses. Total bonus amount: {1}. {2}',
                 delta,
                 self.bonus_count,
@@ -351,30 +344,27 @@ class Stranger(Model):
         self._deferred_advertising.cancel()
         self._deferred_advertising = None
 
-    @asyncio.coroutine
-    def _reward_inviter(self):
+    async def _reward_inviter(self):
         self.was_invited_as = self.sex
         self.save()
         sex_ratio = StatsService.get_instance().get_stats().get_sex_ratio()
-        yield from self.invited_by._add_bonuses(
+        await self.invited_by._add_bonuses(
             type(self).REWARD_BIG if (self.sex == 'female' and sex_ratio >= 1) or 
                 (self.sex == 'male' and sex_ratio < 1) else type(self).REWARD_SMALL,
             )
 
-    @asyncio.coroutine
-    def send(self, message):
+    async def send(self, message):
         '''
         @raise StrangerError if can't send message because of unknown content type.
         @raise TelegramError if stranger has blocked the bot.
         '''
         sender = self.get_sender()
         try:
-            yield from sender.send(message)
+            await sender.send(message)
         except StrangerSenderError as e:
             raise StrangerError('Can\'t send content: {0}'.format(e))
 
-    @asyncio.coroutine
-    def send_to_partner(self, message):
+    async def send_to_partner(self, message):
         '''
         @raise MissingPartnerError if there's no partner for this stranger.
         @raise StrangerError if can't send content.
@@ -382,13 +372,13 @@ class Stranger(Model):
         '''
         if self.partner:
             try:
-                yield from self.partner.send(message)
+                await self.partner.send(message)
             except:
                 raise
             else:
                 # Invitee should reward inviter if it's her first message.
                 if self.invited_by is not None and self.was_invited_as is None:
-                    yield from self._reward_inviter()
+                    await self._reward_inviter()
         else:
             raise MissingPartnerError()
 
@@ -406,17 +396,16 @@ class Stranger(Model):
             raise StrangerError()
         self.languages = languages
 
-    @asyncio.coroutine
-    def set_looking_for_partner(self):
+    async def set_looking_for_partner(self):
         if self.partner:
-            yield from self.partner.kick()
+            await self.partner.kick()
         self.partner = None
         # Before setting `looking_for_partner_from`, check if it's already set to prevent lowering
         # priority.
         if not self.looking_for_partner_from:
             self.looking_for_partner_from = datetime.datetime.utcnow()
         try:
-            yield from self.get_sender().send_notification(
+            await self.get_sender().send_notification(
                 _('Looking for a stranger for you.'),
                 )
         except TelegramError as e:
@@ -424,13 +413,12 @@ class Stranger(Model):
             self.looking_for_partner_from = None
         self.save()
 
-    @asyncio.coroutine
-    def set_partner(self, partner):
+    async def set_partner(self, partner):
         if self.looking_for_partner_from and self.bonus_count >= 1:
             self.bonus_count -= 1
         if self.partner and self.partner.partner == self:
             # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
-            yield from self.partner.kick()
+            await self.partner.kick()
         self.partner = partner
         self.looking_for_partner_from = None
         self.save()

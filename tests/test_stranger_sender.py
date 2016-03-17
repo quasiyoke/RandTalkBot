@@ -31,9 +31,9 @@ class TestStrangerSender(asynctest.TestCase):
         sender = StrangerSender(Mock(), Mock())
         StrangerSender.update_translation.assert_called_once_with()
 
-    def test_answer_inline_query(self):
+    async def test_answer_inline_query(self):
         self.translation.return_value = 'foo {} {}'
-        yield from self.sender.answer_inline_query(
+        await self.sender.answer_inline_query(
             31416,
             [{
                 'type': 'article',
@@ -55,9 +55,9 @@ class TestStrangerSender(asynctest.TestCase):
             is_personal=True,
             )
 
-    def test_send_notification__no_reply_markup(self):
+    async def test_send_notification__no_reply_markup(self):
         self.translation.return_value = 'foo_translation'
-        yield from self.sender.send_notification('foo')
+        await self.sender.send_notification('foo')
         self.translation.assert_called_once_with('foo')
         self.sender.sendMessage.assert_called_once_with(
             '*Rand Talk:* foo_translation',
@@ -67,9 +67,9 @@ class TestStrangerSender(asynctest.TestCase):
             reply_markup=None,
             )
 
-    def test_send_notification__format(self):
+    async def test_send_notification__format(self):
         self.translation.return_value = '{0} {2} foo_translation {1}'
-        yield from self.sender.send_notification(
+        await self.sender.send_notification(
             'foo',
             'zero',
             'one',
@@ -84,9 +84,9 @@ class TestStrangerSender(asynctest.TestCase):
             reply_markup=None,
             )
 
-    def test_send_notification__escapes_markdown(self):
+    async def test_send_notification__escapes_markdown(self):
         self.translation.return_value = '{0} {1}'
-        yield from self.sender.send_notification(
+        await self.sender.send_notification(
             'foo',
             '*foo* _bar_ [baz](http://boo.com)',
             'foo\\\\` `bar baz\\\\boo foo``',
@@ -100,9 +100,9 @@ class TestStrangerSender(asynctest.TestCase):
             reply_markup=None,
             )
 
-    def test_send_notification__with_reply_markup_no_keyboard(self):
+    async def test_send_notification__with_reply_markup_no_keyboard(self):
         self.translation.return_value = 'foo_translation'
-        yield from self.sender.send_notification(
+        await self.sender.send_notification(
             'foo',
             reply_markup={
                 'no_keyboard': True,
@@ -119,9 +119,9 @@ class TestStrangerSender(asynctest.TestCase):
                 },
             )
 
-    def test_send_notification__disable_notification_and_preview(self):
+    async def test_send_notification__disable_notification_and_preview(self):
         self.translation.return_value = 'foo_translation'
-        yield from self.sender.send_notification(
+        await self.sender.send_notification(
             'foo',
             disable_notification=True,
             disable_web_page_preview=True,
@@ -134,9 +134,9 @@ class TestStrangerSender(asynctest.TestCase):
             reply_markup=None,
             )
 
-    def test_send_notification__with_reply_markup_with_keyboard(self):
+    async def test_send_notification__with_reply_markup_with_keyboard(self):
         self.translation.return_value = 'foo_translation'
-        yield from self.sender.send_notification(
+        await self.sender.send_notification(
             'foo',
             reply_markup={
                 'keyboard': [['fff', 'bar'], ['baz', 'boo']],
@@ -160,21 +160,21 @@ class TestStrangerSender(asynctest.TestCase):
                 },
             )
 
-    def test_send__text(self):
+    async def test_send__text(self):
         message = Mock()
         message.type = 'text'
         message.sending_kwargs = {
             'foo': 'bar',
             'baz': 'boo',
             }
-        yield from self.sender.send(message)
+        await self.sender.send(message)
         self.sender.sendMessage.assert_called_once_with(**message.sending_kwargs)
 
-    def test_send__unknown_content_type(self):
+    async def test_send__unknown_content_type(self):
         message = Mock()
         message.type = 'foo_type'
         with self.assertRaises(StrangerSenderError):
-            yield from self.sender.send(message)
+            await self.sender.send(message)
         self.sender.sendMessage.assert_not_called()
 
     @patch('randtalkbot.stranger_sender.get_translation', Mock(return_value='foo_translation'))

@@ -6,11 +6,12 @@
 
 import asyncio
 import asynctest
+from asynctest.mock import patch, Mock, CoroutineMock
 from randtalkbot.admin_handler import AdminHandler
 from randtalkbot.stranger_handler import StrangerHandler
 from randtalkbot.stranger_service import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
-from asynctest.mock import create_autospec, patch, Mock, CoroutineMock
+from unittest.mock import create_autospec
 
 class TestAdminHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerSetupWizard', create_autospec(StrangerSetupWizard))
@@ -30,84 +31,85 @@ class TestAdminHandler(asynctest.TestCase):
                 },
             }
         self.sender = stranger_sender_service.get_or_create_stranger_sender.return_value
+        self.sender.send_notification = CoroutineMock()
         self.admin_handler = AdminHandler(
             (Mock(), self.initial_msg, 31416),
             self.stranger_service,
             )
         self.stranger_sender_service = stranger_sender_service
 
-    def test_handle_command__clear(self):
+    async def test_handle_command__clear(self):
         stranger = CoroutineMock()
         self.stranger_service.get_stranger.return_value = stranger
         message = Mock()
         message.command = 'clear'
         message.command_args = '31416'
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_called_once_with(31416)
         stranger.end_chatting.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with('Stranger was cleared.')
 
-    def test_handle_command__clear_incorrect_telegram_id(self):
+    async def test_handle_command__clear_incorrect_telegram_id(self):
         message = Mock()
         message.command = 'clear'
         message.command_args = 'foo'
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Please specify Telegram ID like this: /clear 31416',
             )
 
-    def test_handle_command__clear_unknown_stranger(self):
+    async def test_handle_command__clear_unknown_stranger(self):
         error = StrangerServiceError()
         self.stranger_service.get_stranger.side_effect = error
         message = Mock()
         message.command = 'clear'
         message.command_args = '31416'
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_called_once_with(31416)
         self.sender.send_notification.assert_called_once_with(
             'Stranger wasn\'t found: {0}',
             error,
             )
 
-    def test_handle_command__pay(self):
+    async def test_handle_command__pay(self):
         stranger = CoroutineMock()
         self.stranger_service.get_stranger.return_value = stranger
         message = Mock()
         message.command = 'pay'
         message.command_args = '31416 27183 foo gratitude'
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_called_once_with(31416)
         stranger.pay.assert_called_once_with(27183, 'foo gratitude')
         self.sender.send_notification.assert_called_once_with('Success.')
 
-    def test_handle_command__pay_incorrect_telegram_id(self):
+    async def test_handle_command__pay_incorrect_telegram_id(self):
         message = Mock()
         message.command = 'pay'
         message.command_args = 'foo'
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Please specify Telegram ID and bonus amount like this: `/pay 31416 10 Thanks!`',
             )
 
-    def test_handle_command__pay_no_command_args(self):
+    async def test_handle_command__pay_no_command_args(self):
         message = Mock()
         message.command = 'pay'
         message.command_args = None
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Please specify Telegram ID and bonus amount like this: `/pay 31416 10 Thanks!`',
             )
 
-    def test_handle_command__pay_unknown_stranger(self):
+    async def test_handle_command__pay_unknown_stranger(self):
         error = StrangerServiceError()
         self.stranger_service.get_stranger.side_effect = error
         message = Mock()
         message.command = 'pay'
         message.command_args = '31416 27183'
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         self.stranger_service.get_stranger.assert_called_once_with(31416)
         self.sender.send_notification.assert_called_once_with(
             'Stranger wasn\'t found: {0}',
@@ -115,11 +117,10 @@ class TestAdminHandler(asynctest.TestCase):
             )
 
     @patch('randtalkbot.admin_handler.StrangerHandler.handle_command')
-    @asyncio.coroutine
-    def test_handle_command__other_command(self, handle_command):
+    async def test_handle_command__other_command(self, handle_command):
         from randtalkbot.admin_handler import StrangerHandler
         message = Mock()
         message.command = 'foo_command'
         message.command_args = 'foo_args'
-        yield from self.admin_handler.handle_command(message)
+        await self.admin_handler.handle_command(message)
         handle_command.assert_called_once_with(message)

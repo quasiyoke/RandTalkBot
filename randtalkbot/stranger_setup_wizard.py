@@ -35,20 +35,18 @@ class StrangerSetupWizard(Wizard):
         self._stranger = stranger
         self._sender = StrangerSenderService.get_instance().get_or_create_stranger_sender(stranger)
 
-    @asyncio.coroutine
-    def activate(self):
+    async def activate(self):
         self._stranger.wizard = 'setup'
         self._stranger.wizard_step = 'languages'
         self._stranger.save()
-        yield from self._prompt()
+        await self._prompt()
 
-    @asyncio.coroutine
-    def deactivate(self):
+    async def deactivate(self):
         self._stranger.wizard = 'none'
         self._stranger.wizard_step = None
         self._stranger.save()
         try:
-            yield from self._sender.send_notification(
+            await self._sender.send_notification(
                 _('Thank you. Use /begin to start looking for a conversational partner, '
                     'once you\'re matched you can use /end to end the conversation.'),
                 reply_markup={'hide_keyboard': True},
@@ -56,15 +54,14 @@ class StrangerSetupWizard(Wizard):
         except TelegramError as e:
             LOGGER.warning('Deactivate. Can\'t notify stranger. %s', e)
 
-    @asyncio.coroutine
-    def handle(self, message):
+    async def handle(self, message):
         '''
         @returns `True` if message was interpreted in this method. `False` if message still needs
             interpretation.
         '''
         if self._stranger.wizard == 'none': # Wizard isn't active. Check if we should activate it.
             if self._stranger.is_novice():
-                yield from self.activate()
+                await self.activate()
                 return True
             else:
                 return False
@@ -75,54 +72,54 @@ class StrangerSetupWizard(Wizard):
                 try:
                     self._stranger.set_languages(get_languages_codes(message.text))
                 except EmptyLanguagesError as e:
-                    yield from self._sender.send_notification(
+                    await self._sender.send_notification(
                         _('Please specify at least one language.'),
                         )
                 except LanguageNotFoundError as e:
                     LOGGER.info('Languages weren\'t parsed: \"%s\"', message.text)
-                    yield from self._sender.send_notification(_('Language \"{0}\" wasn\'t found.'), e.name)
+                    await self._sender.send_notification(_('Language \"{0}\" wasn\'t found.'), e.name)
                 except StrangerError as e:
                     LOGGER.info('Too much languages were specified: \"%s\"', message.text)
-                    yield from self._sender.send_notification(
+                    await self._sender.send_notification(
                         _('Too much languages were specified. Please shorten your list to 6 languages.'),
                         )
                 else:
                     self._sender.update_translation()
                     self._stranger.wizard_step = 'sex'
                     self._stranger.save()
-                yield from self._prompt()
+                await self._prompt()
             elif self._stranger.wizard_step == 'sex':
                 try:
                     self._stranger.set_sex(message.text)
                 except SexError as e:
                     LOGGER.info('Stranger\'s sex wasn\'t parsed: \"%s\"', message.text)
-                    yield from self._sender.send_notification(
+                    await self._sender.send_notification(
                         _('Unknown sex: \"{0}\" -- is not a valid sex name.'),
                         e.name,
                         )
-                    yield from self._prompt()
+                    await self._prompt()
                 else:
                     if self._stranger.sex == 'not_specified':
                         self._stranger.partner_sex = 'not_specified'
                         # Calls Stranger.save() inside.
-                        yield from self.deactivate()
+                        await self.deactivate()
                     else:
                         self._stranger.wizard_step = 'partner_sex'
                         self._stranger.save()
-                        yield from self._prompt()
+                        await self._prompt()
             elif self._stranger.wizard_step == 'partner_sex':
                 try:
                     self._stranger.set_partner_sex(message.text)
                 except SexError as e:
                     LOGGER.info('Stranger partner\'s sex wasn\'t parsed: \"%s\"', message.text)
-                    yield from self._sender.send_notification(
+                    await self._sender.send_notification(
                         _('Unknown sex: \"{0}\" -- is not a valid sex name.'),
                         e.name,
                         )
-                    yield from self._prompt()
+                    await self._prompt()
                 else:
                     # Calls Stranger.save() inside.
-                    yield from self.deactivate()
+                    await self.deactivate()
             else:
                 LOGGER.warning(
                     'Undknown wizard_step value was found: \"%s\"',
@@ -132,31 +129,29 @@ class StrangerSetupWizard(Wizard):
             LOGGER.warning('handle() Can not notify stranger. %s', e)
         return True
 
-    @asyncio.coroutine
-    def handle_command(self, message):
+    async def handle_command(self, message):
         '''
         @returns `True` if command was interpreted in this method. `False` if command still needs
             interpretation.
         '''
         if self._stranger.wizard == 'none':
             # Wizard isn't active. Check if we should activate it.
-            return (yield from self.handle(message)) and message.command != 'start'
+            return (await self.handle(message)) and message.command != 'start'
         elif self._stranger.is_full():
             if self._stranger.wizard == 'setup':
-                yield from self.deactivate()
+                await self.deactivate()
             return False
         else:
             try:
-                yield from self._sender.send_notification(
+                await self._sender.send_notification(
                     _('Finish setup process please. After that you can start using bot.'),
                     )
             except TelegramError as e:
                 LOGGER.warning('Handle command. Cant notify stranger. %s', e)
-            yield from self._prompt()
+            await self._prompt()
             return True
 
-    @asyncio.coroutine
-    def _prompt(self):
+    async def _prompt(self):
         wizard_step = self._stranger.wizard_step
         try:
             if wizard_step == 'languages':
@@ -184,7 +179,7 @@ class StrangerSetupWizard(Wizard):
                         prompt = _('Your current languages are: {0}. Enumerate the languages you '
                             'speak the same way -- in descending order of your speaking '
                             'convenience or just pick one at special keyboard.')
-                yield from self._sender.send_notification(
+                await self._sender.send_notification(
                     prompt,
                     languages_enumeration,
                     reply_markup={
@@ -192,13 +187,13 @@ class StrangerSetupWizard(Wizard):
                         },
                     )
             elif wizard_step == 'sex':
-                yield from self._sender.send_notification(
+                await self._sender.send_notification(
                     _('Set up your sex. If you pick \"Not Specified\" you can\'t choose '
                         'your partner\'s sex.'),
                     reply_markup=SEX_KEYBOARD,
                     )
             elif wizard_step == 'partner_sex':
-                yield from self._sender.send_notification(
+                await self._sender.send_notification(
                     _('Choose your partner\'s sex'),
                     reply_markup=SEX_KEYBOARD,
                     )

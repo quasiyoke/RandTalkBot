@@ -30,7 +30,6 @@ class Bot:
             )
         self._stranger_service = stranger_service
 
-    @asyncio.coroutine
-    def run(self):
+    async def run(self):
         LOGGER.info('Listening')
-        yield from self._delegator_bot.messageLoop()
+        await self._delegator_bot.messageLoop()

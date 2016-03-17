@@ -39,13 +39,12 @@ class StatsService:
     def get_stats(self):
         return self._stats
 
-    @asyncio.coroutine
-    def run(self):
+    async def run(self):
         while True:
             next_stats_time = self._stats.created + type(self).INTERVAL
             now = datetime.datetime.utcnow()
             if next_stats_time > now:
-                yield from asyncio.sleep((next_stats_time - now).total_seconds())
+                await asyncio.sleep((next_stats_time - now).total_seconds())
             self._update_stats()
 
     def _update_stats(self):

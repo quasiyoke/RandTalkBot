@@ -10,7 +10,7 @@ import datetime
 import json
 import types
 import unittest
-from asynctest.mock import create_autospec, patch, Mock
+from asynctest.mock import patch, Mock, CoroutineMock
 from peewee import *
 from randtalkbot import stats
 from randtalkbot.stats_service import StatsService
@@ -180,22 +180,21 @@ class TestStatsService(asynctest.TestCase):
     def test_get_stats(self):
         self.assertEqual(self.stats_service.get_stats(), self.stats)
 
-    @patch('randtalkbot.stats_service.asyncio')
+    @patch('randtalkbot.stats_service.asyncio', CoroutineMock())
     @patch('randtalkbot.stats_service.datetime', Mock())
-    @asyncio.coroutine
-    def test_run__ok(self, asyncio):
+    async def test_run__ok(self):
+        from randtalkbot.stats_service import asyncio
         from randtalkbot.stats_service import datetime as datetime_mock
         self.stats_service._update_stats.reset_mock()
         datetime_mock.datetime.utcnow.side_effect = [datetime.datetime(1990, 1, 1, 3), RuntimeError]
         with self.assertRaises(RuntimeError):
-            yield from self.stats_service.run()
+            await self.stats_service.run()
         asyncio.sleep.assert_called_once_with(3600)
         self.stats_service._update_stats.assert_called_once_with()
 
     @patch('randtalkbot.stats_service.asyncio')
     @patch('randtalkbot.stats_service.datetime', Mock())
-    @asyncio.coroutine
-    def test_run__too_late(self, asyncio):
+    async def test_run__too_late(self, asyncio):
         from randtalkbot.stats_service import datetime as datetime_mock
         self.stats_service._update_stats.reset_mock()
         datetime_mock.datetime.utcnow.side_effect = [
@@ -203,7 +202,7 @@ class TestStatsService(asynctest.TestCase):
             RuntimeError,
             ]
         with self.assertRaises(RuntimeError):
-            yield from self.stats_service.run()
+            await self.stats_service.run()
         asyncio.sleep.assert_not_called()
         self.stats_service._update_stats.assert_called_once_with()
 

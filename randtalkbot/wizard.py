@@ -8,16 +8,13 @@ import asyncio
 import logging
 
 class Wizard:
-    @asyncio.coroutine
-    def activate(self):
+    async def activate(self):
         raise NotImplementedError()
 
-    @asyncio.coroutine
-    def deactivate(self):
+    async def deactivate(self):
         raise NotImplementedError()
 
-    @asyncio.coroutine
-    def handle(self, text):
+    async def handle(self, text):
         '''
         @returns `True` if message was interpreted in this method. `False` if message still needs
             interpretation.

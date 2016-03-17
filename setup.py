@@ -59,13 +59,10 @@ setup(
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Topic :: Communications :: Chat',
         ],
     install_requires=[
-        'asyncio>=3.4.3,<4.0',
         'docopt>=0.6.2,<0.7',
         'peewee>=2.7.4,<3.0',
         'pycountry>=1.19,<2.0',
@@ -73,6 +70,7 @@ setup(
         'telepot>=6.0,<7.0',
         ],
     tests_require=[
+        'asynctest>=0.6,<0.7',
         'coveralls>=1.1,<2.0',
         ],
     cmdclass={

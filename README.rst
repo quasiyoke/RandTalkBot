@@ -7,7 +7,7 @@ Rand Talk
 .. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
 
-Bot matching you with a random person on Telegram. Chat with anonymous strangers speaking on your language `here <https://telegram.me/RandTalkBot>`_.
+Bot matching you with a random person on Telegram. Chat with anonymous strangers speaking on your language `here <https://telegram.me/RandTalkBot>`_. Rand Talk was written on Python 3.5 and `telepot<https://github.com/nickoala/telepot>`_.
 
 Deployment
 ----------

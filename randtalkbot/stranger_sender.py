@@ -43,8 +43,7 @@ class StrangerSender(telepot.helper.Sender):
         s = cls.MARKDOWN_RE.sub(r'\\\1', s)
         return s
 
-    @asyncio.coroutine
-    def answer_inline_query(self, query_id, answers):
+    async def answer_inline_query(self, query_id, answers):
         def translate(item):
             return self._(item) if isinstance(item, str) else self._(item[0]).format(*item[1:])
 
@@ -53,10 +52,9 @@ class StrangerSender(telepot.helper.Sender):
                 answer['title'] = translate(answer['title'])
                 answer['description'] = translate(answer['description'])
                 answer['message_text'] = translate(answer['message_text'])
-        yield from self._bot.answerInlineQuery(query_id, answers, is_personal=True)
+        await self._bot.answerInlineQuery(query_id, answers, is_personal=True)
 
-    @asyncio.coroutine
-    def send(self, message):
+    async def send(self, message):
         '''
         @raises StrangerSenderError if message's content type is not supported.
         @raises TelegramError if stranger has blocked the bot.
@@ -66,10 +64,9 @@ class StrangerSender(telepot.helper.Sender):
         except KeyError:
             raise StrangerSenderError('Unsupported content_type: {}'.format(message.type))
         else:
-            yield from getattr(self, method_name)(**message.sending_kwargs)
+            await getattr(self, method_name)(**message.sending_kwargs)
 
-    @asyncio.coroutine
-    def send_notification(self, message, *args, disable_notification=None, disable_web_page_preview=None,
+    async def send_notification(self, message, *args, disable_notification=None, disable_web_page_preview=None,
         reply_markup=None):
         '''
         @raise TelegramError if stranger has blocked the bot.
@@ -84,7 +81,7 @@ class StrangerSender(telepot.helper.Sender):
                     ],
                 'one_time_keyboard': True,
                 }
-        yield from self.sendMessage(
+        await self.sendMessage(
             '*Rand Talk:* {}'.format(message),
             disable_notification=disable_notification,
             disable_web_page_preview=disable_web_page_preview,

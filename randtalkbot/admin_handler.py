@@ -15,24 +15,22 @@ from telepot import TelegramError
 LOGGER = logging.getLogger('randtalkbot.admin_handler')
 
 class AdminHandler(StrangerHandler):
-    @asyncio.coroutine
-    def _handle_command_clear(self, message):
+    async def _handle_command_clear(self, message):
         try:
             telegram_id = int(message.command_args)
         except (ValueError, TypeError):
-            yield from self._sender.send_notification('Please specify Telegram ID like this: /clear 31416')
+            await self._sender.send_notification('Please specify Telegram ID like this: /clear 31416')
             return
         try:
             stranger = self._stranger_service.get_stranger(telegram_id)
         except StrangerServiceError as e:
-            yield from self._sender.send_notification('Stranger wasn\'t found: {0}', e)
+            await self._sender.send_notification('Stranger wasn\'t found: {0}', e)
             return
-        yield from stranger.end_chatting()
-        yield from self._sender.send_notification('Stranger was cleared.')
+        await stranger.end_chatting()
+        await self._sender.send_notification('Stranger was cleared.')
         LOGGER.debug('Clear: %d -> %d', self._stranger.id, telegram_id)
 
-    @asyncio.coroutine
-    def _handle_command_pay(self, message):
+    async def _handle_command_pay(self, message):
         try:
             match = re.match(
                 r'^(?P<telegram_id>\d+)\s+(?P<delta>\d+)\s*(?P<gratitude>.*)$',
@@ -44,15 +42,15 @@ class AdminHandler(StrangerHandler):
             telegram_id = int(match.group('telegram_id'))
             delta = int(match.group('delta'))
         else:
-            yield from self._sender.send_notification(
+            await self._sender.send_notification(
                 'Please specify Telegram ID and bonus amount like this: `/pay 31416 10 Thanks!`',
                 )
             return
         try:
             stranger = self._stranger_service.get_stranger(telegram_id)
         except StrangerServiceError as e:
-            yield from self._sender.send_notification('Stranger wasn\'t found: {0}', e)
+            await self._sender.send_notification('Stranger wasn\'t found: {0}', e)
             return
-        yield from stranger.pay(delta, match.group('gratitude'))
-        yield from self._sender.send_notification('Success.')
+        await stranger.pay(delta, match.group('gratitude'))
+        await self._sender.send_notification('Success.')
         LOGGER.debug('Pay: {} -({})-> {}'.format(self._stranger.id, delta, telegram_id))
