@@ -608,6 +608,36 @@ class TestStranger(asynctest.TestCase):
             )
 
     @patch('randtalkbot.stranger.get_languages_names', Mock())
+    async def test_notify_partner_found__updates_translation(self):
+        def update_translation(partner=None):
+            sender._ = new_translation
+
+        from randtalkbot.stranger import get_languages_names
+        old_translation = Mock()
+        new_translation = Mock(side_effect=['Use {0} please.', 'Your partner is here.'])
+        sender = CoroutineMock()
+        sender.update_translation = Mock(side_effect=update_translation)
+        sender._ = old_translation
+        self.stranger.get_sender = Mock(return_value=sender)
+        self.stranger.languages = '["foo", "bar", "baz"]'
+        self.stranger.get_partner = Mock(return_value=None)
+        talk = Mock()
+        talk.is_successful.return_value = True
+        talk.partner1 = self.stranger
+        self.stranger.get_talk = Mock(return_value=talk)
+        self.stranger.bonus_count = 0
+        self.stranger2.languages = '["baz"]'
+        await self.stranger.notify_partner_found(self.stranger2)
+        self.assertEqual(
+            new_translation.call_args_list,
+            [
+                call('Use {0} please.'),
+                call('Your partner is here.'),
+                ],
+            )
+        old_translation.assert_not_called()
+
+    @patch('randtalkbot.stranger.get_languages_names', Mock())
     async def test_notify_partner_found__was_bonus_used(self):
         from randtalkbot.stranger import get_languages_names
         sender = CoroutineMock()

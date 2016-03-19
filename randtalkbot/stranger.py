@@ -297,6 +297,7 @@ class Stranger(Model):
         if len(self.get_languages()) > len(common_languages):
             # To make the bot speak on common language.
             sender.update_translation(partner)
+            _ = sender._
             # If the stranger knows any language which another partner doesn't, we should notify him
             # especial way.
             if len(common_languages) == 1:
