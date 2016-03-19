@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-03-19 20:39+0300\n"
+"POT-Creation-Date: 2016-03-19 23:08+0300\n"
 "PO-Revision-Date: 2016-02-25 23:50+0100\n"
 "Last-Translator: Martin Ligabue <martinligabue@gmail.com>\n"
 "Language-Team: Italian\n"
@@ -95,7 +95,7 @@ msgstr ""
 msgid "Looking for partner was stopped."
 msgstr "Ricerca partner per la chat interrotta"
 
-#: randtalkbot/stranger.py:238
+#: randtalkbot/stranger.py:237
 #, python-brace-format
 msgid ""
 "You've received one bonus for inviting a person to the bot. Bonuses will "
@@ -108,7 +108,7 @@ msgstr ""
 "{0}. Congratulazioni! 🤑\n"
 "Per fermare le notifiche, fai /mute\\_bonuses."
 
-#: randtalkbot/stranger.py:247
+#: randtalkbot/stranger.py:246
 #, python-brace-format
 msgid ""
 "You've received {0} bonuses for inviting a person to the bot. Bonuses will "
@@ -121,24 +121,24 @@ msgstr ""
 "{1}. Congratulazioni! 🤑\n"
 "Per disattivare queste notifiche, usare il /mute\\_bonuses."
 
-#: randtalkbot/stranger.py:267
+#: randtalkbot/stranger.py:266
 msgid "Chat was finished."
 msgstr "Chat chiusa."
 
-#: randtalkbot/stranger.py:269
+#: randtalkbot/stranger.py:268
 msgid "Your partner has left chat."
 msgstr "L'altra persona ha lasciato la chat. 😿"
 
-#: randtalkbot/stranger.py:274
+#: randtalkbot/stranger.py:273
 #, python-brace-format
 msgid "You've used one bonus. {0} bonus(es) left."
 msgstr "Hai usato un bonus. {0} bonus rimasti."
 
-#: randtalkbot/stranger.py:278
+#: randtalkbot/stranger.py:277
 msgid "You've used your last bonus."
 msgstr "Hai usato il tuo ultimo bonus."
 
-#: randtalkbot/stranger.py:281
+#: randtalkbot/stranger.py:280
 msgid "Feel free to /begin a new talk."
 msgstr "Premi /begin per iniziarne un'altra!"
 
@@ -191,7 +191,7 @@ msgstr ""
 msgid "Have a nice chat!"
 msgstr "Divertiti 🤗"
 
-#: randtalkbot/stranger.py:445
+#: randtalkbot/stranger.py:444
 msgid "Looking for a stranger for you."
 msgstr "Ricerca partner per la chat in corso. 🤔"
 
@@ -207,8 +207,8 @@ msgid ""
 "If you have any suggestions or require help, please contact @quasiyoke. When "
 "asking questions, please provide this number: {0}.\n"
 "\n"
-"Subscribe to [our news](https://telegram.me/RandTalkChannel). You're welcome "
-"to inspect and improve [Rand Talk v. {1} source code](https://github.com/"
+"Subscribe to [our news](https://telegram.me/RandTalk). You're welcome to "
+"inspect and improve [Rand Talk v. {1} source code](https://github.com/"
 "quasiyoke/RandTalkBot) or to [give us 5 stars](https://telegram.me/storebot?"
 "start=randtalkbot)."
 msgstr ""
@@ -221,9 +221,9 @@ msgstr ""
 "Se hai suggerimenti o hai bisogno di aiuto scrivi pure all'admin (inglese) "
 "del bot, @quasiyoke. Nel messaggio, per favore, includi questo numero: {0}.\n"
 "\n"
-"Iscriviti alle [nostre notizie (en)](https://telegram.me/RandTalkChannel). "
-"Sei il benvenuto per controllare e migliorare il [codice sorgente del Rand "
-"Talk v. {1}](https://github.com/quasiyoke/RandTalkBot) o [per darci 5 stelle]"
+"Iscriviti alle [nostre notizie (en)](https://telegram.me/RandTalk). Sei il "
+"benvenuto per controllare e migliorare il [codice sorgente del Rand Talk v. "
+"{1}](https://github.com/quasiyoke/RandTalkBot) o [per darci 5 stelle]"
 "(https://telegram.me/storebot?start=randtalkbot)."
 
 #: randtalkbot/stranger_handler.py:107
