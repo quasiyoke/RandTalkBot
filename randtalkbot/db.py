@@ -8,9 +8,10 @@ import logging
 from .errors import DBError
 from .stats import Stats
 from .stranger import Stranger
+from .talk import Talk
 from peewee import *
 from playhouse.shortcuts import RetryOperationalError
-from randtalkbot import stats, stranger
+from randtalkbot import stats, stranger, talk
 
 LOGGER = logging.getLogger('randtalkbot.db')
 
@@ -33,13 +34,14 @@ class DB:
         try:
             self._db.connect()
         except DatabaseError as e:
-            raise DBError('DatabaseError during connecting to database: {}'.format(e))
+            raise DBError('DatabaseError during connecting to database. {}'.format(e))
         self._db.close()
-        stranger.database_proxy.initialize(self._db)
         stats.database_proxy.initialize(self._db)
+        stranger.database_proxy.initialize(self._db)
+        talk.database_proxy.initialize(self._db)
 
     def install(self):
         try:
-            self._db.create_tables([Stats, Stranger])
+            self._db.create_tables([Stats, Stranger, Talk])
         except DatabaseError as e:
-            raise DBError('DatabaseError during creating tables: {}'.format(e))
+            raise DBError('DatabaseError during creating tables. {}'.format(e))

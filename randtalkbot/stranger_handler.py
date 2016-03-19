@@ -11,13 +11,14 @@ import re
 import sys
 import telepot
 import telepot.async
-from .errors import MissingPartnerError, StrangerError, StrangerHandlerError, UnknownCommandError
+from .errors import MissingPartnerError, PartnerObtainingError, StrangerError, StrangerHandlerError, \
+    StrangerServiceError, UnknownCommandError, UnsupportedContentError
 from .i18n import get_languages_codes, get_translation, LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
-from .message import Message, UnsupportedContentError
+from .message import Message
 from .stranger import SEX_NAMES
 from .stranger_sender import StrangerSender
 from .stranger_sender_service import StrangerSenderService
-from .stranger_service import PartnerObtainingError, StrangerServiceError
+from .stranger_service import StrangerService
 from .stranger_setup_wizard import StrangerSetupWizard
 from .utils import __version__
 from telepot import TelegramError
@@ -30,7 +31,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
     HOUR_TIMEDELTA = datetime.timedelta(hours=1)
     LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=10)
 
-    def __init__(self, seed_tuple, stranger_service):
+    def __init__(self, seed_tuple):
         '''
         Most of this constructor's code were copied from telepot.helper.ChatHandler and
         its superclasses to inject stranger_sender_service.
@@ -41,9 +42,8 @@ class StrangerHandler(telepot.async.helper.UserHandler):
         self._from_id = from_id
         self.listener.set_options()
         self.listener.capture(from__id=from_id)
-        self._stranger_service = stranger_service
         try:
-            self._stranger = self._stranger_service.get_or_create_stranger(self._from_id)
+            self._stranger = StrangerService.get_instance().get_or_create_stranger(self._from_id)
         except StrangerServiceError as e:
             LOGGER.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
@@ -62,27 +62,20 @@ class StrangerHandler(telepot.async.helper.UserHandler):
     async def _handle_command_begin(self, message):
         self._stranger.prevent_advertising()
         try:
-            await self._set_partner()
+            await StrangerService.get_instance().match_partner(self._stranger)
         except PartnerObtainingError:
             LOGGER.debug('Looking for partner: %d', self._stranger.id)
             self._stranger.advertise_later()
             await self._stranger.set_looking_for_partner()
-        except StrangerHandlerError as e:
-            LOGGER.warning('Can\'t notify seeking for partner stranger: %s', e)
         except StrangerServiceError as e:
-            LOGGER.error('Problems with handling /begin command for %d: %s', self._stranger.id, str(e))
-            try:
-                await self._sender.send_notification(
-                    _('Internal error. Admins are already notified about that.'),
-                    )
-            except TelegramError as e:
-                LOGGER.warning('Handle /begin command. Can\'t notify stranger about error. %s', e)
+            LOGGER.warning('Can\'t set partner for %d. %s', self._stranger.id, e)
 
     async def _handle_command_end(self, message):
+        partner = self._stranger.get_partner()
         LOGGER.debug(
-            '/end: %d -x-> %d',
+            '/end: %d -x-> %s',
             self._stranger.id,
-            self._stranger.partner.id if self._stranger.partner else 0,
+            'none' if partner is None else partner.id,
             )
         self._stranger.prevent_advertising()
         await self._stranger.end_chatting()
@@ -142,7 +135,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                             )
                     else:
                         try:
-                            invited_by = self._stranger_service.get_stranger_by_invitation(invitation)
+                            invited_by = StrangerService.get_instance().get_stranger_by_invitation(invitation)
                         except StrangerServiceError as e:
                             LOGGER.info('/start error. Can\'t obtain stranger who did invite: %s', e)
                         else:
@@ -186,7 +179,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                 LOGGER.warning(
                     'Send message. Can\'t send to partned: %d -> %d',
                     self._stranger.id,
-                    self._stranger.partner.id,
+                    self._stranger.get_partner().id,
                     )
                 await self._sender.send_notification(
                     _('Your partner has blocked me! How did you do that?!'),
@@ -195,7 +188,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
 
     async def on_inline_query(self, query):
         query_id, from_id, query_string = telepot.glance(query, flavor='inline_query')
-        LOGGER.debug('Inline query from {}: {}'.format(self._stranger.id, query_string))
+        LOGGER.debug('Inline query from %d: \"%s\"', self._stranger.id, query_string)
         response = [{
             'type': 'article',
             'id': 'invitation_link',
@@ -211,31 +204,3 @@ class StrangerHandler(telepot.async.helper.UserHandler):
             'parse_mode': 'Markdown',
             }]
         await self._sender.answer_inline_query(query_id, response)
-
-    async def _set_partner(self):
-        '''
-        Finds partner for the stranger. Does handling of strangers who have blocked the bot.
-
-        @raise PartnerObtainingError if there's no proper partners.
-        @raise StrangerHandlerError if the stranger has blocked the bot.
-        @raise StrangerServiceError if there're some DB troubles.
-        '''
-        while True:
-            partner = self._stranger_service.get_partner(self._stranger)
-            try:
-                await partner.notify_partner_found(self._stranger)
-            except StrangerError:
-                # Potential partner has blocked the bot. Let's look for next potential partner.
-                await partner.end_chatting()
-            else:
-                try:
-                    await self._stranger.notify_partner_found(partner)
-                except StrangerError as e:
-                    # Stranger has blocked the bot. Forgive him, clear his potential partner and exit
-                    # the cycle.
-                    raise StrangerHandlerError('Can\'t notify seeking for partner stranger: {}'.format(e))
-                else:
-                    await self._stranger.set_partner(partner)
-                    await partner.set_partner(self._stranger)
-                    LOGGER.debug('Found partner: %d -> %d.', self._stranger.id, partner.id)
-                    break

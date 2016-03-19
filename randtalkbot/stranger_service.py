@@ -5,7 +5,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from .errors import PartnerObtainingError, StrangerServiceError
+from .errors import PartnerObtainingError, StrangerError, StrangerServiceError
 from .stranger import INVITATION_LENGTH, Stranger
 from peewee import *
 
@@ -14,68 +14,27 @@ LOGGER = logging.getLogger('randtalkbot.stranger_service')
 class StrangerService:
     def __init__(self):
         self._strangers_cache = {}
+        type(self)._instance = self
+
+    @classmethod
+    def get_instance(cls):
+        try:
+            return cls._instance
+        except AttributeError:
+            cls._instance = cls()
+            return cls._instance
 
     def get_cached_stranger(self, stranger):
         try:
             return self._strangers_cache[stranger.id]
         except KeyError:
             self._strangers_cache[stranger.id] = stranger
-            if stranger.partner is not None:
-                stranger.partner = self.get_cached_stranger(stranger.partner)
             return stranger
 
     def get_full_strangers(self):
         for stranger in Stranger.select():
             if stranger.is_full():
                 yield stranger
-
-    def get_partner(self, stranger):
-        '''
-        Tries to find a partner for obtained stranger or throws PartnerObtainingError if there's no
-        proper partner.
-
-        @throws PartnerObtainingError
-        '''
-        try:
-            possible_partners = Stranger.select().where(
-                Stranger.id != stranger.id,
-                Stranger.partner == None,
-                Stranger.looking_for_partner_from != None,
-                )
-            if stranger.sex == 'not_specified':
-                possible_partners = possible_partners.where(Stranger.partner_sex == 'not_specified')
-            else:
-                possible_partners = possible_partners.where(
-                    (Stranger.partner_sex == stranger.sex) | (Stranger.partner_sex == 'not_specified'),
-                    )
-            # If stranger wants to filter partners by sex, let's do that.
-            if stranger.partner_sex == 'male' or stranger.partner_sex == 'female':
-                possible_partners = possible_partners.where(
-                    Stranger.sex == stranger.partner_sex,
-                    )
-            possible_partners = possible_partners.order_by(
-                Stranger.bonus_count.desc(),
-                Stranger.looking_for_partner_from,
-                )
-            partner = None
-            partner_language_priority = 1000
-            for possible_partner in possible_partners:
-                for priority, language in enumerate(
-                    stranger.get_languages()[:partner_language_priority],
-                    ):
-                    if possible_partner.speaks_on_language(language):
-                        partner = possible_partner
-                        partner_language_priority = priority
-                        if priority == 0:
-                            break
-                else:
-                    continue
-                break
-            if partner is None:
-                raise PartnerObtainingError()
-            return self.get_cached_stranger(partner)
-        except DatabaseError as e:
-            raise StrangerServiceError('Database problems during `get_partner`: {0}'.format(e))
 
     def get_or_create_stranger(self, telegram_id):
         try:
@@ -113,3 +72,72 @@ class StrangerService:
                 'Database problems during `get_stranger_by_invitation`: {0}'.format(e),
                 )
         return self.get_cached_stranger(stranger)
+
+    def _match_partner(self, stranger):
+        '''
+        Tries to find a partner for obtained stranger or throws PartnerObtainingError if there's no
+        proper partner.
+
+        @throws PartnerObtainingError
+        '''
+        possible_partners = Stranger.select().where(
+            Stranger.id != stranger.id,
+            Stranger.looking_for_partner_from != None,
+            )
+        if stranger.sex == 'not_specified':
+            possible_partners = possible_partners.where(Stranger.partner_sex == 'not_specified')
+        else:
+            possible_partners = possible_partners.where(
+                (Stranger.partner_sex == stranger.sex) | (Stranger.partner_sex == 'not_specified'),
+                )
+        # If stranger wants to filter partners by sex, let's do that.
+        if stranger.partner_sex == 'male' or stranger.partner_sex == 'female':
+            possible_partners = possible_partners.where(
+                Stranger.sex == stranger.partner_sex,
+                )
+        possible_partners = possible_partners.order_by(
+            Stranger.bonus_count.desc(),
+            Stranger.looking_for_partner_from,
+            )
+        partner = None
+        partner_language_priority = 1000
+        for possible_partner in possible_partners:
+            for priority, language in enumerate(
+                stranger.get_languages()[:partner_language_priority],
+                ):
+                if possible_partner.speaks_on_language(language):
+                    partner = possible_partner
+                    partner_language_priority = priority
+                    if priority == 0:
+                        break
+            else:
+                continue
+            break
+        if partner is None:
+            raise PartnerObtainingError()
+        return self.get_cached_stranger(partner)
+
+    async def match_partner(self, stranger):
+        '''
+        Finds partner for the stranger. Does handling of strangers who have blocked the bot.
+
+        @raise PartnerObtainingError if there's no proper partners.
+        @raise StrangerServiceError if the stranger has blocked the bot.
+        '''
+        while True:
+            partner = self._match_partner(stranger)
+            try:
+                await partner.notify_partner_found(stranger)
+            except StrangerError as e:
+                # Potential partner has blocked the bot. Let's look for next potential partner.
+                LOGGER.info('Bad potential partner for %d. %s', stranger.id, e)
+                await partner.end_chatting()
+                continue
+            break
+        try:
+            await stranger.notify_partner_found(partner)
+        except StrangerError as e:
+            # Stranger has blocked the bot.
+            raise StrangerServiceError('Can\'t notify seeking for partner stranger: {}'.format(e))
+        await stranger.set_partner(partner)
+        LOGGER.debug('Found partner: %d -> %d.', stranger.id, partner.id)

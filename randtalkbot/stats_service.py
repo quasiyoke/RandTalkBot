@@ -21,9 +21,8 @@ def increment(d, key):
 class StatsService:
     INTERVAL = datetime.timedelta(hours=4)
 
-    def __init__(self, stranger_service):
+    def __init__(self):
         type(self)._instance = self
-        self._stranger_service = stranger_service
         try:
             self._stats = Stats.select().order_by(Stats.created.desc()).get()
         except DoesNotExist:
@@ -48,14 +47,16 @@ class StatsService:
             self._update_stats()
 
     def _update_stats(self):
+        from .stranger_service import StrangerService
         stats = Stats()
+        stranger_service = StrangerService.get_instance()
 
         sex_distribution = {}
         partner_sex_distribution = {}
         languages_count_distribution = {}
         languages_popularity = {}
         total_count = 0
-        for stranger in self._stranger_service.get_full_strangers():
+        for stranger in stranger_service.get_full_strangers():
             total_count += 1
             increment(sex_distribution, stranger.sex)
             increment(partner_sex_distribution, stranger.partner_sex)
@@ -72,7 +73,7 @@ class StatsService:
         languages_popularity_items.sort(key=lambda item: item[1], reverse=True)
 
         languages_to_orientation = {language: {} for language, popularity in languages_popularity_items}
-        for stranger in self._stranger_service.get_full_strangers():
+        for stranger in stranger_service.get_full_strangers():
             orientation = '{} {}'.format(stranger.sex, stranger.partner_sex)
             for language in stranger.get_languages():
                 try:

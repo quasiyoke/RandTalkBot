@@ -136,10 +136,9 @@ class TestStatsService(asynctest.TestCase):
     def setUp(self):
         stats.database_proxy.initialize(self.database)
         self.database.create_tables([Stats])
-        self.stranger_service = Mock()
         self.update_stats = StatsService._update_stats
         StatsService._update_stats = Mock()
-        self.stats_service = StatsService(self.stranger_service)
+        self.stats_service = StatsService()
         self.stats = Mock()
         self.stats.created = datetime.datetime(1990, 1, 1)
         self.stats_service._stats = self.stats
@@ -156,14 +155,14 @@ class TestStatsService(asynctest.TestCase):
     def test_init__some_stats_in_db_1(self):
         stats1 = Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
         stats2 = Stats.create(data_json='', created=datetime.datetime(1990, 1, 1))
-        stats_service = StatsService(self.stranger_service)
+        stats_service = StatsService()
         self.assertEqual(stats_service._stats, stats2)
 
     @asynctest.ignore_loop
     def test_init__some_stats_in_db_2(self):
         stats1 = Stats.create(data_json='', created=datetime.datetime(1990, 1, 1))
         stats2 = Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
-        stats_service = StatsService(self.stranger_service)
+        stats_service = StatsService()
         self.assertEqual(stats_service._stats, stats1)
 
     @asynctest.ignore_loop
@@ -207,8 +206,11 @@ class TestStatsService(asynctest.TestCase):
         self.stats_service._update_stats.assert_called_once_with()
 
     @asynctest.ignore_loop
+    @patch('randtalkbot.stranger_service.StrangerService', Mock())
     def test_update_stats(self):
-        self.stranger_service.get_full_strangers = get_strangers
+        from randtalkbot.stranger_service import StrangerService
+        stranger_service = StrangerService.get_instance.return_value
+        stranger_service.get_full_strangers = get_strangers
         self.stats_service._update_stats = types.MethodType(self.update_stats, self.stats_service)
         self.stats_service._update_stats()
         self.assertEqual(

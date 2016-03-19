@@ -15,20 +15,19 @@ from telepot.async.delegate import create_open
 LOGGER = logging.getLogger('randtalkbot.bot')
 
 class Bot:
-    def __init__(self, configuration, stranger_service):
+    def __init__(self, configuration):
         self._admins_telegram_ids = configuration.admins_telegram_ids
         self._delegator_bot = telepot.async.DelegatorBot(
             configuration.token,
             [
                 # If the bot isn't chatting with an admin, skip, so for this chat will be used another handler,
                 # not AdminHandler.
-                (per_from_id_in(self._admins_telegram_ids), create_open(AdminHandler, stranger_service)),
+                (per_from_id_in(self._admins_telegram_ids), create_open(AdminHandler)),
                 # If the bot is chatting with an admin, skip, so for this chat will be used another handler,
                 # not StrangerHandler.
-                (per_from_id_except(self._admins_telegram_ids), create_open(StrangerHandler, stranger_service)),
+                (per_from_id_except(self._admins_telegram_ids), create_open(StrangerHandler)),
                 ],
             )
-        self._stranger_service = stranger_service
 
     async def run(self):
         LOGGER.info('Listening')

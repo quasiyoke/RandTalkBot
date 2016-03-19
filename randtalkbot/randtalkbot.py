@@ -16,7 +16,6 @@ from .db import DB
 from .errors import DBError
 from .stats_service import StatsService
 from .stranger_sender_service import StrangerSenderService
-from .stranger_service import StrangerService
 from .utils import __version__
 from docopt import docopt
 from randtalkbot import stranger, stranger_service
@@ -58,12 +57,11 @@ def main():
     else:
         LOGGER.info('Executing RandTalkBot')
         loop = asyncio.get_event_loop()
-        stranger_service = StrangerService()
 
-        stats_service = StatsService(stranger_service)
+        stats_service = StatsService()
         loop.create_task(stats_service.run())
 
-        bot = Bot(configuration, stranger_service)
+        bot = Bot(configuration)
         loop.create_task(bot.run())
 
         try:

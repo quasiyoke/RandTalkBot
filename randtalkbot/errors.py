@@ -42,3 +42,9 @@ class UnknownCommandError(Exception):
     def __init__(self, command):
         super(UnknownCommandError, self).__init__()
         self.command = command
+
+class UnsupportedContentError(Exception):
+    pass
+
+class WrongStrangerError(Exception):
+    pass

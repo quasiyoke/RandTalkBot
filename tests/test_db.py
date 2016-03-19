@@ -10,16 +10,19 @@ from randtalkbot.db import DB, RetryingDB
 from randtalkbot.errors import DBError
 from randtalkbot.stats import Stats
 from randtalkbot.stranger import Stranger
+from randtalkbot.talk import Talk
 from unittest.mock import create_autospec, patch, Mock
 
 class TestDB(unittest.TestCase):
     @patch('randtalkbot.db.RetryingDB', create_autospec(RetryingDB))
     @patch('randtalkbot.db.stats')
     @patch('randtalkbot.db.stranger')
-    def setUp(self, stats_module_mock, stranger_module_mock):
+    @patch('randtalkbot.db.talk')
+    def setUp(self, stats_module_mock, stranger_module_mock, talk_module_mock):
         from randtalkbot.db import RetryingDB
         self.stats_module_mock = stats_module_mock
         self.stranger_module_mock = stranger_module_mock
+        self.talk_module_mock = talk_module_mock
         self.database = Mock()
         self.RetryingDB = RetryingDB
         self.RetryingDB.return_value = self.database
@@ -40,6 +43,7 @@ class TestDB(unittest.TestCase):
             )
         self.stats_module_mock.database_proxy.initialize.assert_called_once_with(self.database)
         self.stranger_module_mock.database_proxy.initialize.assert_called_once_with(self.database)
+        self.talk_module_mock.database_proxy.initialize.assert_called_once_with(self.database)
 
     def test_init__database_troubles(self):
         self.RetryingDB.return_value.connect.side_effect = DatabaseError()
@@ -48,7 +52,7 @@ class TestDB(unittest.TestCase):
 
     def test_install__ok(self):
         self.db.install()
-        self.database.create_tables.assert_called_once_with([Stats, Stranger])
+        self.database.create_tables.assert_called_once_with([Stats, Stranger, Talk])
 
     def test_install__database_error(self):
         self.database.create_tables.side_effect = DatabaseError()

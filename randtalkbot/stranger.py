@@ -78,8 +78,8 @@ class Stranger(Model):
     class Meta:
         database = database_proxy
         indexes = (
-            (('partner', 'bonus_count', 'looking_for_partner_from'), False),
-            (('partner', 'sex', 'partner_sex', 'bonus_count', 'looking_for_partner_from'), False),
+            (('partner_sex', 'bonus_count', 'looking_for_partner_from'), False),
+            (('sex', 'partner_sex', 'bonus_count', 'looking_for_partner_from'), False),
             )
 
     @classmethod
@@ -143,29 +143,21 @@ class Stranger(Model):
         self._deferred_advertising = asyncio.get_event_loop().create_task(self._advertise())
 
     async def end_chatting(self):
-        try:
-            sender = self.get_sender()
-            if self.looking_for_partner_from:
-                # If stranger is looking for partner
-                try:
-                    await sender.send_notification(_('Looking for partner was stopped.'))
-                except TelegramError as e:
-                    LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
-            elif self.partner:
-                # If stranger is chatting now
-                try:
-                    await sender.send_notification(
-                        _('Chat was finished. Feel free to /begin a new one.'),
-                        )
-                except TelegramError as e:
-                    LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
-                if self.partner.partner == self:
-                    # If partner isn't taking with the stranger because of some error, we shouldn't kick him.
-                    await self.partner.kick()
-        finally:
-            self.partner = None
+        sender = self.get_sender()
+        if self.looking_for_partner_from is not None:
+            # If stranger is looking for partner
             self.looking_for_partner_from = None
-            self.save()
+            try:
+                await sender.send_notification(_('Looking for partner was stopped.'))
+            except TelegramError as e:
+                LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
+        elif self.get_partner() is not None:
+            # If stranger is chatting now
+            try:
+                await sender.send_notification(_('Chat was finished. Feel free to /begin a new one.'))
+            except TelegramError as e:
+                LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
+        await self.set_partner(None)
 
     def get_common_languages(self, partner):
         partner_languages = partner.get_languages()
@@ -184,6 +176,14 @@ class Stranger(Model):
             # If languages field wasn't set.
             return []
 
+    def get_partner(self):
+        try:
+            return self._partner
+        except AttributeError:
+            talk = self.get_talk()
+            self._partner = None if talk is None else talk.get_partner(self)
+            return self._partner
+
     def get_sender(self):
         return StrangerSenderService.get_instance().get_or_create_stranger_sender(self)
 
@@ -194,6 +194,14 @@ class Stranger(Model):
         args = json.dumps(args, separators=(',', ':'))
         args = base64.urlsafe_b64encode(args.encode('utf-8'))
         return args.decode('utf-8')
+
+    def get_talk(self):
+        try:
+            return self._talk
+        except AttributeError:
+            from .talk import Talk
+            self._talk = Talk.get_talk(self)
+            return self._talk
 
     def is_novice(self):
         return self.languages is None and \
@@ -206,8 +214,8 @@ class Stranger(Model):
             self.partner_sex is not None
 
     async def kick(self):
-        self.partner = None
-        self.save()
+        self._talk = None
+        self._partner = None
         sender = self.get_sender()
         try:
             await sender.send_notification(
@@ -275,10 +283,10 @@ class Stranger(Model):
         else:
             languages_limitations = None
 
-        if self.partner:
-            notification_sentences.append(sender._(_('Here\'s another stranger.')))
-        else:
+        if self.get_partner() is None:
             notification_sentences.append(sender._(_('Your partner is here.')))
+        else:
+            notification_sentences.append(sender._(_('Here\'s another stranger.')))
 
         if self.looking_for_partner_from and self.bonus_count >= 1:
             if self.bonus_count - 1:
@@ -314,9 +322,7 @@ class Stranger(Model):
         try:
             await sender.send_notification(' '.join(notification_sentences))
         except TelegramError as e:
-            LOGGER.info('Notify stranger partner found. Can\'t notify stranger %d: %s', self.id, e)
-            self.partner = None
-            raise StrangerError(e)
+            raise StrangerError('Can\'t notify stranger {}. {}', self.id, e)
         finally:
             # To reset languages.
             sender.update_translation()
@@ -370,17 +376,17 @@ class Stranger(Model):
         @raise StrangerError if can't send content.
         @raise TelegramError if the partner has blocked the bot.
         '''
-        if self.partner:
-            try:
-                await self.partner.send(message)
-            except:
-                raise
-            else:
-                # Invitee should reward inviter if it's her first message.
-                if self.invited_by is not None and self.was_invited_as is None:
-                    await self._reward_inviter()
-        else:
+        partner = self.get_partner()
+        if partner is None:
             raise MissingPartnerError()
+        try:
+            await partner.send(message)
+        except:
+            raise
+        else:
+            # Invitee should reward inviter if it's her first message.
+            if self.invited_by is not None and self.was_invited_as is None:
+                await self._reward_inviter()
 
     def set_languages(self, languages):
         '''
@@ -397,12 +403,9 @@ class Stranger(Model):
         self.languages = languages
 
     async def set_looking_for_partner(self):
-        if self.partner:
-            await self.partner.kick()
-        self.partner = None
         # Before setting `looking_for_partner_from`, check if it's already set to prevent lowering
         # priority.
-        if not self.looking_for_partner_from:
+        if self.looking_for_partner_from is None:
             self.looking_for_partner_from = datetime.datetime.utcnow()
         try:
             await self.get_sender().send_notification(
@@ -411,17 +414,38 @@ class Stranger(Model):
         except TelegramError as e:
             LOGGER.debug('Set looking for partner. Can\'t notify stranger. %s', e)
             self.looking_for_partner_from = None
-        self.save()
+        await self.set_partner(None)
 
     async def set_partner(self, partner):
-        if self.looking_for_partner_from and self.bonus_count >= 1:
-            self.bonus_count -= 1
-        if self.partner and self.partner.partner == self:
-            # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
-            await self.partner.kick()
-        self.partner = partner
-        self.looking_for_partner_from = None
-        self.save()
+        if self.get_partner() == partner:
+            self.save()
+            return
+        if self._partner is not None:
+            if self._partner.get_partner() == self:
+                # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
+                await self._partner.kick()
+            self._talk.end = datetime.datetime.utcnow()
+            self._talk.save()
+        if partner is None:
+            self._talk = None
+            self._partner = None
+        else:
+            from .talk import Talk
+            self._talk = Talk.create(
+                partner1=self,
+                partner2=partner,
+                searched_since=partner.looking_for_partner_from,
+                )
+            self._partner = partner
+            if self.looking_for_partner_from is not None:
+                self.looking_for_partner_from = None
+                self.save()
+            partner._talk = self._talk
+            partner._partner = self
+            if partner.bonus_count >= 1:
+                partner.bonus_count -= 1
+            partner.looking_for_partner_from = None
+            partner.save()
 
     def set_sex(self, sex_name):
         '''

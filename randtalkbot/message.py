@@ -10,11 +10,9 @@ import logging
 import json
 import re
 import telepot
+from .errors import UnsupportedContentError
 
 LOGGER = logging.getLogger('randtalkbot.message')
-
-class UnsupportedContentError(Exception):
-    pass
 
 class Message:
     COMMAND_RE_PATTERN = re.compile('^/([a-z_]+)\\b\s*(.*)$')
@@ -31,9 +29,10 @@ class Message:
         self.command = None
         self.command_args = None
         try:
-            getattr(self, '_init_' + content_type)(message_json)
+            init_method = getattr(self, '_init_' + content_type)
         except AttributeError:
             raise UnsupportedContentError()
+        init_method(message_json)
 
     def decode_command_args(self):
         try:

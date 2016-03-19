@@ -9,18 +9,20 @@ import asynctest
 from asynctest.mock import patch, Mock, CoroutineMock
 from randtalkbot.admin_handler import AdminHandler
 from randtalkbot.stranger_handler import StrangerHandler
-from randtalkbot.stranger_service import StrangerServiceError
+from randtalkbot.admin_handler import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
 from unittest.mock import create_autospec
 
 class TestAdminHandler(asynctest.TestCase):
+    @patch('randtalkbot.stranger_handler.StrangerService', Mock())
     @patch('randtalkbot.stranger_handler.StrangerSetupWizard', create_autospec(StrangerSetupWizard))
     @patch('randtalkbot.stranger_sender_service.StrangerSenderService._instance')
     def setUp(self, stranger_sender_service):
         from randtalkbot.stranger_handler import StrangerSetupWizard
+        from randtalkbot.stranger_handler import StrangerService
         self.stranger = CoroutineMock()
-        self.stranger_service = Mock()
-        self.stranger_service.get_or_create_stranger.return_value = self.stranger
+        stranger_service = StrangerService.get_instance.return_value
+        stranger_service.get_or_create_stranger.return_value = self.stranger
         StrangerSetupWizard.reset_mock()
         self.StrangerSetupWizard = StrangerSetupWizard
         self.stranger_setup_wizard = StrangerSetupWizard.return_value
@@ -32,85 +34,96 @@ class TestAdminHandler(asynctest.TestCase):
             }
         self.sender = stranger_sender_service.get_or_create_stranger_sender.return_value
         self.sender.send_notification = CoroutineMock()
-        self.admin_handler = AdminHandler(
-            (Mock(), self.initial_msg, 31416),
-            self.stranger_service,
-            )
+        self.admin_handler = AdminHandler((Mock(), self.initial_msg, 31416))
         self.stranger_sender_service = stranger_sender_service
 
-    async def test_handle_command__clear(self):
+    @patch('randtalkbot.admin_handler.StrangerService', Mock())
+    async def test_handle_command_clear(self):
+        from randtalkbot.admin_handler import StrangerService
         stranger = CoroutineMock()
-        self.stranger_service.get_stranger.return_value = stranger
+        stranger_service = StrangerService.get_instance.return_value
+        stranger_service.get_stranger.return_value = stranger
         message = Mock()
-        message.command = 'clear'
         message.command_args = '31416'
-        await self.admin_handler.handle_command(message)
-        self.stranger_service.get_stranger.assert_called_once_with(31416)
+        await self.admin_handler._handle_command_clear(message)
+        stranger_service.get_stranger.assert_called_once_with(31416)
         stranger.end_chatting.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with('Stranger was cleared.')
 
-    async def test_handle_command__clear_incorrect_telegram_id(self):
+    @patch('randtalkbot.admin_handler.StrangerService', Mock())
+    async def test_handle_command_clear__incorrect_telegram_id(self):
+        from randtalkbot.admin_handler import StrangerService
+        stranger_service = StrangerService.get_instance.return_value
         message = Mock()
-        message.command = 'clear'
         message.command_args = 'foo'
-        await self.admin_handler.handle_command(message)
-        self.stranger_service.get_stranger.assert_not_called()
+        await self.admin_handler._handle_command_clear(message)
+        stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Please specify Telegram ID like this: /clear 31416',
             )
 
-    async def test_handle_command__clear_unknown_stranger(self):
+    @patch('randtalkbot.admin_handler.StrangerService', Mock())
+    async def test_handle_command_clear__unknown_stranger(self):
+        from randtalkbot.admin_handler import StrangerService
         error = StrangerServiceError()
-        self.stranger_service.get_stranger.side_effect = error
+        stranger_service = StrangerService.get_instance.return_value
+        stranger_service.get_stranger.side_effect = error
         message = Mock()
-        message.command = 'clear'
         message.command_args = '31416'
-        await self.admin_handler.handle_command(message)
-        self.stranger_service.get_stranger.assert_called_once_with(31416)
+        await self.admin_handler._handle_command_clear(message)
+        stranger_service.get_stranger.assert_called_once_with(31416)
         self.sender.send_notification.assert_called_once_with(
             'Stranger wasn\'t found: {0}',
             error,
             )
 
-    async def test_handle_command__pay(self):
+    @patch('randtalkbot.admin_handler.StrangerService', Mock())
+    async def test_handle_command_pay(self):
+        from randtalkbot.admin_handler import StrangerService
+        stranger_service = StrangerService.get_instance.return_value
         stranger = CoroutineMock()
-        self.stranger_service.get_stranger.return_value = stranger
+        stranger_service.get_stranger.return_value = stranger
         message = Mock()
-        message.command = 'pay'
         message.command_args = '31416 27183 foo gratitude'
-        await self.admin_handler.handle_command(message)
-        self.stranger_service.get_stranger.assert_called_once_with(31416)
+        await self.admin_handler._handle_command_pay(message)
+        stranger_service.get_stranger.assert_called_once_with(31416)
         stranger.pay.assert_called_once_with(27183, 'foo gratitude')
         self.sender.send_notification.assert_called_once_with('Success.')
 
-    async def test_handle_command__pay_incorrect_telegram_id(self):
+    @patch('randtalkbot.admin_handler.StrangerService', Mock())
+    async def test_handle_command_pay__incorrect_telegram_id(self):
+        from randtalkbot.admin_handler import StrangerService
+        stranger_service = StrangerService.get_instance.return_value
         message = Mock()
-        message.command = 'pay'
         message.command_args = 'foo'
-        await self.admin_handler.handle_command(message)
-        self.stranger_service.get_stranger.assert_not_called()
+        await self.admin_handler._handle_command_pay(message)
+        stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Please specify Telegram ID and bonus amount like this: `/pay 31416 10 Thanks!`',
             )
 
-    async def test_handle_command__pay_no_command_args(self):
+    @patch('randtalkbot.admin_handler.StrangerService', Mock())
+    async def test_handle_command_pay__no_command_args(self):
+        from randtalkbot.admin_handler import StrangerService
+        stranger_service = StrangerService.get_instance.return_value
         message = Mock()
-        message.command = 'pay'
         message.command_args = None
-        await self.admin_handler.handle_command(message)
-        self.stranger_service.get_stranger.assert_not_called()
+        await self.admin_handler._handle_command_pay(message)
+        stranger_service.get_stranger.assert_not_called()
         self.sender.send_notification.assert_called_once_with(
             'Please specify Telegram ID and bonus amount like this: `/pay 31416 10 Thanks!`',
             )
 
-    async def test_handle_command__pay_unknown_stranger(self):
+    @patch('randtalkbot.admin_handler.StrangerService', Mock())
+    async def test_handle_command_pay__unknown_stranger(self):
+        from randtalkbot.admin_handler import StrangerService
+        stranger_service = StrangerService.get_instance.return_value
         error = StrangerServiceError()
-        self.stranger_service.get_stranger.side_effect = error
+        stranger_service.get_stranger.side_effect = error
         message = Mock()
-        message.command = 'pay'
         message.command_args = '31416 27183'
-        await self.admin_handler.handle_command(message)
-        self.stranger_service.get_stranger.assert_called_once_with(31416)
+        await self.admin_handler._handle_command_pay(message)
+        stranger_service.get_stranger.assert_called_once_with(31416)
         self.sender.send_notification.assert_called_once_with(
             'Stranger wasn\'t found: {0}',
             error,

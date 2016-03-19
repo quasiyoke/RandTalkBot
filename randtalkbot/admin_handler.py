@@ -7,9 +7,10 @@
 import asyncio
 import logging
 import re
-from .stranger import MissingPartnerError, SEX_NAMES, StrangerError
+from .errors import StrangerError, StrangerServiceError
+from .stranger import MissingPartnerError, SEX_NAMES
 from .stranger_handler import StrangerHandler
-from .stranger_service import StrangerServiceError
+from .stranger_service import StrangerService
 from telepot import TelegramError
 
 LOGGER = logging.getLogger('randtalkbot.admin_handler')
@@ -22,7 +23,7 @@ class AdminHandler(StrangerHandler):
             await self._sender.send_notification('Please specify Telegram ID like this: /clear 31416')
             return
         try:
-            stranger = self._stranger_service.get_stranger(telegram_id)
+            stranger = StrangerService.get_instance().get_stranger(telegram_id)
         except StrangerServiceError as e:
             await self._sender.send_notification('Stranger wasn\'t found: {0}', e)
             return
@@ -47,7 +48,7 @@ class AdminHandler(StrangerHandler):
                 )
             return
         try:
-            stranger = self._stranger_service.get_stranger(telegram_id)
+            stranger = StrangerService.get_instance().get_stranger(telegram_id)
         except StrangerServiceError as e:
             await self._sender.send_notification('Stranger wasn\'t found: {0}', e)
             return
