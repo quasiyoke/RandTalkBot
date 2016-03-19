@@ -65,3 +65,6 @@ class Talk(Model):
         else:
             raise WrongStrangerError()
         self.save()
+
+    def is_successful(self):
+        return self.partner1_sent and self.partner2_sent

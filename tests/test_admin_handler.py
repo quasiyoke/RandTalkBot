@@ -47,7 +47,7 @@ class TestAdminHandler(asynctest.TestCase):
         message.command_args = '31416'
         await self.admin_handler._handle_command_clear(message)
         stranger_service.get_stranger.assert_called_once_with(31416)
-        stranger.end_chatting.assert_called_once_with()
+        stranger.end_talk.assert_called_once_with()
         self.sender.send_notification.assert_called_once_with('Stranger was cleared.')
 
     @patch('randtalkbot.admin_handler.StrangerService', Mock())

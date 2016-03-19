@@ -27,7 +27,7 @@ class AdminHandler(StrangerHandler):
         except StrangerServiceError as e:
             await self._sender.send_notification('Stranger wasn\'t found: {0}', e)
             return
-        await stranger.end_chatting()
+        await stranger.end_talk()
         await self._sender.send_notification('Stranger was cleared.')
         LOGGER.debug('Clear: %d -> %d', self._stranger.id, telegram_id)
 

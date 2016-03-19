@@ -144,7 +144,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.stranger.get_partner = Mock(return_value=partner)
         await self.stranger_handler._handle_command_end(message)
         self.stranger.prevent_advertising.assert_called_once_with()
-        self.stranger.end_chatting.assert_called_once_with()
+        self.stranger.end_talk.assert_called_once_with()
 
     @patch('randtalkbot.stranger_handler.__version__', '0.0.0')
     async def test_handle_command_help(self):

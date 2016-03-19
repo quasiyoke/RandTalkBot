@@ -181,7 +181,7 @@ Building gettext files
 
 Use `verboselib <https://github.com/oblalex/verboselib>`_ to extract new messages::
 
-    $ verboselib-manage.py extract -d randtalkbot -a -o randtalkbot/locale
+    $ verboselib-manage.py extract -d randtalkbot -a -o randtalkbot/locale -i lib
 
 And to compile them::
 

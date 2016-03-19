@@ -131,7 +131,7 @@ class StrangerService:
             except StrangerError as e:
                 # Potential partner has blocked the bot. Let's look for next potential partner.
                 LOGGER.info('Bad potential partner for %d. %s', stranger.id, e)
-                await partner.end_chatting()
+                await partner.end_talk()
                 continue
             break
         try:

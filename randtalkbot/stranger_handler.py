@@ -78,7 +78,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
             'none' if partner is None else partner.id,
             )
         self._stranger.prevent_advertising()
-        await self._stranger.end_chatting()
+        await self._stranger.end_talk()
 
     async def _handle_command_help(self, message):
         try:
@@ -112,7 +112,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
     async def _handle_command_setup(self, message):
         LOGGER.debug('/setup: %d', self._stranger.id)
         self._stranger.prevent_advertising()
-        await self._stranger.end_chatting()
+        await self._stranger.end_talk()
         await self._stranger_setup_wizard.activate()
 
     async def _handle_command_start(self, message):
@@ -184,7 +184,7 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                 await self._sender.send_notification(
                     _('Your partner has blocked me! How did you do that?!'),
                     )
-                await self._stranger.end_chatting()
+                await self._stranger.end_talk()
 
     async def on_inline_query(self, query):
         query_id, from_id, query_string = telepot.glance(query, flavor='inline_query')

@@ -103,3 +103,10 @@ class TestTalk(unittest.TestCase):
         self.assertEqual(self.talk_0.partner2_sent, 2001)
         with self.assertRaises(WrongStrangerError):
             self.talk_0.increment_sent(self.stranger_2)
+
+    def test_is_successful(self):
+        self.assertFalse(self.talk_1.is_successful())
+        self.talk_1.partner1_sent = 1
+        self.assertFalse(self.talk_1.is_successful())
+        self.talk_1.partner2_sent = 1
+        self.assertTrue(self.talk_1.is_successful())

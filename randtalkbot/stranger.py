@@ -60,7 +60,6 @@ class Stranger(Model):
     invited_by = ForeignKeyField('self', null=True, related_name='invited')
     languages = CharField(max_length=LANGUAGES_MAX_LENGTH, null=True)
     looking_for_partner_from = DateTimeField(null=True)
-    partner = ForeignKeyField('self', null=True)
     partner_sex = CharField(choices=SEX_CHOICES, max_length=SEX_MAX_LENGTH, null=True)
     sex = CharField(choices=SEX_CHOICES, max_length=SEX_MAX_LENGTH, null=True)
     telegram_id = IntegerField(unique=True)
@@ -142,20 +141,19 @@ class Stranger(Model):
     def advertise_later(self):
         self._deferred_advertising = asyncio.get_event_loop().create_task(self._advertise())
 
-    async def end_chatting(self):
-        sender = self.get_sender()
+    async def end_talk(self):
         if self.looking_for_partner_from is not None:
             # If stranger is looking for partner
             self.looking_for_partner_from = None
             try:
-                await sender.send_notification(_('Looking for partner was stopped.'))
+                await self.get_sender().send_notification(_('Looking for partner was stopped.'))
             except TelegramError as e:
                 LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
         elif self.get_partner() is not None:
             # If stranger is chatting now
             try:
-                await sender.send_notification(_('Chat was finished. Feel free to /begin a new one.'))
-            except TelegramError as e:
+                await self._notify_talk_ended(by_self=True)
+            except StrangerError as e:
                 LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, e)
         await self.set_partner(None)
 
@@ -214,15 +212,13 @@ class Stranger(Model):
             self.partner_sex is not None
 
     async def kick(self):
+        try:
+            await self._notify_talk_ended(by_self=False)
+        except StrangerError as e:
+            LOGGER.warning('Kick. Can\'t notify stranger %d: %s', self.id, e)
+        self._pay_for_talk()
         self._talk = None
         self._partner = None
-        sender = self.get_sender()
-        try:
-            await sender.send_notification(
-                _('Your partner has left chat. Feel free to /begin a new conversation.'),
-                )
-        except TelegramError as e:
-            LOGGER.warning('Kick. Can\'t notify stranger %d: %s', self.id, e)
 
     def mute_bonuses_notifications(self):
         self._bonuses_notifications_muted = True
@@ -258,13 +254,44 @@ class Stranger(Model):
         except TelegramError as e:
             LOGGER.info('Can\'t notify stranger %d about bonuses: %s', self.id, e)
 
+    async def _notify_talk_ended(self, by_self):
+        '''
+        @raise StrangerError If stranger we're changing has blocked the bot.
+        '''
+        sender = self.get_sender()
+        _ = sender._
+        sentences = []
+
+        if by_self:
+            sentences.append(_('Chat was finished.'))
+        else:
+            sentences.append(_('Your partner has left chat.'))
+
+        talk = self.get_talk()
+        if talk is not None and talk.is_successful() and self == talk.partner1 and self.bonus_count >= 1:
+            if self.bonus_count - 1:
+                bonuses_notification = _('You\'ve used one bonus. {0} bonus(es) left.').format(
+                    self.bonus_count - 1,
+                    )
+            else:
+                bonuses_notification = _('You\'ve used your last bonus.')
+            sentences.append(bonuses_notification)
+
+        sentences.append(_('Feel free to /begin a new talk.'))
+
+        try:
+            await sender.send_notification(' '.join(sentences))
+        except TelegramError as e:
+            raise StrangerError(str(e))
+
     async def notify_partner_found(self, partner):
         '''
         @raise StrangerError If stranger we're changing has blocked the bot.
         '''
         self.prevent_advertising()
         sender = self.get_sender()
-        notification_sentences = []
+        _ = sender._
+        sentences = []
 
         common_languages = self.get_common_languages(partner)
         if len(self.get_languages()) > len(common_languages):
@@ -273,54 +300,54 @@ class Stranger(Model):
             # If the stranger knows any language which another partner doesn't, we should notify him
             # especial way.
             if len(common_languages) == 1:
-                languages_limitations = sender._(_('Use {0} please.')).format(
+                languages_limitations = _('Use {0} please.').format(
                     get_languages_names(common_languages),
                     )
             else:
-                languages_limitations = sender._(_('You can use the following languages: {0}.')).format(
+                languages_limitations = _('You can use the following languages: {0}.').format(
                     get_languages_names(common_languages),
                     )
         else:
             languages_limitations = None
 
         if self.get_partner() is None:
-            notification_sentences.append(sender._(_('Your partner is here.')))
+            sentences.append(_('Your partner is here.'))
         else:
-            notification_sentences.append(sender._(_('Here\'s another stranger.')))
-
-        if self.looking_for_partner_from and self.bonus_count >= 1:
-            if self.bonus_count - 1:
-                bonuses_notification = sender._(_('You\'ve used one bonus. {0} bonus(es) left.')).format(
-                    self.bonus_count - 1,
-                    )
-            else:
-                bonuses_notification = sender._(_('You\'ve used your last bonus.'))
-            notification_sentences.append(bonuses_notification)
+            talk = self.get_talk()
+            if talk.is_successful() and self == talk.partner1 and self.bonus_count >= 1:
+                if self.bonus_count - 1:
+                    bonuses_notification = _(
+                        'You\'ve used one bonus with previous partner. {0} bonus(es) left.'
+                        ).format(self.bonus_count - 1)
+                else:
+                    bonuses_notification = _('You\'ve used your last bonus with previous partner.')
+                sentences.append(bonuses_notification)
+            sentences.append(_('Here\'s another stranger.'))
 
         if languages_limitations:
-            notification_sentences.append(languages_limitations)
+            sentences.append(languages_limitations)
 
         if partner.looking_for_partner_from:
             looked_for_partner_for = datetime.datetime.utcnow() - partner.looking_for_partner_from
             if looked_for_partner_for >= type(self).LONG_WAITING_TIMEDELTA:
                 # Notify Stranger if his partner did wait too much and could be asleep.
                 if type(self).HOUR_TIMEDELTA <= looked_for_partner_for:
-                    long_waiting_notification = sender._(
-                        _('Your partner\'s been looking for you for {0} hr. Say him \"Hello\" -- '
-                            'if he doesn\'t respond to you, launch search again by /begin command.'),
+                    long_waiting_notification = _(
+                        'Your partner\'s been looking for you for {0} hr. Say him \"Hello\" -- '
+                            'if he doesn\'t respond to you, launch search again by /begin command.',
                         ).format(round(looked_for_partner_for.total_seconds() / 3600))
                 else:
-                    long_waiting_notification = sender._(
-                        _('Your partner\'s been looking for you for {0} min. Say him \"Hello\" -- '
-                            'if he doesn\'t respond to you, launch search again by /begin command.'),
+                    long_waiting_notification = _(
+                        'Your partner\'s been looking for you for {0} min. Say him \"Hello\" -- '
+                            'if he doesn\'t respond to you, launch search again by /begin command.',
                         ).format(round(looked_for_partner_for.total_seconds() / 60))
-                notification_sentences.append(long_waiting_notification)
+                sentences.append(long_waiting_notification)
 
-        if len(notification_sentences) == 1:
-            notification_sentences.append(sender._(_('Have a nice chat!')))
+        if len(sentences) < 2:
+            sentences.append(_('Have a nice chat!'))
 
         try:
-            await sender.send_notification(' '.join(notification_sentences))
+            await sender.send_notification(' '.join(sentences))
         except TelegramError as e:
             raise StrangerError('Can\'t notify stranger {}. {}', self.id, e)
         finally:
@@ -340,6 +367,12 @@ class Stranger(Model):
                 )
         except TelegramError as e:
             LOGGER.info('Pay. Can\'t notify stranger %d: %s', self.id, e)
+
+    def _pay_for_talk(self):
+        talk = self.get_talk()
+        if talk is not None and talk.is_successful() and self == talk.partner1 and self.bonus_count >= 1:
+            self.bonus_count -= 1
+            self.save()
 
     def prevent_advertising(self):
         try:
@@ -384,9 +417,7 @@ class Stranger(Model):
         except:
             raise
         else:
-            # Invitee should reward inviter if it's her first message.
-            if self.invited_by is not None and self.was_invited_as is None:
-                await self._reward_inviter()
+            self.get_talk().increment_sent(self)
 
     def set_languages(self, languages):
         '''
@@ -424,6 +455,7 @@ class Stranger(Model):
             if self._partner.get_partner() == self:
                 # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
                 await self._partner.kick()
+            self._pay_for_talk()
             self._talk.end = datetime.datetime.utcnow()
             self._talk.save()
         if partner is None:
@@ -442,8 +474,6 @@ class Stranger(Model):
                 self.save()
             partner._talk = self._talk
             partner._partner = self
-            if partner.bonus_count >= 1:
-                partner.bonus_count -= 1
             partner.looking_for_partner_from = None
             partner.save()
 
