@@ -6,7 +6,7 @@
 
 import asyncio
 import asynctest
-from asynctest.mock import patch, Mock, CoroutineMock
+from asynctest.mock import call, patch, Mock, CoroutineMock
 from randtalkbot.admin_handler import AdminHandler
 from randtalkbot.stranger_handler import StrangerHandler
 from randtalkbot.admin_handler import StrangerServiceError
@@ -48,7 +48,7 @@ class TestAdminHandler(asynctest.TestCase):
         await self.admin_handler._handle_command_clear(message)
         stranger_service.get_stranger.assert_called_once_with(31416)
         stranger.end_talk.assert_called_once_with()
-        self.sender.send_notification.assert_called_once_with('Stranger was cleared.')
+        self.sender.send_notification.assert_called_once_with('Stranger {0} was cleared', 31416)
 
     @patch('randtalkbot.admin_handler.StrangerService', Mock())
     async def test_handle_command_clear__incorrect_telegram_id(self):
@@ -58,8 +58,12 @@ class TestAdminHandler(asynctest.TestCase):
         message.command_args = 'foo'
         await self.admin_handler._handle_command_clear(message)
         stranger_service.get_stranger.assert_not_called()
-        self.sender.send_notification.assert_called_once_with(
-            'Please specify Telegram ID like this: /clear 31416',
+        self.assertEqual(
+            self.sender.send_notification.call_args_list,
+            [
+                call('Is it really telegram_id: \"{0}\"?', 'foo'),
+                call('Use it this way: `/clear 31416 27183`'),
+                ],
             )
 
     @patch('randtalkbot.admin_handler.StrangerService', Mock())
@@ -72,9 +76,12 @@ class TestAdminHandler(asynctest.TestCase):
         message.command_args = '31416'
         await self.admin_handler._handle_command_clear(message)
         stranger_service.get_stranger.assert_called_once_with(31416)
-        self.sender.send_notification.assert_called_once_with(
-            'Stranger wasn\'t found: {0}',
-            error,
+        self.assertEqual(
+            self.sender.send_notification.call_args_list,
+            [
+                call('Stranger {0} wasn\'t found: {1}', 31416, error),
+                call('Use it this way: `/clear 31416 27183`'),
+                ],
             )
 
     @patch('randtalkbot.admin_handler.StrangerService', Mock())

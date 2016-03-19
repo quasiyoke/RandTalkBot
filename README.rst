@@ -129,7 +129,7 @@ In @BotFather compatible format::
 
 Admins specified at ``admins`` configuration property are able to use the following additional commands::
 
-    clear TELEGRAM_ID — "Clear" specified user. Stop her coversation or clear "looking for partner" flag.
+    clear TELEGRAM_IDs — "Clear" specified users. Stop their coversations or clear "looking for partner" flag.
     pay TELEGRAM_ID AMOUNT GRATITUDE — Pay AMOUNT bonuses to TELEGRAM_ID and notify her with GRATITUDE.
 
 Roadmap
@@ -146,7 +146,7 @@ Roadmap
 * 1.4 Reports
 * 1.5 Replies
 * 1.6 Customizable greetings message
-* 1.7 /oops — return last partner!
+* 1.7 /oops command to ask your recent partner to connect together again
 
 Contributing
 ------------
