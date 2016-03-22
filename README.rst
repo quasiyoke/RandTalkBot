@@ -9,12 +9,36 @@ Rand Talk
 
 Telegram bot matching you with a random person of desired sex speaking on your language(s). Chat with anonymous strangers `here <https://telegram.me/RandTalkBot>`_. Rand Talk was written on Python 3.5 and `telepot <https://github.com/nickoala/telepot>`_ and uses MySQL to store users' preferences. Rand Talk's interface was translated on several languages. You're able to send any messages except replies and forwarded messages. Rand Talk rewards you with bonuses for people you invite using your individual link. To get this link, use @RandTalkBot as inline bot. The bot collects stats regularly. Rand Talk rewards you with more bonuses for the people of rare sex.
 
+List of supported commands
+--------------------------
+
+In @BotFather compatible format::
+
+    begin - Begin looking for next stranger
+    end - End talking
+    setup - Choose sex and languages
+    help - Help for Rand Talk
+
+Admins specified at ``admins`` configuration property are able to use the following additional commands::
+
+    clear TELEGRAM_IDs — "Clear" specified users. Stop their coversations or clear "looking for partner" flag.
+    pay TELEGRAM_ID AMOUNT GRATITUDE — Pay AMOUNT bonuses to TELEGRAM_ID and notify her with GRATITUDE.
+
+Roadmap
+-------
+
+* 1.3 Don't talk with recent partners
+* 1.4 Reports
+* 1.5 Replies
+* 1.6 Customizable greetings message
+* 1.7 /oops command to ask your recent partner to connect together again
+
 Deployment
 ----------
 
 ::
 
-    $ virtualenv --python=/usr/bin/python3 randtalkbotenv
+    $ virtualenv --python=/usr/bin/python3.5 randtalkbotenv
     $ source randtalkbotenv/bin/activate
     (randtalkbotenv) $ pip install https://github.com/quasiyoke/RandTalkBot/zipball/master
 
@@ -116,30 +140,6 @@ I'm using such shell script for semi-automatic deployment::
 Just launch::
 
     $ ssh john_doe@8.8.8.8 "bash -s" < deploy.sh
-
-List of supported commands
---------------------------
-
-In @BotFather compatible format::
-
-    begin - Begin looking for next stranger
-    end - End talking
-    setup - Choose sex and languages
-    help - Help for Rand Talk
-
-Admins specified at ``admins`` configuration property are able to use the following additional commands::
-
-    clear TELEGRAM_IDs — "Clear" specified users. Stop their coversations or clear "looking for partner" flag.
-    pay TELEGRAM_ID AMOUNT GRATITUDE — Pay AMOUNT bonuses to TELEGRAM_ID and notify her with GRATITUDE.
-
-Roadmap
--------
-
-* 1.3 Don't talk with recent partners
-* 1.4 Reports
-* 1.5 Replies
-* 1.6 Customizable greetings message
-* 1.7 /oops command to ask your recent partner to connect together again
 
 Contributing
 ------------
