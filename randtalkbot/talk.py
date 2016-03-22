@@ -43,6 +43,12 @@ class Talk(Model):
         return talks
 
     @classmethod
+    def get_last_partners_ids(cls, stranger):
+        talks = cls.select().where((cls.partner1 == stranger) | (cls.partner2 == stranger))
+        for talk in talks:
+            yield talk.get_partner_id(stranger)
+
+    @classmethod
     def get_not_ended_talks(cls, after=None):
         talks = cls.select().where(Talk.end == None)
         if after is not None:
@@ -62,10 +68,16 @@ class Talk(Model):
             return talk
 
     def get_partner(self, stranger):
-        if stranger == self.partner1:
-            return self.partner2
-        elif stranger == self.partner2:
-            return self.partner1
+        '''
+        @raise WrongStrangerError
+        '''
+        return Stranger.get(id=self.get_partner_id(stranger))
+
+    def get_partner_id(self, stranger):
+        if stranger.id == self.partner1_id:
+            return self.partner2_id
+        elif stranger.id == self.partner2_id:
+            return self.partner1_id
         else:
             raise WrongStrangerError()
 

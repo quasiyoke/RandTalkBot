@@ -27,7 +27,6 @@ Admins specified at ``admins`` configuration property are able to use the follow
 Roadmap
 -------
 
-* 1.3 Don't talk with recent partners
 * 1.4 Reports
 * 1.5 Replies
 * 1.6 Customizable greetings message

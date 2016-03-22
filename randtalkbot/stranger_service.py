@@ -80,6 +80,8 @@ class StrangerService:
 
         @throws PartnerObtainingError
         '''
+        from .talk import Talk
+
         possible_partners = Stranger.select().where(
             Stranger.id != stranger.id,
             Stranger.looking_for_partner_from != None,
@@ -99,9 +101,14 @@ class StrangerService:
             Stranger.bonus_count.desc(),
             Stranger.looking_for_partner_from,
             )
+
+        last_partners_ids = frozenset(Talk.get_last_partners_ids(stranger))
+
         partner = None
         partner_language_priority = 1000
         for possible_partner in possible_partners:
+            if possible_partner.id in last_partners_ids:
+                continue
             for priority, language in enumerate(
                 stranger.get_languages()[:partner_language_priority],
                 ):

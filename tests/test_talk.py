@@ -126,7 +126,25 @@ class TestTalk(unittest.TestCase):
                 ],
             )
 
-    def test_not_ended_talks(self):
+    def test_get_last_partners_ids(self):
+        self.assertEqual(
+            frozenset(Talk.get_last_partners_ids(self.stranger_0)),
+            frozenset([
+                self.stranger_1.id,
+                self.stranger_2.id,
+                self.stranger_3.id,
+                ]),
+            )
+        self.assertEqual(
+            frozenset(Talk.get_last_partners_ids(self.stranger_2)),
+            frozenset([
+                self.stranger_0.id,
+                self.stranger_3.id,
+                self.stranger_4.id,
+                ]),
+            )
+
+    def test_get_not_ended_talks(self):
         self.assertEqual(
             list(Talk.get_not_ended_talks()),
             [
