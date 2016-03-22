@@ -40,7 +40,7 @@ class TestCommand(SetuptoolsTestCommand):
 setup(
     name='RandTalkBot',
     version=__version__,
-    description='Bot matching you with a random person on Telegram.',
+    description='Telegram bot matching you with a random person of desired sex speaking on your language(s).',
     long_description=long_description,
     keywords=['telegram', 'bot', 'anonymous', 'chat'],
     license='AGPLv3+',
@@ -67,7 +67,7 @@ setup(
         'peewee>=2.7.4,<3.0',
         'pycountry>=1.19,<2.0',
         'pymysql>=0.6.7,<0.7',
-        'telepot>=6.0,<7.0',
+        'telepot>=6.6,<7.0',
         ],
     tests_require=[
         'asynctest>=0.6,<0.7',
