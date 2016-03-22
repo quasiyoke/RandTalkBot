@@ -7,7 +7,7 @@ Rand Talk
 .. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
 
-Bot matching you with a random person on Telegram. Chat with anonymous strangers speaking on your language `here <https://telegram.me/RandTalkBot>`_. Rand Talk was written on Python 3.5 and `telepot <https://github.com/nickoala/telepot>`_.
+Telegram bot matching you with a random person of desired sex speaking on your language(s). Chat with anonymous strangers `here <https://telegram.me/RandTalkBot>`_. Rand Talk was written on Python 3.5 and `telepot <https://github.com/nickoala/telepot>`_ and uses MySQL to store users' preferences. Rand Talk's interface was translated on several languages. You're able to send any messages except replies and forwarded messages. Rand Talk rewards you with bonuses for people you invite using your individual link. To get this link, use @RandTalkBot as inline bot. The bot collects stats regularly. Rand Talk rewards you with more bonuses for the people of rare sex.
 
 Deployment
 ----------
@@ -135,13 +135,6 @@ Admins specified at ``admins`` configuration property are able to use the follow
 Roadmap
 -------
 
-* 0.1 Simplest functionality
-* 0.2 Storing data at MySQL
-* 0.3 Partner's sex, language choosing
-* 0.4 Translate interface to various languages
-* 1.0 Almost all messages types support except replies and forwards
-* 1.1 Invitations
-* 1.2 Collecting bot's stats
 * 1.3 Don't talk with recent partners
 * 1.4 Reports
 * 1.5 Replies

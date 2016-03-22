@@ -30,6 +30,26 @@ class Talk(Model):
         database = database_proxy
 
     @classmethod
+    def delete_old(cls, before):
+        cls.delete().where(Talk.end < before).execute()
+
+    @classmethod
+    def get_ended_talks(cls, after=None):
+        talks = cls.select()
+        if after is None:
+            talks = talks.where(Talk.end != None)
+        else:
+            talks = talks.where(Talk.end >= after)
+        return talks
+
+    @classmethod
+    def get_not_ended_talks(cls, after=None):
+        talks = cls.select().where(Talk.end == None)
+        if after is not None:
+            talks = talks.where(Talk.begin >= after)
+        return talks
+
+    @classmethod
     def get_talk(cls, stranger):
         try:
             talk = cls.get(((cls.partner1 == stranger) | (cls.partner2 == stranger)) & (cls.end == None))

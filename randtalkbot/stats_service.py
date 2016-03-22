@@ -10,13 +10,42 @@ import logging
 from .stats import Stats
 from peewee import *
 
+COUNT_INTERVALS = (4, 16, 64, 256)
 LOGGER = logging.getLogger('randtalkbot.stats_service')
+
+def get_talks_stats(talks, get_value, intervals):
+    distribution = {interval: 0 for interval in intervals}
+    distribution['more'] = 0
+    average = 0
+    count = 0
+    for talk in talks:
+        value = get_value(talk)
+        increment_distribution(distribution, value, intervals)
+        average += value
+        count += 1
+    try:
+        average /= count
+    except ZeroDivisionError:
+        pass
+    return {
+        'distribution': distribution,
+        'average': average,
+        'count': count,
+        }
 
 def increment(d, key):
     try:
         d[key] += 1
     except KeyError:
         d[key] = 1
+
+def increment_distribution(d, value, intervals):
+    for interval in intervals:
+        if value <= interval:
+            break
+    else:
+        interval = 'more'
+    d[interval] += 1
 
 class StatsService:
     INTERVAL = datetime.timedelta(hours=4)
@@ -26,6 +55,7 @@ class StatsService:
         try:
             self._stats = Stats.select().order_by(Stats.created.desc()).get()
         except DoesNotExist:
+            self._stats = None
             self._update_stats()
 
     @classmethod
@@ -48,6 +78,7 @@ class StatsService:
 
     def _update_stats(self):
         from .stranger_service import StrangerService
+        from .talk import Talk
         stats = Stats()
         stranger_service = StrangerService.get_instance()
 
@@ -86,6 +117,27 @@ class StatsService:
             for language, popularity in languages_popularity_items
             ]
 
+        talks_waiting = get_talks_stats(
+            Talk.get_not_ended_talks(after=None if self._stats is None else self._stats.created),
+            lambda talk: (talk.begin - talk.searched_since).total_seconds(),
+            (10, 60, 60 * 5, 60 * 30, 60 * 60 * 3, ),
+            )
+
+        ended_talks = Talk.get_ended_talks(after=None if self._stats is None else self._stats.created)
+        talks_duration = get_talks_stats(
+            ended_talks,
+            lambda talk: (talk.end - talk.begin).total_seconds(),
+            (10, 60, 60 * 5, 60 * 30, ),
+            )
+        talks_sent = get_talks_stats(
+            ended_talks,
+            lambda talk: talk.partner1_sent + talk.partner2_sent,
+            COUNT_INTERVALS,
+            )
+
+        if self._stats is not None:
+            Talk.delete_old(before=self._stats.created)
+
         stats_json = {
             'languages_count_distribution': languages_count_distribution_items,
             'languages_popularity': languages_popularity_items,
@@ -93,6 +145,9 @@ class StatsService:
             'partner_sex_distribution': partner_sex_distribution,
             'sex_distribution': sex_distribution,
             'total_count': total_count,
+            'talks_duration': talks_duration,
+            'talks_sent': talks_sent,
+            'talks_waiting': talks_waiting,
             }
         stats.set_data(stats_json)
         stats.save()
