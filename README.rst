@@ -143,7 +143,7 @@ Just launch::
 Contributing
 ------------
 
-We are glad to see your contributions to RandTalk. Our reward starts from 10 bonuses for you.
+We are glad to see your contributions to Rand Talk. Our reward starts from 10 bonuses for you.
 
 Translations
 ^^^^^^^^^^^^

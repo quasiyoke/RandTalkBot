@@ -30,6 +30,9 @@ class StrangerSenderService:
                 cls._instance = cls(bot)
         return cls._instance
 
+    def get_cache_size(self):
+        return len(self._stranger_senders)
+
     def get_or_create_stranger_sender(self, stranger):
         try:
             return self._stranger_senders[stranger.telegram_id]

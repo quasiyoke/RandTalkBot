@@ -430,6 +430,7 @@ class TestStatsService(asynctest.TestCase):
 
     @asynctest.ignore_loop
     @patch('randtalkbot.stranger_service.StrangerService', Mock())
+    @patch('randtalkbot.stranger_sender_service.StrangerSenderService', Mock())
     @patch('randtalkbot.talk.Talk', Mock())
     def test_update_stats__no_stats_in_db(self):
         from randtalkbot.stranger_service import StrangerService
@@ -496,12 +497,15 @@ class TestStatsService(asynctest.TestCase):
 
     @asynctest.ignore_loop
     @patch('randtalkbot.stranger_service.StrangerService', Mock())
+    @patch('randtalkbot.stranger_sender_service.StrangerSenderService', Mock())
     @patch('randtalkbot.talk.Talk', Mock())
     def test_update_stats__some_stats_in_db(self):
         from randtalkbot.stranger_service import StrangerService
+        from randtalkbot.stranger_sender_service import StrangerSenderService
         from randtalkbot.talk import Talk
         stranger_service = StrangerService.get_instance.return_value
         stranger_service.get_full_strangers = get_strangers
+        stranger_sender_service = StrangerSenderService.get_instance.return_value
         Talk.get_not_ended_talks.return_value = get_talks(NOT_ENDED_TALKS)
         Talk.get_ended_talks.return_value = get_talks(ENDED_TALKS)
         self.stats_service._update_stats = types.MethodType(self.update_stats, self.stats_service)
@@ -510,9 +514,12 @@ class TestStatsService(asynctest.TestCase):
         Talk.get_not_ended_talks.assert_called_once_with(after=datetime.datetime(1990, 1, 1))
         Talk.get_ended_talks.assert_called_once_with(after=datetime.datetime(1990, 1, 1))
         Talk.delete_old.assert_called_once_with(before=datetime.datetime(1990, 1, 1))
+        stranger_service.get_cache_size.assert_called_once_with()
+        stranger_sender_service.get_cache_size.assert_called_once_with()
 
     @asynctest.ignore_loop
     @patch('randtalkbot.stranger_service.StrangerService', Mock())
+    @patch('randtalkbot.stranger_sender_service.StrangerSenderService', Mock())
     @patch('randtalkbot.talk.Talk', Mock())
     def test_update_stats__no_talks(self):
         from randtalkbot.stranger_service import StrangerService

@@ -78,6 +78,7 @@ class StatsService:
 
     def _update_stats(self):
         from .stranger_service import StrangerService
+        from .stranger_sender_service import StrangerSenderService
         from .talk import Talk
         stats = Stats()
         stranger_service = StrangerService.get_instance()
@@ -153,3 +154,11 @@ class StatsService:
         stats.save()
         self._stats = stats
         LOGGER.info('Stats were updated')
+        LOGGER.debug(
+            'StrangerService cache size: %d',
+            StrangerService.get_instance().get_cache_size(),
+            )
+        LOGGER.debug(
+            'StrangerSenderService cache size: %d',
+            StrangerSenderService.get_instance().get_cache_size(),
+            )

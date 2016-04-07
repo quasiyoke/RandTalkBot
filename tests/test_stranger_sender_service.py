@@ -31,6 +31,14 @@ class TestStrangerSenderService(unittest.TestCase):
         with self.assertRaises(StrangerSenderServiceError):
             StrangerSenderService.get_instance()
 
+    def test_get_cache_size(self):
+        self.assertEqual(self.stranger_sender_service.get_cache_size(), 0)
+        self.stranger_sender_service._stranger_senders = {
+            0: 0,
+            1: 1,
+            }
+        self.assertEqual(self.stranger_sender_service.get_cache_size(), 2)
+
     @patch('randtalkbot.stranger_sender_service.StrangerSender', create_autospec(StrangerSender))
     def test_get_or_create_stranger_sender__cached(self):
         from randtalkbot.stranger_sender_service import StrangerSender

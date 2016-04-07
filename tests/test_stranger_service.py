@@ -105,6 +105,15 @@ class TestStrangerService(asynctest.TestCase):
         self.assertEqual(self.stranger_service._strangers_cache[31416], stranger)
 
     @asynctest.ignore_loop
+    def test_get_cache_size(self):
+        self.assertEqual(self.stranger_service.get_cache_size(), 0)
+        self.stranger_service._strangers_cache = {
+            0: 0,
+            1: 1,
+            }
+        self.assertEqual(self.stranger_service.get_cache_size(), 2)
+
+    @asynctest.ignore_loop
     def test_get_full_strangers(self):
         full_strangers = list(self.stranger_service.get_full_strangers())
         self.assertEqual(len(full_strangers), 6)

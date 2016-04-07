@@ -31,6 +31,9 @@ class StrangerService:
             self._strangers_cache[stranger.id] = stranger
             return stranger
 
+    def get_cache_size(self):
+        return len(self._strangers_cache)
+
     def get_full_strangers(self):
         for stranger in Stranger.select():
             if stranger.is_full():
