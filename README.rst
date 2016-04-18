@@ -154,6 +154,8 @@ Here's the list of bot translators. Take your chance to be here!
 
 * English. Pyotr Ermishkin <quasiyoke@gmail.com>
 
+* German. Jonas Zohren <jfowl@wjclub.tk>
+
 * Italian
 
   * Marco Giustetto <arducode@gmail.com>
