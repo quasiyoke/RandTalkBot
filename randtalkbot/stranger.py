@@ -38,6 +38,7 @@ ADDITIONAL_SEX_NAMES_TO_CODES = {
     'f': 'female',
     _('girl'): 'female',
     _('woman'): 'female',
+    'women': 'female',
 }
 SEX_MAX_LENGTH = 20
 SEX_NAMES_TO_CODES = {}

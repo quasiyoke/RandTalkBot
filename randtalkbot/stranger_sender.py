@@ -59,6 +59,8 @@ class StrangerSender(telepot.helper.Sender):
         @raises StrangerSenderError if message's content type is not supported.
         @raises TelegramError if stranger has blocked the bot.
         '''
+        if message.is_reply:
+            raise StrangerSenderError('Reply can\'t be sent.')
         try:
             method_name = StrangerSender.MESSAGE_TYPE_TO_METHOD_NAME[message.type]
         except KeyError:

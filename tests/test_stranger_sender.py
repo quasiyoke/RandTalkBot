@@ -162,6 +162,7 @@ class TestStrangerSender(asynctest.TestCase):
 
     async def test_send__text(self):
         message = Mock()
+        message.is_reply = False
         message.type = 'text'
         message.sending_kwargs = {
             'foo': 'bar',
@@ -172,7 +173,16 @@ class TestStrangerSender(asynctest.TestCase):
 
     async def test_send__unknown_content_type(self):
         message = Mock()
+        message.is_reply = False
         message.type = 'foo_type'
+        with self.assertRaises(StrangerSenderError):
+            await self.sender.send(message)
+        self.sender.sendMessage.assert_not_called()
+
+    async def test_send__reply(self):
+        message = Mock()
+        message.is_reply = True
+        message.type = 'text'
         with self.assertRaises(StrangerSenderError):
             await self.sender.send(message)
         self.sender.sendMessage.assert_not_called()

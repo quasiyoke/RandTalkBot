@@ -321,9 +321,12 @@ class TestMessage(unittest.TestCase):
     @patch('randtalkbot.message.telepot')
     def test_init__message_with_reply(self, telepot):
         telepot.glance2.return_value = 'text', 'private', 31416
+        self.message_json['text'] = 'foo'
+        message = Message(self.message_json)
+        self.assertFalse(message.is_reply)
         self.message_json['reply_to_message'] = None
-        with self.assertRaises(UnsupportedContentError):
-            Message(self.message_json)
+        message = Message(self.message_json)
+        self.assertTrue(message.is_reply)
 
     @patch('randtalkbot.message.telepot')
     def test_init__message_with_forward(self, telepot):
