@@ -67,7 +67,7 @@ setup(
         'peewee>=2.7.4,<3.0',
         'pycountry>=1.19,<2.0',
         'pymysql>=0.6.7,<0.7',
-        'telepot>=6.6,<7.0',
+        'telepot>=6.8,<7.0',
         ],
     tests_require=[
         'asynctest>=0.6,<0.7',

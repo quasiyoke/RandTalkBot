@@ -168,7 +168,7 @@ class TestStrangerHandler(asynctest.TestCase):
     async def test_handle_command_help__telegram_error(self):
         from randtalkbot.stranger_handler import LOGGER
         message = Mock()
-        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         await self.stranger_handler._handle_command_help(message)
         self.assertTrue(LOGGER.warning.called)
 
@@ -184,7 +184,7 @@ class TestStrangerHandler(asynctest.TestCase):
     async def test_handle_command_mute_bonuses__telegram_error(self):
         from randtalkbot.stranger_handler import LOGGER
         message = Mock()
-        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         await self.stranger_handler._handle_command_mute_bonuses(message)
         self.assertTrue(LOGGER.warning.called)
 
@@ -436,7 +436,7 @@ class TestStrangerHandler(asynctest.TestCase):
         partner.id = 27183
         self.stranger.get_partner = Mock(return_value=partner)
         self.stranger.id = 31416
-        self.stranger.send_to_partner = CoroutineMock(side_effect=TelegramError('foo_description', 123))
+        self.stranger.send_to_partner = CoroutineMock(side_effect=TelegramError({}, '', 0))
         await self.stranger_handler.on_chat_message(message_json)
         LOGGER.warning(
             'Send text. Can\'t send to partned: %d -> %d',

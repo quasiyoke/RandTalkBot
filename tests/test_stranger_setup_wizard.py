@@ -51,7 +51,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     async def test_deactivate__telegram_error(self):
         from randtalkbot.stranger_setup_wizard import LOGGER
-        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         await self.stranger_setup_wizard.deactivate()
         self.assertTrue(LOGGER.warning.called)
 
@@ -252,7 +252,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger_setup_wizard._prompt = CoroutineMock()
         message = Mock()
         message.text = 'foo_text'
-        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         self.assertTrue((await self.stranger_setup_wizard.handle(message)))
         self.assertTrue(LOGGER.warning.called)
 
@@ -315,7 +315,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger_setup_wizard._prompt = CoroutineMock()
         message = Mock()
         message.command = 'begin'
-        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         self.assertTrue((await self.stranger_setup_wizard.handle_command(message)))
         self.assertTrue(LOGGER.warning.called)
 
@@ -432,6 +432,6 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         self.stranger.get_languages.return_value = []
-        self.sender.send_notification.side_effect = TelegramError('', 0)
+        self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         await self.stranger_setup_wizard._prompt()
         self.assertTrue(LOGGER.warning.called)

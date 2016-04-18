@@ -170,7 +170,7 @@ class TestStranger(asynctest.TestCase):
         from randtalkbot.stranger import LOGGER
         self.stranger.get_sender = Mock()
         self.stranger.get_sender.return_value.send_notification = CoroutineMock(
-            side_effect=TelegramError('', 0),
+            side_effect=TelegramError({}, '', 0),
             )
         self.stranger.get_invitation_link = Mock(return_value='foo_invitation_link')
         self.stranger.looking_for_partner_from = datetime.datetime.utcnow()
@@ -243,7 +243,7 @@ class TestStranger(asynctest.TestCase):
         self.stranger.looking_for_partner_from = datetime.datetime(1970, 1, 1)
         self.stranger.get_partner = Mock(return_value=None)
         self.stranger.set_partner = CoroutineMock()
-        sender.send_notification.side_effect = TelegramError('foo_description', 123)
+        sender.send_notification.side_effect = TelegramError({}, '', 0)
         await self.stranger.end_talk()
         sender.send_notification.assert_called_once_with('Looking for partner was stopped.')
         sender.send.assert_not_called()
@@ -433,7 +433,7 @@ class TestStranger(asynctest.TestCase):
         from randtalkbot.stranger import LOGGER
         sender = CoroutineMock()
         self.stranger.get_sender = Mock(return_value=sender)
-        error = TelegramError('foo_description', 123)
+        error = TelegramError({}, '', 0)
         sender.send_notification.side_effect = error
         await self.stranger._notify_about_bonuses(1)
         LOGGER.info.assert_called_once_with('Can\'t notify stranger %d about bonuses: %s', 1, error)
@@ -485,7 +485,7 @@ class TestStranger(asynctest.TestCase):
     async def test_notify_talk_ended__telegram_error(self):
         from randtalkbot.stranger import get_languages_names
         sender = CoroutineMock()
-        sender.send_notification.side_effect = TelegramError('', 0)
+        sender.send_notification.side_effect = TelegramError({}, '', 0)
         sender._ = Mock(side_effect=['Your partner has left chat.', 'Feel free to /begin a new talk.'])
         self.stranger.get_sender = Mock(return_value=sender)
         self.stranger.get_partner = Mock(return_value=None)
@@ -877,7 +877,7 @@ class TestStranger(asynctest.TestCase):
     async def test_notify_partner_found__telegram_error(self):
         from randtalkbot.stranger import get_languages_names
         sender = CoroutineMock()
-        sender.send_notification.side_effect = TelegramError('foo_description', 123)
+        sender.send_notification.side_effect = TelegramError({}, '', 0)
         sender.update_translation = Mock()
         sender._ = Mock(side_effect=[
             'Your partner is here.',
@@ -920,7 +920,7 @@ class TestStranger(asynctest.TestCase):
         self.stranger.get_sender = Mock(return_value=sender)
         self.stranger.bonus_count = 1000
         self.stranger.save = Mock()
-        error = TelegramError('foo_description', 123)
+        error = TelegramError({}, '', 0)
         sender.send_notification.side_effect = error
         await self.stranger.pay(31416, 'foo_gratitude')
         self.stranger.save.assert_called_once_with()
@@ -1042,7 +1042,7 @@ class TestStranger(asynctest.TestCase):
 
     async def test_send_to_partner__telegram_error(self):
         self.stranger.get_partner = Mock(return_value=self.stranger2)
-        self.stranger2.send = CoroutineMock(side_effect=TelegramError('', 100))
+        self.stranger2.send = CoroutineMock(side_effect=TelegramError({}, '', 0))
         message = Mock()
         with self.assertRaises(TelegramError):
             await self.stranger.send_to_partner(message)
@@ -1105,7 +1105,7 @@ class TestStranger(asynctest.TestCase):
     @patch('randtalkbot.stranger.datetime')
     async def test_set_looking_for_partner__bot_was_blocked(self, datetime_mock):
         sender = CoroutineMock()
-        sender.send_notification.side_effect = TelegramError('', 0)
+        sender.send_notification.side_effect = TelegramError({}, '', 0)
         self.stranger.get_sender = Mock(return_value=sender)
         self.stranger.set_partner = CoroutineMock()
         datetime_mock.datetime.utcnow.return_value = 'foo_time'
