@@ -31,4 +31,4 @@ class Bot:
 
     async def run(self):
         LOGGER.info('Listening')
-        await self._delegator_bot.messageLoop()
+        await self._delegator_bot.message_loop()

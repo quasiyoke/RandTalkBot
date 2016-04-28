@@ -113,13 +113,13 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__invalid_audio(self, telepot):
-        telepot.glance2.return_value = 'audio', 'private', 31416
+        telepot.glance.return_value = 'audio', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
 
     @patch('randtalkbot.message.telepot')
     def test_init__command_with_args(self, telepot):
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.message_json['text'] = '/begin chat'
         message = Message(self.message_json)
         self.assertEqual(message.command, 'begin')
@@ -127,7 +127,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__command_without_args(self, telepot):
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.message_json['text'] = '/start'
         message = Message(self.message_json)
         self.assertEqual(message.command, 'start')
@@ -135,7 +135,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__command_with_underscore(self, telepot):
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.message_json['text'] = '/begin_chat here'
         message = Message(self.message_json)
         self.assertEqual(message.command, 'begin_chat')
@@ -155,7 +155,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__invalid_document(self, telepot):
-        telepot.glance2.return_value = 'document', 'private', 31416
+        telepot.glance.return_value = 'document', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
 
@@ -178,7 +178,7 @@ class TestMessage(unittest.TestCase):
         self.message_json['location'] = {
             'latitude': 'foo',
             }
-        telepot.glance2.return_value = 'location', 'private', 31416
+        telepot.glance.return_value = 'location', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
 
@@ -214,7 +214,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__invalid_photo(self, telepot):
-        telepot.glance2.return_value = 'photo', 'private', 31416
+        telepot.glance.return_value = 'photo', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
 
@@ -228,7 +228,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__invalid_sticker(self, telepot):
-        telepot.glance2.return_value = 'sticker', 'private', 31416
+        telepot.glance.return_value = 'sticker', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
 
@@ -243,7 +243,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__text_without_command_has_empty_comand_field(self, telepot):
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.message_json['text'] = 'foo'
         message = Message(self.message_json)
         self.assertEqual(message.command, None)
@@ -281,7 +281,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__invalid_video(self, telepot):
-        telepot.glance2.return_value = 'video', 'private', 31416
+        telepot.glance.return_value = 'video', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
 
@@ -314,13 +314,13 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__invalid_voice(self, telepot):
-        telepot.glance2.return_value = 'voice', 'private', 31416
+        telepot.glance.return_value = 'voice', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
 
     @patch('randtalkbot.message.telepot')
     def test_init__message_with_reply(self, telepot):
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.message_json['text'] = 'foo'
         message = Message(self.message_json)
         self.assertFalse(message.is_reply)
@@ -330,7 +330,7 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__message_with_forward(self, telepot):
-        telepot.glance2.return_value = 'text', 'private', 31416
+        telepot.glance.return_value = 'text', 'private', 31416
         self.message_json['forward_from'] = None
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
@@ -341,6 +341,6 @@ class TestMessage(unittest.TestCase):
 
     @patch('randtalkbot.message.telepot')
     def test_init__unknown_content_type(self, telepot):
-        telepot.glance2.return_value = 'foo_content_type', 'private', 31416
+        telepot.glance.return_value = 'foo_content_type', 'private', 31416
         with self.assertRaises(UnsupportedContentError):
             Message(self.message_json)
