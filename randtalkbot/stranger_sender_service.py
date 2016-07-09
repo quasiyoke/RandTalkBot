@@ -5,12 +5,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from .errors import StrangerSenderServiceError
 from .stranger_sender import StrangerSender
 
 LOGGER = logging.getLogger('randtalkbot.stranger_sender_service')
 
-class StrangerSenderServiceError(Exception):
-    pass
 
 class StrangerSenderService:
     _instance = None
@@ -24,7 +23,8 @@ class StrangerSenderService:
         if cls._instance is None:
             if bot is None:
                 raise StrangerSenderServiceError(
-                    'Instance wasn\'t initialized. Provide arguments to construct one.',
+                    'Instance wasn\'t initialized. Provide arguments to '
+                    'construct one.',
                     )
             else:
                 cls._instance = cls(bot)

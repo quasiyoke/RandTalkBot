@@ -13,6 +13,7 @@ from randtalkbot.admin_handler import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
 from unittest.mock import create_autospec
 
+
 class TestAdminHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerService', Mock())
     @patch('randtalkbot.stranger_handler.StrangerSetupWizard', create_autospec(StrangerSetupWizard))
@@ -34,7 +35,10 @@ class TestAdminHandler(asynctest.TestCase):
             }
         self.sender = stranger_sender_service.get_or_create_stranger_sender.return_value
         self.sender.send_notification = CoroutineMock()
-        self.admin_handler = AdminHandler((Mock(), self.initial_msg, 31416))
+        self.admin_handler = AdminHandler(
+            (Mock(), self.initial_msg, 31416),
+            timeout=1,
+            )
         self.stranger_sender_service = stranger_sender_service
 
     @patch('randtalkbot.admin_handler.StrangerService', Mock())

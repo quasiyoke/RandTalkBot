@@ -16,7 +16,7 @@ from .i18n import get_languages_names, get_translations
 from .stats_service import StatsService
 from .stranger_sender_service import StrangerSenderService
 from peewee import *
-from telepot import TelegramError
+from telepot.exception import TelegramError
 
 INVITATION_CHARS = string.ascii_letters + string.digits + string.punctuation
 INVITATION_LENGTH = 10

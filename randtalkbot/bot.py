@@ -10,22 +10,29 @@ import telepot
 from .admin_handler import AdminHandler
 from .stranger_handler import StrangerHandler
 from telepot.delegate import per_from_id_in, per_from_id_except
-from telepot.async.delegate import create_open
+from telepot.aio.delegate import create_open
 
 LOGGER = logging.getLogger('randtalkbot.bot')
+
 
 class Bot:
     def __init__(self, configuration):
         self._admins_telegram_ids = configuration.admins_telegram_ids
-        self._delegator_bot = telepot.async.DelegatorBot(
+        self._delegator_bot = telepot.aio.DelegatorBot(
             configuration.token,
             [
-                # If the bot isn't chatting with an admin, skip, so for this chat will be used another handler,
-                # not AdminHandler.
-                (per_from_id_in(self._admins_telegram_ids), create_open(AdminHandler)),
-                # If the bot is chatting with an admin, skip, so for this chat will be used another handler,
-                # not StrangerHandler.
-                (per_from_id_except(self._admins_telegram_ids), create_open(StrangerHandler)),
+                # If the bot isn't chatting with an admin, skip, so for this
+                # chat will be used another handler, not AdminHandler.
+                (per_from_id_in(self._admins_telegram_ids), create_open(
+                    AdminHandler,
+                    timeout=60,
+                    )),
+                # If the bot is chatting with an admin, skip, so for this chat
+                # will be used another handler, not StrangerHandler.
+                (per_from_id_except(self._admins_telegram_ids), create_open(
+                    StrangerHandler,
+                    timeout=60,
+                    )),
                 ],
             )
 

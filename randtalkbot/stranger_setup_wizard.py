@@ -15,7 +15,7 @@ from .i18n import get_languages_codes, get_languages_names, LanguageNotFoundErro
 from .stranger import SEX_NAMES
 from .stranger_sender_service import StrangerSenderService
 from .wizard import Wizard
-from telepot import TelegramError
+from telepot.exception import TelegramError
 
 def _(s): return s
 

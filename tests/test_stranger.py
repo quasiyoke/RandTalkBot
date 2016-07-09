@@ -15,11 +15,12 @@ from randtalkbot.errors import MissingPartnerError, StrangerError
 from randtalkbot.stranger import Stranger
 from randtalkbot.stranger_sender import StrangerSenderError
 from randtalkbot.stranger_sender_service import StrangerSenderService
-from telepot import TelegramError
+from telepot.exception import TelegramError
 from unittest.mock import create_autospec
 
 database = SqliteDatabase(':memory:')
 stranger.database_proxy.initialize(database)
+
 
 class TestStranger(asynctest.TestCase):
     def setUp(self):

@@ -35,6 +35,9 @@ class StrangerHandlerError(Exception):
 class StrangerSenderError(Exception):
     pass
 
+class StrangerSenderServiceError(Exception):
+    pass
+
 class StrangerServiceError(Exception):
     pass
 

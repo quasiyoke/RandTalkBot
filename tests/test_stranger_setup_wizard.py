@@ -12,8 +12,9 @@ from randtalkbot.stranger_handler import *
 from randtalkbot.stranger_sender_service import *
 from randtalkbot.stranger_service import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
-from telepot import TelegramError
+from telepot.exception import TelegramError
 from unittest.mock import create_autospec
+
 
 class TestStrangerSetupWizard(asynctest.TestCase):
     @patch('randtalkbot.stranger_sender_service.StrangerSenderService._instance')

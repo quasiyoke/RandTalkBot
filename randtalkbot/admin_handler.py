@@ -11,7 +11,7 @@ from .errors import StrangerError, StrangerServiceError
 from .stranger import MissingPartnerError, SEX_NAMES
 from .stranger_handler import StrangerHandler
 from .stranger_service import StrangerService
-from telepot import TelegramError
+from telepot.exception import TelegramError
 
 LOGGER = logging.getLogger('randtalkbot.admin_handler')
 

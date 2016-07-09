@@ -7,6 +7,7 @@
 import asyncio
 import datetime
 import logging
+from .errors import StrangerSenderServiceError
 from .stats import Stats
 from peewee import *
 
@@ -158,7 +159,13 @@ class StatsService:
             'StrangerService cache size: %d',
             StrangerService.get_instance().get_cache_size(),
             )
-        LOGGER.debug(
-            'StrangerSenderService cache size: %d',
-            StrangerSenderService.get_instance().get_cache_size(),
-            )
+        try:
+            LOGGER.debug(
+                'StrangerSenderService cache size: %d',
+                StrangerSenderService.get_instance().get_cache_size(),
+                )
+        except StrangerSenderServiceError:
+            LOGGER.debug(
+                'StrangerSenderService isn\'t initialized and can\'t provide '
+                'its cache size.'
+                )

@@ -10,10 +10,12 @@ import logging
 import re
 import sys
 import telepot
-import telepot.async
-from .errors import MissingPartnerError, PartnerObtainingError, StrangerError, StrangerHandlerError, \
-    StrangerServiceError, UnknownCommandError, UnsupportedContentError
-from .i18n import get_languages_codes, get_translation, LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
+import telepot.aio
+from .errors import MissingPartnerError, PartnerObtainingError, \
+    StrangerError, StrangerHandlerError, StrangerServiceError, \
+    UnknownCommandError, UnsupportedContentError
+from .i18n import get_languages_codes, get_translation, \
+    LanguageNotFoundError, SUPPORTED_LANGUAGES_NAMES
 from .message import Message
 from .stranger import SEX_NAMES
 from .stranger_sender import StrangerSender
@@ -21,33 +23,31 @@ from .stranger_sender_service import StrangerSenderService
 from .stranger_service import StrangerService
 from .stranger_setup_wizard import StrangerSetupWizard
 from .utils import __version__
-from telepot import TelegramError
+from telepot.exception import TelegramError
 
 LOGGER = logging.getLogger('randtalkbot.stranger_handler')
 
+
 def _(s): return s
 
-class StrangerHandler(telepot.async.helper.UserHandler):
+
+class StrangerHandler(telepot.aio.helper.UserHandler):
     HOUR_TIMEDELTA = datetime.timedelta(hours=1)
     LONG_WAITING_TIMEDELTA = datetime.timedelta(minutes=10)
+    COORDINATOR_CLASS = telepot.aio.helper.CallbackQueryCoordinator
 
-    def __init__(self, seed_tuple):
-        '''
-        Most of this constructor's code were copied from telepot.helper.ChatHandler and
-        its superclasses to inject stranger_sender_service.
-        '''
+    def __init__(self, seed_tuple, *args, **kwargs):
+        super(StrangerHandler, self).__init__(seed_tuple, *args, **kwargs)
         bot, initial_msg, seed = seed_tuple
-        telepot.helper.ListenerContext.__init__(self, bot, seed)
-        from_id = initial_msg['from']['id']
-        self._from_id = from_id
-        self.listener.set_options()
-        self.listener.capture(from__id=from_id)
+        self._from_id = initial_msg['from']['id']
         try:
-            self._stranger = StrangerService.get_instance().get_or_create_stranger(self._from_id)
+            self._stranger = StrangerService.get_instance(). \
+                get_or_create_stranger(self._from_id)
         except StrangerServiceError as e:
             LOGGER.error('Problems with StrangerHandler construction: %s', e)
             sys.exit('Problems with StrangerHandler construction: %s' % e)
-        self._sender = StrangerSenderService.get_instance(bot).get_or_create_stranger_sender(self._stranger)
+        self._sender = StrangerSenderService.get_instance(bot). \
+            get_or_create_stranger_sender(self._stranger)
         self._stranger_setup_wizard = StrangerSetupWizard(self._stranger)
         self._deferred_advertising = None
 
@@ -146,6 +146,9 @@ class StrangerHandler(telepot.async.helper.UserHandler):
                 _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
                     'you\'re matched you can use /end to end the conversation.'),
                 )
+
+    async def on_close(self, error):
+        pass
 
     async def on_chat_message(self, message_json):
         content_type, chat_type, chat_id = telepot.glance(message_json)

@@ -8,14 +8,15 @@ import asyncio
 import asynctest
 import datetime
 from asynctest.mock import call, patch, Mock, CoroutineMock
-from randtalkbot.errors import MissingCommandError, StrangerError, StrangerServiceError, UnknownCommandError, \
-    UnsupportedContentError
+from randtalkbot.errors import MissingCommandError, StrangerError, \
+    StrangerServiceError, UnknownCommandError, UnsupportedContentError
 from randtalkbot.message import Message
 from randtalkbot.stranger_handler import StrangerHandler
 from randtalkbot.stranger_sender_service import StrangerSenderService
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
-from telepot import TelegramError
+from telepot.exception import TelegramError
 from unittest.mock import create_autospec
+
 
 class TestStrangerHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerSetupWizard')
@@ -41,7 +42,10 @@ class TestStrangerHandler(asynctest.TestCase):
         self.sender = stranger_sender_service.get_or_create_stranger_sender.return_value
         self.sender.answer_inline_query = CoroutineMock()
         self.sender.send_notification = CoroutineMock()
-        self.stranger_handler = StrangerHandler((Mock(), self.initial_msg, 31416))
+        self.stranger_handler = StrangerHandler(
+            (Mock(), self.initial_msg, 31416),
+            timeout=1,
+            )
         self.stranger_sender_service = stranger_sender_service
         self.message_cls = Message
 
@@ -54,7 +58,10 @@ class TestStrangerHandler(asynctest.TestCase):
         stranger_setup_wizard = StrangerSetupWizard.return_value
         stranger_service = StrangerService.get_instance.return_value
         stranger_service.get_or_create_stranger.return_value = self.stranger
-        self.stranger_handler = StrangerHandler((Mock(), self.initial_msg, 31416))
+        self.stranger_handler = StrangerHandler(
+            (Mock(), self.initial_msg, 31416),
+            timeout=1,
+            )
         self.assertEqual(self.stranger_handler._from_id, 31416)
         self.assertEqual(self.stranger_handler._stranger, self.stranger)
         self.assertEqual(self.stranger_handler._stranger_setup_wizard, stranger_setup_wizard)
@@ -70,7 +77,10 @@ class TestStrangerHandler(asynctest.TestCase):
         stranger_service = StrangerService.get_instance.return_value
         stranger_service.get_or_create_stranger.side_effect = StrangerServiceError()
         with self.assertRaises(SystemExit):
-            self.stranger_handler = StrangerHandler((Mock(), self.initial_msg, 31416))
+            self.stranger_handler = StrangerHandler(
+                (Mock(), self.initial_msg, 31416),
+                timeout=1,
+                )
         self.assertEqual(self.stranger_handler._from_id, 31416)
         self.assertEqual(self.stranger_handler._stranger, self.stranger)
         self.assertEqual(self.stranger_handler._stranger_setup_wizard, self.stranger_setup_wizard)
