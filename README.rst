@@ -1,10 +1,10 @@
 Rand Talk
 =========
 
-.. image:: https://coveralls.io/repos/quasiyoke/RandTalkBot/badge.svg?branch=dev&service=github
-    :target: https://coveralls.io/github/quasiyoke/RandTalkBot?branch=dev
+.. image:: https://coveralls.io/repos/quasiyoke/RandTalkBot/badge.svg?service=github
+    :target: https://coveralls.io/github/quasiyoke/RandTalkBot
 
-.. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg?branch=dev
+.. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
 
 Telegram bot matching you with a random person of desired sex speaking on your language(s). Chat with anonymous strangers `here <https://telegram.me/RandTalkBot>`_. Rand Talk was written on Python 3.5 and `telepot <https://github.com/nickoala/telepot>`_ and uses MySQL to store users' preferences. Rand Talk's interface was translated on several languages. You're able to send any messages except replies and forwarded messages. Rand Talk rewards you with bonuses for people you invite using your individual link. To get this link, use @RandTalkBot as inline bot. The bot collects stats regularly. Rand Talk rewards you with more bonuses for the people of rare sex.
