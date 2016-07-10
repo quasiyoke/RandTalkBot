@@ -129,10 +129,19 @@ class StrangerHandler(telepot.aio.helper.UserHandler):
                     LOGGER.info('/start error. Can\'t obtain invitation: %s', e)
                 else:
                     if self._stranger.invitation == invitation:
-                        await self._sender.send_notification(
-                            _('Don\'t try to fool me. Forward message with the link to your friends and '
-                                'receive well-earned bonuses that will help you to find partner quickly.'),
-                            )
+                        try:
+                            await self._sender.send_notification(
+                                _('Don\'t try to fool me. Forward message '
+                                    'with the link to your friends and '
+                                    'receive well-earned bonuses that will '
+                                    'help you to find partner quickly.'),
+                                )
+                        except TelegramError as e:
+                            LOGGER.warning(
+                                'Handle /start command. Can\'t notify '
+                                'cheating stranger. %s',
+                                e,
+                                )
                     else:
                         try:
                             invited_by = StrangerService.get_instance().get_stranger_by_invitation(invitation)
@@ -142,10 +151,17 @@ class StrangerHandler(telepot.aio.helper.UserHandler):
                             self._stranger.invited_by = invited_by
                             self._stranger.save()
         if self._stranger.wizard == 'none':
-            await self._sender.send_notification(
-                _('*Manual*\n\nUse /begin to start looking for a conversational partner, once '
-                    'you\'re matched you can use /end to end the conversation.'),
-                )
+            try:
+                await self._sender.send_notification(
+                    _('*Manual*\n\nUse /begin to start looking for a '
+                        'conversational partner, once you\'re matched you can '
+                        'use /end to end the conversation.'),
+                    )
+            except TelegramError as e:
+                LOGGER.warning(
+                    'Handle /start command. Can\'t notify stranger. %s',
+                    e,
+                    )
 
     async def on_close(self, error):
         pass

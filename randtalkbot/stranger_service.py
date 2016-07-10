@@ -11,8 +11,12 @@ from peewee import *
 
 LOGGER = logging.getLogger('randtalkbot.stranger_service')
 
+
 class StrangerService:
     def __init__(self):
+        # We need to lock strangers for matching to prevent attempts to create
+        # second conversation with single partner.
+        self._locked_strangers_ids = set()
         self._strangers_cache = {}
         type(self)._instance = self
 
@@ -78,8 +82,8 @@ class StrangerService:
 
     def _match_partner(self, stranger):
         '''
-        Tries to find a partner for obtained stranger or throws PartnerObtainingError if there's no
-        proper partner.
+        Tries to find a partner for obtained stranger or throws
+        PartnerObtainingError if there's no proper partner.
 
         @throws PartnerObtainingError
         '''
@@ -110,11 +114,12 @@ class StrangerService:
         partner = None
         partner_language_priority = 1000
         for possible_partner in possible_partners:
-            if possible_partner.id in last_partners_ids:
+            if possible_partner.id in last_partners_ids or \
+                    possible_partner.id in self._locked_strangers_ids:
                 continue
             for priority, language in enumerate(
-                stranger.get_languages()[:partner_language_priority],
-                ):
+                    stranger.get_languages()[:partner_language_priority],
+                    ):
                 if possible_partner.speaks_on_language(language):
                     partner = possible_partner
                     partner_language_priority = priority
@@ -125,11 +130,13 @@ class StrangerService:
             break
         if partner is None:
             raise PartnerObtainingError()
+        self._locked_strangers_ids.add(partner.id)
         return self.get_cached_stranger(partner)
 
     async def match_partner(self, stranger):
         '''
-        Finds partner for the stranger. Does handling of strangers who have blocked the bot.
+        Finds partner for the stranger. Does handling of strangers who have
+        blocked the bot.
 
         @raise PartnerObtainingError if there's no proper partners.
         @raise StrangerServiceError if the stranger has blocked the bot.
@@ -139,15 +146,21 @@ class StrangerService:
             try:
                 await partner.notify_partner_found(stranger)
             except StrangerError as e:
-                # Potential partner has blocked the bot. Let's look for next potential partner.
+                # Potential partner has blocked the bot. Let's look for next
+                # potential partner.
                 LOGGER.info('Bad potential partner for %d. %s', stranger.id, e)
                 await partner.end_talk()
+                self._locked_strangers_ids.discard(partner.id)
                 continue
             break
         try:
             await stranger.notify_partner_found(partner)
         except StrangerError as e:
+            self._locked_strangers_ids.discard(partner.id)
             # Stranger has blocked the bot.
-            raise StrangerServiceError('Can\'t notify seeking for partner stranger: {}'.format(e))
+            raise StrangerServiceError(
+                'Can\'t notify seeking for partner stranger: {}'.format(e),
+                )
         await stranger.set_partner(partner)
+        self._locked_strangers_ids.discard(partner.id)
         LOGGER.debug('Found partner: %d -> %d.', stranger.id, partner.id)
