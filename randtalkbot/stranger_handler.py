@@ -205,6 +205,12 @@ class StrangerHandler(telepot.aio.helper.UserHandler):
                     )
                 await self._stranger.end_talk()
 
+    async def on_edited_chat_message(self, message_json):
+        LOGGER.info('User tried to edit their message.')
+        await self._sender.send_notification(
+            _('Messages editing isn\'t supported'),
+            )
+
     async def on_inline_query(self, query):
         query_id, from_id, query_string = telepot.glance(query, flavor='inline_query')
         LOGGER.debug('Inline query from %d: \"%s\"', self._stranger.id, query_string)

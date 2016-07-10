@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: randtalkbot\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-28 23:05+0300\n"
+"POT-Creation-Date: 2016-07-10 21:20+0300\n"
 "PO-Revision-Date: 2016-01-16 10:10+0300\n"
 "Last-Translator: Pyotr Ermishkin <quasiyoke@gmail.com>\n"
 "Language-Team: Russian\n"
@@ -17,35 +17,35 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: randtalkbot/stranger.py:29
+#: randtalkbot/stranger.py:30
 msgid "Female"
 msgstr "Женский"
 
-#: randtalkbot/stranger.py:30
+#: randtalkbot/stranger.py:31
 msgid "Male"
 msgstr "Мужской"
 
-#: randtalkbot/stranger.py:31
+#: randtalkbot/stranger.py:32
 msgid "Not specified"
 msgstr "Не указано"
 
-#: randtalkbot/stranger.py:35
+#: randtalkbot/stranger.py:36
 msgid "boy"
 msgstr "мальчик"
 
-#: randtalkbot/stranger.py:36
+#: randtalkbot/stranger.py:37
 msgid "man"
 msgstr "мужчина"
 
-#: randtalkbot/stranger.py:39
+#: randtalkbot/stranger.py:40
 msgid "girl"
 msgstr "девочка"
 
-#: randtalkbot/stranger.py:40
+#: randtalkbot/stranger.py:41
 msgid "woman"
 msgstr "женщина"
 
-#: randtalkbot/stranger.py:111
+#: randtalkbot/stranger.py:113
 #, python-brace-format
 msgid ""
 "The search is going on. {0} users are looking for partner -- change your "
@@ -62,7 +62,7 @@ msgstr ""
 "{1} бонуса за приглашенную девушку и по {2} бонусу за мужчину (больше "
 "бонусов → быстрее поиск собеседника):"
 
-#: randtalkbot/stranger.py:117
+#: randtalkbot/stranger.py:119
 #, python-brace-format
 msgid ""
 "The search is going on. {0} users are looking for partner -- change your "
@@ -79,7 +79,7 @@ msgstr ""
 "{1} бонуса за приглашенного мужчину и по {2} бонусу за девушку (больше "
 "бонусов → быстрее поиск собеседника):"
 
-#: randtalkbot/stranger.py:132 randtalkbot/stranger_handler.py:199
+#: randtalkbot/stranger.py:134 randtalkbot/stranger_handler.py:223
 #, python-brace-format
 msgid ""
 "Do you want to talk with somebody, practice in foreign languages or you just "
@@ -91,11 +91,11 @@ msgstr ""
 "Talk — бот для общения со случайными собеседниками заданного пола. "
 "[Попробуйте!]({0})"
 
-#: randtalkbot/stranger.py:150
+#: randtalkbot/stranger.py:152
 msgid "Looking for partner was stopped."
 msgstr "Поиск партнера прекращен"
 
-#: randtalkbot/stranger.py:238
+#: randtalkbot/stranger.py:240
 #, python-brace-format
 msgid ""
 "You've received one bonus for inviting a person to the bot. Bonuses will "
@@ -108,7 +108,7 @@ msgstr ""
 "Поздравляем! 🤑\n"
 "Чтобы приостановить эти уведомления, вызовите /mute\\_bonuses."
 
-#: randtalkbot/stranger.py:247
+#: randtalkbot/stranger.py:249
 #, python-brace-format
 msgid ""
 "You've received {0} bonuses for inviting a person to the bot. Bonuses will "
@@ -121,56 +121,56 @@ msgstr ""
 "Поздравляем! 🤑\n"
 "Чтобы приостановить эти уведомления, вызовите /mute\\_bonuses."
 
-#: randtalkbot/stranger.py:267
+#: randtalkbot/stranger.py:269
 msgid "Chat was finished."
 msgstr "Беседа закончена."
 
-#: randtalkbot/stranger.py:269
+#: randtalkbot/stranger.py:271
 msgid "Your partner has left chat."
 msgstr "Собеседник покинул чат. 😿"
 
-#: randtalkbot/stranger.py:274
+#: randtalkbot/stranger.py:276
 #, python-brace-format
 msgid "You've used one bonus. {0} bonus(es) left."
 msgstr "Вы использовали один бонус. {0} бонус(ов) осталось."
 
-#: randtalkbot/stranger.py:278
+#: randtalkbot/stranger.py:280
 msgid "You've used your last bonus."
 msgstr "Был использован ваш последний бонус."
 
-#: randtalkbot/stranger.py:281
+#: randtalkbot/stranger.py:283
 msgid "Feel free to /begin a new talk."
 msgstr "Чтобы начать новый разговор, скомандуйте /begin."
 
-#: randtalkbot/stranger.py:305
+#: randtalkbot/stranger.py:307
 #, python-brace-format
 msgid "Use {0} please."
 msgstr "Используйте пожалуйста {0}."
 
-#: randtalkbot/stranger.py:309
+#: randtalkbot/stranger.py:311
 #, python-brace-format
 msgid "You can use the following languages: {0}."
 msgstr "Вы можете использовать следующие языки: {0}."
 
-#: randtalkbot/stranger.py:316
+#: randtalkbot/stranger.py:318
 msgid "Your partner is here."
 msgstr "Собеседник найден."
 
-#: randtalkbot/stranger.py:322
+#: randtalkbot/stranger.py:324
 #, python-brace-format
 msgid "You've used one bonus with previous partner. {0} bonus(es) left."
 msgstr ""
 "Вы использовали один бонус с предыдущим партнером. {0} бонус(ов) осталось."
 
-#: randtalkbot/stranger.py:325
+#: randtalkbot/stranger.py:327
 msgid "You've used your last bonus with previous partner."
 msgstr "Был использован ваш последний бонус с предыдущим партнером."
 
-#: randtalkbot/stranger.py:327
+#: randtalkbot/stranger.py:329
 msgid "Here's another stranger."
 msgstr "Подобран новый собеседник."
 
-#: randtalkbot/stranger.py:338
+#: randtalkbot/stranger.py:340
 #, python-brace-format
 msgid ""
 "Your partner's been looking for you for {0} hr. Say him \"Hello\" -- if he "
@@ -179,7 +179,7 @@ msgstr ""
 "Партнер ждал вас {0} ч. Поприветствуйте его — если он не ответит, вы можете "
 "вновь запустить поиск командой /begin."
 
-#: randtalkbot/stranger.py:343
+#: randtalkbot/stranger.py:345
 #, python-brace-format
 msgid ""
 "Your partner's been looking for you for {0} min. Say him \"Hello\" -- if he "
@@ -188,11 +188,11 @@ msgstr ""
 "Партнер ждал вас {0} мин. Поприветствуйте его — если он не ответит, вы "
 "можете вновь запустить поиск командой /begin."
 
-#: randtalkbot/stranger.py:349
+#: randtalkbot/stranger.py:351
 msgid "Have a nice chat!"
 msgstr "Приятного общения 🤗"
 
-#: randtalkbot/stranger.py:445
+#: randtalkbot/stranger.py:447
 msgid "Looking for a stranger for you."
 msgstr "Идет подбор партнера 🤔"
 
@@ -231,7 +231,7 @@ msgstr ""
 msgid "Notifications about bonuses were muted for 1 hour"
 msgstr "Уведомления о бонусах были приостановлены на 1 час 🤐"
 
-#: randtalkbot/stranger_handler.py:133
+#: randtalkbot/stranger_handler.py:134
 msgid ""
 "Don't try to fool me. Forward message with the link to your friends and "
 "receive well-earned bonuses that will help you to find partner quickly."
@@ -240,7 +240,7 @@ msgstr ""
 "вы получите честнозаработанные бонусы, которые помогут вам находить "
 "собеседников быстрее."
 
-#: randtalkbot/stranger_handler.py:146
+#: randtalkbot/stranger_handler.py:156
 msgid ""
 "*Manual*\n"
 "\n"
@@ -252,23 +252,27 @@ msgstr ""
 "Чтобы приступить к поиску собеседника, скомандуйте /begin. Когда ваш партнер "
 "будет найден, вы сможете закончить разговор, выполнив /end."
 
-#: randtalkbot/stranger_handler.py:159 randtalkbot/stranger_handler.py:177
+#: randtalkbot/stranger_handler.py:178 randtalkbot/stranger_handler.py:196
 msgid "Messages of this type aren't supported."
 msgstr "Сообщения такого типа не поддерживаются 😞"
 
-#: randtalkbot/stranger_handler.py:169
+#: randtalkbot/stranger_handler.py:188
 msgid "Unknown command. Look /help for the full list of commands."
 msgstr "Неизвестная команда. Чтобы посмотреть все команды, скомандуйте /help."
 
-#: randtalkbot/stranger_handler.py:185
+#: randtalkbot/stranger_handler.py:204
 msgid "Your partner has blocked me! How did you do that?!"
 msgstr "Ваш собеседник меня заблокировал! И как только вам это удается?! 😕"
 
-#: randtalkbot/stranger_handler.py:195
+#: randtalkbot/stranger_handler.py:210
+msgid "Messages editing isn't supported"
+msgstr "Редактирование сообщений не поддерживается 😞"
+
+#: randtalkbot/stranger_handler.py:219
 msgid "Rand Talk Invitation Link"
 msgstr "Приглашение в Rand Talk"
 
-#: randtalkbot/stranger_handler.py:196
+#: randtalkbot/stranger_handler.py:220
 msgid "The more friends'll use your link -- the faster the search will be"
 msgstr "Чем больше знакомых воспользуются ссылкой, тем быстрее будет поиск"
 

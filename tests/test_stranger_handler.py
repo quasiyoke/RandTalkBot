@@ -578,6 +578,13 @@ class TestStrangerHandler(asynctest.TestCase):
         Message.assert_called_once_with(message_json)
         handle_command_mock.assert_not_called()
 
+    async def test_on_edited_chat_message(self):
+        message_json = 'foo_message'
+        await self.stranger_handler.on_edited_chat_message(message_json)
+        self.sender.send_notification.assert_called_once_with(
+            'Messages editing isn\'t supported',
+            )
+
     @patch('randtalkbot.stranger_handler.telepot', Mock())
     async def test_on_inline_query(self):
         from randtalkbot.stranger_handler import telepot
