@@ -23,6 +23,7 @@ INVITATION_LENGTH = 10
 LANGUAGES_MAX_LENGTH = 40
 LOGGER = logging.getLogger('randtalkbot.stranger')
 
+
 def _(s): return s
 
 SEX_CHOICES = (
@@ -54,6 +55,7 @@ WIZARD_CHOICES = (
     )
 
 database_proxy = Proxy()
+
 
 class Stranger(Model):
     bonus_count = IntegerField(default=0)
@@ -436,8 +438,8 @@ class Stranger(Model):
         self.languages = languages
 
     async def set_looking_for_partner(self):
-        # Before setting `looking_for_partner_from`, check if it's already set to prevent lowering
-        # priority.
+        # Before setting `looking_for_partner_from`, check if it's already set
+        # to prevent lowering priority.
         if self.looking_for_partner_from is None:
             self.looking_for_partner_from = datetime.datetime.utcnow()
         try:
@@ -445,7 +447,10 @@ class Stranger(Model):
                 _('Looking for a stranger for you.'),
                 )
         except TelegramError as e:
-            LOGGER.debug('Set looking for partner. Can\'t notify stranger. %s', e)
+            LOGGER.debug(
+                'Set looking for partner. Can\'t notify stranger. %s',
+                e,
+                )
             self.looking_for_partner_from = None
         await self.set_partner(None)
 
@@ -455,11 +460,13 @@ class Stranger(Model):
             return
         if self._partner is not None:
             if self._partner.get_partner() == self:
-                # If partner isn't talking with the stranger because of some error, we shouldn't kick him.
+                # If partner isn't talking with the stranger because of some
+                # error, we shouldn't kick him.
                 await self._partner.kick()
             self._pay_for_talk()
-            self._talk.end = datetime.datetime.utcnow()
-            self._talk.save()
+            if self._talk is not None:
+                self._talk.end = datetime.datetime.utcnow()
+                self._talk.save()
         if partner is None:
             self._talk = None
             self._partner = None
