@@ -190,3 +190,9 @@ Launch tests and observe code coverage.
 
     $ coverage run --source=randtalkbot -m unittest
     $ coverage report -m
+
+Launch some specific test.
+
+::
+
+    $ python -m unittest tests.test_stranger.TestStranger
