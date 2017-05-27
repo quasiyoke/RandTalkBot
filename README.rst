@@ -7,7 +7,7 @@ Rand Talk
 .. image:: https://travis-ci.org/quasiyoke/RandTalkBot.svg
     :target: https://travis-ci.org/quasiyoke/RandTalkBot
 
-Telegram bot matching you with a random person of desired sex speaking on your language(s). Chat with anonymous strangers `here <https://telegram.me/RandTalkBot>`_. Rand Talk was written on Python 3.5 and `telepot <https://github.com/nickoala/telepot>`_ and uses MySQL to store users' preferences. Rand Talk's interface was translated on several languages. You're able to send any messages except replies and forwarded messages. Rand Talk rewards you with bonuses for people you invite using your individual link. To get this link, use @RandTalkBot as inline bot. The bot collects stats regularly. Rand Talk rewards you with more bonuses for the people of rare sex.
+Telegram bot matching you with a random person of desired sex speaking on your language(s). Chat with anonymous strangers `here <https://telegram.me/RandTalkBot>`_. Rand Talk was written on Python 3.6 and `telepot <https://github.com/nickoala/telepot>`_ and uses MySQL to store users' preferences. Rand Talk's interface was translated on several languages. You're able to send any messages except replies and forwarded messages. Rand Talk rewards you with bonuses for people you invite using your individual link. To get this link, use @RandTalkBot as inline bot. The bot collects stats regularly. Rand Talk rewards you with more bonuses for the people of rare sex.
 
 Supported commands
 ------------------
@@ -27,118 +27,89 @@ Admins specified at ``admins`` configuration property are able to use the follow
 Roadmap
 -------
 
-* 1.4 Reports
-* 1.5 Replies
-* 1.6 Customizable greetings message
-* 1.7 /oops command to ask your recent partner to connect together again
+* 2.2 Reports
+* 2.3 Replies
+* 2.4 Customizable greetings message
+* 2.5 /oops command to ask your recent partner to connect together again
 
 Deployment
 ----------
 
 ::
 
-    $ virtualenv --python=/usr/bin/python3.5 randtalkbotenv
-    $ source randtalkbotenv/bin/activate
-    (randtalkbotenv) $ pip install https://github.com/quasiyoke/RandTalkBot/zipball/master
+    $ docker network create \
+        --subnet=172.28.0.0/16 \
+        randtalkbot
+    $ docker run \
+        --name=randtalkbot-mysql \
+        --net=randtalkbot \
+        --ip=172.28.0.50 \
+        --env="MYSQL_ROOT_PASSWORD=P9u205LLeY8XyRt3fM8t77D8" \
+        --env="MYSQL_DATABASE=randtalkbot" \
+        --env="MYSQL_USER=randtalkbot" \
+        --env="MYSQL_PASSWORD=xwBUr3oobCXjqSvz4t" \
+        --detach \
+        mysql:5.7
+    $ git clone https://github.com/quasiyoke/RandTalkBot.git
+    $ cd RandTalkBot
+    $ docker build --tag=randtalkbot .
 
-After that write ``randtalkbotenv/configuration.json`` file like that::
+After that write ``configuration/configuration.json`` file like that::
 
     {
         "admins": [31416, 271828],
         "database": {
-            "host": "localhost",
-            "name": "randtalk",
+            "host": "172.28.0.50",
+            "name": "randtalkbot",
             "user": "randtalkbot",
             "password": "xwBUr3oobCXjqSvz4t"
-            },
+        },
         "logging": {
             "version": 1,
             "formatters": {
                 "simple": {
                     "class": "logging.Formatter",
                     "format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-                    }
-                },
+                }
+            },
             "handlers": {
                 "console": {
                     "class": "logging.StreamHandler",
                     "level": "DEBUG",
                     "formatter": "simple"
-                    },
-                "file": {
-                    "class": "logging.handlers.RotatingFileHandler",
-                    "level": "DEBUG",
-                    "formatter": "simple",
-                    "filename": "log.log",
-                    "maxBytes": 10485760,
-                    "backupCount": 10,
-                    "encoding": "utf-8"
-                    },
-                "email": {
-                    "class": "logging.handlers.SMTPHandler",
-                    "level": "ERROR",
-                    "formatter": "simple",
-                    "mailhost": ["smtp.gmail.com", 587],
-                    "fromaddr": "example1@gmail.com",
-                    "toaddrs": ["example2@gmail.com"],
-                    "subject": "[Rand Talk Error]",
-                    "credentials": ["example1@gmail.com", "RM49p7XFB:Z6x@kCkv"],
-                    "secure": []
-                    }
-                },
+                }
+            },
             "loggers": {
                 "randtalkbot": {
                     "level": "DEBUG",
                     "handlers": []
-                    },
+                },
                 "peewee": {
                     "level": "DEBUG",
                     "handlers": []
-                    }
-                },
+                }
+            },
             "root": {
                 "level": "DEBUG",
                 "handlers": ["console", "email"]
-                }
-            },
+            }
+        },
         "token": "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
-        }
+    }
 
 Where:
 
 * ``admins`` — list of admins' Telegram IDs. Admins are able to use extended list of bot commands. Optional. Default is ``[]``.
 * ``logging`` — logging setup as described in `this howto <https://docs.python.org/3/howto/logging.html>`_.
 
-Create MySQL DB::
+Now you may run Rand Talk::
 
-    CREATE DATABASE IF NOT EXISTS randtalk CHARACTER SET utf8 COLLATE utf8_general_ci;
-    CREATE USER randtalkbot@localhost IDENTIFIED BY 'xwBUr3oobCXjqSvz4t';
-    GRANT ALL ON randtalk.* TO randtalkbot@localhost;
-
-Create necessary DB tables::
-
-    (randtalkbotenv) $ randtalkbot install randtalkbotenv/configuration.json
-
-Now you may run ``randtalkbot``::
-
-    (randtalkbotenv) $ randtalkbot randtalkbotenv/configuration.json
-
-Updating using SSH
-^^^^^^^^^^^^^^^^^^
-
-I'm using such shell script for semi-automatic deployment::
-
-    #!/bin/bash
-    cd path/to/randtalkbotenv/
-    source bin/activate
-    echo "y" | pip uninstall randtalkbot
-    pip install https://github.com/quasiyoke/RandTalkBot/zipball/master
-    killall randtalkbot
-    nohup randtalkbot configuration.json &
-
-Just launch::
-
-    $ ssh john_doe@8.8.8.8 "bash -s" < deploy.sh
+    $ docker run \
+        --name=randtalkbot \
+        --net=randtalkbot \
+        --volume=`pwd`/configuration:/configuration \
+        --detach \
+        randtalkbot
 
 Contributing
 ------------

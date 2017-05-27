@@ -56,9 +56,9 @@ target/
 
 # Bot
 conf*.json
-*.sh
 
-#Virtualenv
+# Virtualenv
 bin/
+share/
 lib64
 pip-selfcheck.json
