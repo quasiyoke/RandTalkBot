@@ -59,7 +59,7 @@ setup(
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Communications :: Chat',
         ],
     install_requires=[
@@ -67,7 +67,7 @@ setup(
         'peewee>=2.7.4,<3.0',
         'pycountry>=1.19,<2.0',
         'pymysql>=0.6.7,<0.7',
-        'telepot>=8.2,<8.3',
+        'telepot>=12.0,<13.0',
         ],
     tests_require=[
         'asynctest>=0.6,<0.7',

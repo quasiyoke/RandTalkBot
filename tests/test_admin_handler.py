@@ -37,6 +37,7 @@ class TestAdminHandler(asynctest.TestCase):
         self.sender.send_notification = CoroutineMock()
         self.admin_handler = AdminHandler(
             (Mock(), self.initial_msg, 31416),
+            event_space=None,
             timeout=1,
             )
         self.stranger_sender_service = stranger_sender_service

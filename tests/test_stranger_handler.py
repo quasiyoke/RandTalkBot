@@ -44,6 +44,7 @@ class TestStrangerHandler(asynctest.TestCase):
         self.sender.send_notification = CoroutineMock()
         self.stranger_handler = StrangerHandler(
             (Mock(), self.initial_msg, 31416),
+            event_space=None,
             timeout=1,
             )
         self.stranger_sender_service = stranger_sender_service
@@ -60,6 +61,7 @@ class TestStrangerHandler(asynctest.TestCase):
         stranger_service.get_or_create_stranger.return_value = self.stranger
         self.stranger_handler = StrangerHandler(
             (Mock(), self.initial_msg, 31416),
+            event_space=None,
             timeout=1,
             )
         self.assertEqual(self.stranger_handler._from_id, 31416)
@@ -79,6 +81,7 @@ class TestStrangerHandler(asynctest.TestCase):
         with self.assertRaises(SystemExit):
             self.stranger_handler = StrangerHandler(
                 (Mock(), self.initial_msg, 31416),
+                event_space=None,
                 timeout=1,
                 )
         self.assertEqual(self.stranger_handler._from_id, 31416)
