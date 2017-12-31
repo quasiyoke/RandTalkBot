@@ -4,17 +4,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import asynctest
 from asynctest.mock import patch, Mock, CoroutineMock
-from randtalkbot.errors import *
-from randtalkbot.i18n import LanguageNotFoundError
-from randtalkbot.stranger_handler import *
-from randtalkbot.stranger_sender_service import *
-from randtalkbot.stranger_service import StrangerServiceError
-from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
 from telepot.exception import TelegramError
-from unittest.mock import create_autospec
+from randtalkbot.errors import EmptyLanguagesError, SexError
+from randtalkbot.i18n import LanguageNotFoundError
+from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
 
 
 class TestStrangerSetupWizard(asynctest.TestCase):
@@ -29,7 +24,9 @@ class TestStrangerSetupWizard(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_init(self):
-        self.stranger_sender_service.get_or_create_stranger_sender.assert_called_once_with(self.stranger)
+        self.stranger_sender_service \
+            .get_or_create_stranger_sender \
+            .assert_called_once_with(self.stranger)
 
     async def test_activate(self):
         self.stranger_setup_wizard._prompt = CoroutineMock()
@@ -52,10 +49,10 @@ class TestStrangerSetupWizard(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     async def test_deactivate__telegram_error(self):
-        from randtalkbot.stranger_setup_wizard import LOGGER
+        from randtalkbot.stranger_setup_wizard import LOGGER as logger_mock
         self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         await self.stranger_setup_wizard.deactivate()
-        self.assertTrue(LOGGER.warning.called)
+        self.assertTrue(logger_mock.warning.called)
 
     async def test_handle__deactivated_novice(self):
         self.stranger.wizard = 'none'
@@ -103,7 +100,6 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     async def test_handle__languages_empty_languages_error(self):
         from randtalkbot.stranger_setup_wizard import get_languages_codes
-        from randtalkbot.errors import EmptyLanguagesError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         get_languages_codes.side_effect = EmptyLanguagesError()
@@ -114,7 +110,9 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         get_languages_codes.assert_called_once_with('foo_text')
         self.stranger.set_languages.assert_not_called()
         self.stranger_setup_wizard._prompt.assert_called_once_with()
-        self.sender.send_notification.assert_called_once_with('Please specify at least one language.')
+        self.sender \
+            .send_notification \
+            .assert_called_once_with('Please specify at least one language.')
 
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     async def test_handle__languages_language_not_found(self):
@@ -138,7 +136,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     async def test_handle__languages_too_much(self):
         from randtalkbot.stranger_setup_wizard import get_languages_codes
-        from randtalkbot.stranger_setup_wizard import LOGGER
+        from randtalkbot.stranger_setup_wizard import LOGGER as logger_mock
         from randtalkbot.errors import StrangerError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
@@ -153,7 +151,8 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.sender.send_notification.assert_called_once_with(
             'Too much languages were specified. Please shorten your list to 6 languages.',
             )
-        LOGGER.info.assert_called_once_with('Too much languages were specified: \"%s\"', 'foo_text')
+        logger_mock.info \
+            .assert_called_once_with('Too much languages were specified: \"%s\"', 'foo_text')
 
     async def test_handle__sex_ok(self):
         self.stranger.wizard = 'setup'
@@ -183,7 +182,6 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.save.assert_not_called()
 
     async def test_handle__sex_sex_error(self):
-        from randtalkbot.errors import SexError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'sex'
         self.stranger_setup_wizard._prompt = CoroutineMock()
@@ -214,7 +212,6 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.save.assert_not_called()
 
     async def test_handle__partner_sex_sex_error(self):
-        from randtalkbot.errors import SexError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'partner_sex'
         self.stranger_setup_wizard._prompt = CoroutineMock()
@@ -231,7 +228,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     async def test_handle__unknown_wizard_step(self):
-        from randtalkbot.stranger_setup_wizard import LOGGER
+        from randtalkbot.stranger_setup_wizard import LOGGER as logger_mock
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'unknown_step'
         self.stranger_setup_wizard._prompt = CoroutineMock()
@@ -240,12 +237,13 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.assertTrue((await self.stranger_setup_wizard.handle(message)))
         self.stranger_setup_wizard._prompt.assert_not_called()
         self.sender.send_notification.assert_not_called()
-        LOGGER.warning.assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
+        logger_mock.warning \
+            .assert_called_once_with('Undknown wizard_step value was found: "%s"', 'unknown_step')
 
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     async def test_handle__telegram_error(self):
-        from randtalkbot.stranger_setup_wizard import LOGGER
+        from randtalkbot.stranger_setup_wizard import LOGGER as logger_mock
         from randtalkbot.stranger_setup_wizard import get_languages_codes
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
@@ -255,7 +253,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         message.text = 'foo_text'
         self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         self.assertTrue((await self.stranger_setup_wizard.handle(message)))
-        self.assertTrue(LOGGER.warning.called)
+        self.assertTrue(logger_mock.warning.called)
 
     async def test_handle_command__not_activated_handled(self):
         self.stranger.wizard = 'none'
@@ -309,7 +307,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     async def test_handle_command__telegram_error(self):
-        from randtalkbot.stranger_setup_wizard import LOGGER
+        from randtalkbot.stranger_setup_wizard import LOGGER as logger_mock
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'sex'
         self.stranger.is_full.return_value = False
@@ -318,7 +316,7 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         message.command = 'begin'
         self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         self.assertTrue((await self.stranger_setup_wizard.handle_command(message)))
-        self.assertTrue(LOGGER.warning.called)
+        self.assertTrue(logger_mock.warning.called)
 
     @patch(
         'randtalkbot.stranger_setup_wizard.SUPPORTED_LANGUAGES_NAMES',
@@ -346,9 +344,9 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.get_languages.return_value = ['pt']
         await self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
-            'Your current language is {0}. Enumerate the languages you speak like this: '
-                '"English, Italian" -- in descending order of your speaking convenience '
-                'or just pick one at special keyboard.',
+            'Your current language is {0}. Enumerate the languages you speak like this:'
+            ' "English, Italian" -- in descending order of your speaking convenience'
+            ' or just pick one at special keyboard.',
             'Português',
             reply_markup={
                 'keyboard': [
@@ -369,9 +367,9 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.get_languages.return_value = ['pt', 'de', 'en']
         await self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
-            'Your current languages are: {0}. Enumerate the languages you speak the same way '
-                '-- in descending order of your speaking convenience or just pick one '
-                'at special keyboard.',
+            'Your current languages are: {0}. Enumerate the languages you speak the same way'
+            ' -- in descending order of your speaking convenience or just pick one'
+            ' at special keyboard.',
             'Português, Deutsch, English',
             reply_markup={
                 'keyboard': [
@@ -397,8 +395,8 @@ class TestStrangerSetupWizard(asynctest.TestCase):
         self.stranger.get_languages.return_value = []
         await self.stranger_setup_wizard._prompt()
         self.sender.send_notification.assert_called_once_with(
-            'Enumerate the languages you speak like this: "English, Italian" -- in descending ' + \
-                'order of your speaking convenience or just pick one at special keyboard.',
+            'Enumerate the languages you speak like this: "English, Italian" -- in descending'
+            ' order of your speaking convenience or just pick one at special keyboard.',
             '',
             reply_markup={'keyboard': [('English', 'Português'), ('Italiano', 'Русский')]},
             )
@@ -429,10 +427,10 @@ class TestStrangerSetupWizard(asynctest.TestCase):
 
     @patch('randtalkbot.stranger_setup_wizard.LOGGER', Mock())
     async def test_prompt__telegram_error(self):
-        from randtalkbot.stranger_setup_wizard import LOGGER
+        from randtalkbot.stranger_setup_wizard import LOGGER as logger_mock
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         self.stranger.get_languages.return_value = []
         self.sender.send_notification.side_effect = TelegramError({}, '', 0)
         await self.stranger_setup_wizard._prompt()
-        self.assertTrue(LOGGER.warning.called)
+        self.assertTrue(logger_mock.warning.called)

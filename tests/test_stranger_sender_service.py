@@ -1,17 +1,16 @@
-# RandTalkBot Bot matching you with a random person on Telegram.
+    # RandTalkBot Bot matching you with a random person on Telegram.
 # Copyright (C) 2016 quasiyoke
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from unittest.mock import create_autospec, patch, Mock
 from randtalkbot.stranger_sender import StrangerSender
 from randtalkbot.stranger_sender_service import StrangerSenderService, StrangerSenderServiceError
-from unittest.mock import call, create_autospec, patch, Mock
 
 class TestStrangerSenderService(unittest.TestCase):
-    @patch('randtalkbot.stranger_sender_service.StrangerSender')
-    def setUp(self, stranger_sender_cls_mock):
+    def setUp(self):
         self.bot = Mock()
         self.stranger_sender_service = StrangerSenderService(self.bot)
         # Cached instance should be cleared for each test.
@@ -41,7 +40,7 @@ class TestStrangerSenderService(unittest.TestCase):
 
     @patch('randtalkbot.stranger_sender_service.StrangerSender', create_autospec(StrangerSender))
     def test_get_or_create_stranger_sender__cached(self):
-        from randtalkbot.stranger_sender_service import StrangerSender
+        from randtalkbot.stranger_sender_service import StrangerSender as stranger_sender_cls_mock
         stranger_sender = Mock()
         stranger = Mock()
         stranger.telegram_id = 31416
@@ -50,17 +49,17 @@ class TestStrangerSenderService(unittest.TestCase):
             self.stranger_sender_service.get_or_create_stranger_sender(stranger),
             stranger_sender,
             )
-        self.assertFalse(StrangerSender.called)
+        self.assertFalse(stranger_sender_cls_mock.called)
 
     @patch('randtalkbot.stranger_sender_service.StrangerSender', create_autospec(StrangerSender))
     def test_get_or_create_stranger_sender__not_cached(self):
-        from randtalkbot.stranger_sender_service import StrangerSender
-        stranger_sender = StrangerSender.return_value
+        from randtalkbot.stranger_sender_service import StrangerSender as stranger_sender_cls_mock
+        stranger_sender = stranger_sender_cls_mock.return_value
         stranger = Mock()
         stranger.telegram_id = 31416
         self.assertEqual(
             self.stranger_sender_service.get_or_create_stranger_sender(stranger),
             stranger_sender,
             )
-        StrangerSender.assert_called_once_with(self.bot, stranger)
+        stranger_sender_cls_mock.assert_called_once_with(self.bot, stranger)
         self.assertEqual(self.stranger_sender_service._stranger_senders[31416], stranger_sender)

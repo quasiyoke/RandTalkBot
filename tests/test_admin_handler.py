@@ -4,14 +4,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
+from unittest.mock import create_autospec
 import asynctest
 from asynctest.mock import call, patch, Mock, CoroutineMock
 from randtalkbot.admin_handler import AdminHandler
-from randtalkbot.stranger_handler import StrangerHandler
 from randtalkbot.admin_handler import StrangerServiceError
 from randtalkbot.stranger_setup_wizard import StrangerSetupWizard
-from unittest.mock import create_autospec
 
 
 class TestAdminHandler(asynctest.TestCase):
@@ -19,14 +17,15 @@ class TestAdminHandler(asynctest.TestCase):
     @patch('randtalkbot.stranger_handler.StrangerSetupWizard', create_autospec(StrangerSetupWizard))
     @patch('randtalkbot.stranger_sender_service.StrangerSenderService._instance')
     def setUp(self, stranger_sender_service):
-        from randtalkbot.stranger_handler import StrangerSetupWizard
-        from randtalkbot.stranger_handler import StrangerService
+        from randtalkbot.stranger_handler import StrangerSetupWizard as \
+            stranger_setup_wizard_cls_mock
+        from randtalkbot.stranger_handler import StrangerService as stranger_service_cls_mock
         self.stranger = CoroutineMock()
-        stranger_service = StrangerService.get_instance.return_value
+        stranger_service = stranger_service_cls_mock.get_instance.return_value
         stranger_service.get_or_create_stranger.return_value = self.stranger
-        StrangerSetupWizard.reset_mock()
-        self.StrangerSetupWizard = StrangerSetupWizard
-        self.stranger_setup_wizard = StrangerSetupWizard.return_value
+        stranger_setup_wizard_cls_mock.reset_mock()
+        self.stranger_setup_wizard_cls_mock = stranger_setup_wizard_cls_mock
+        self.stranger_setup_wizard = stranger_setup_wizard_cls_mock.return_value
         self.stranger_setup_wizard.handle = CoroutineMock()
         self.initial_msg = {
             'from': {
@@ -143,7 +142,6 @@ class TestAdminHandler(asynctest.TestCase):
 
     @patch('randtalkbot.admin_handler.StrangerHandler.handle_command')
     async def test_handle_command__other_command(self, handle_command):
-        from randtalkbot.admin_handler import StrangerHandler
         message = Mock()
         message.command = 'foo_command'
         message.command_args = 'foo_args'

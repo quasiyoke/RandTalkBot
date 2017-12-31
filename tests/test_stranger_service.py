@@ -4,18 +4,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asynctest
 import datetime
-import unittest
+from unittest.mock import create_autospec
+import asynctest
 from asynctest.mock import call, patch, Mock, CoroutineMock
-from peewee import *
-from playhouse.test_utils import test_database
+from peewee import DatabaseError, DoesNotExist, SqliteDatabase
 from randtalkbot import stranger
 from randtalkbot.errors import StrangerError, StrangerServiceError, \
     PartnerObtainingError
 from randtalkbot.stranger import Stranger
 from randtalkbot.stranger_service import StrangerService
-from unittest.mock import create_autospec
 
 
 class TestStrangerService(asynctest.TestCase):
@@ -95,16 +93,15 @@ class TestStrangerService(asynctest.TestCase):
         cached_stranger = Mock()
         cached_stranger.id = 31416
         self.stranger_service._strangers_cache[31416] = cached_stranger
-        stranger = Mock()
         stranger.id = 31416
         self.assertEqual(self.stranger_service.get_cached_stranger(stranger), cached_stranger)
 
     @asynctest.ignore_loop
     def test_get_cached_stranger__not_cached(self):
-        stranger = Mock()
-        stranger.id = 31416
-        self.assertEqual(self.stranger_service.get_cached_stranger(stranger), stranger)
-        self.assertEqual(self.stranger_service._strangers_cache[31416], stranger)
+        stranger_mock = Mock()
+        stranger_mock.id = 31416
+        self.assertEqual(self.stranger_service.get_cached_stranger(stranger_mock), stranger_mock)
+        self.assertEqual(self.stranger_service._strangers_cache[31416], stranger_mock)
 
     @asynctest.ignore_loop
     def test_get_cache_size(self):
@@ -123,8 +120,8 @@ class TestStrangerService(asynctest.TestCase):
     @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
     @asynctest.ignore_loop
     def test_get_or_create_stranger__stranger_found(self):
-        from randtalkbot.stranger_service import Stranger
-        Stranger.get.return_value = self.stranger_0
+        from randtalkbot.stranger_service import Stranger as stranger_cls_mock
+        stranger_cls_mock.get.return_value = self.stranger_0
         self.stranger_service.get_cached_stranger = Mock()
         self.stranger_service.get_cached_stranger.return_value = 'cached_stranger'
         self.assertEqual(
@@ -136,9 +133,9 @@ class TestStrangerService(asynctest.TestCase):
     @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
     @asynctest.ignore_loop
     def test_get_or_create_stranger__stranger_not_found(self):
-        from randtalkbot.stranger_service import Stranger
-        Stranger.get.side_effect = DoesNotExist()
-        Stranger.create.return_value = self.stranger_0
+        from randtalkbot.stranger_service import Stranger as stranger_cls_mock
+        stranger_cls_mock.get.side_effect = DoesNotExist()
+        stranger_cls_mock.create.return_value = self.stranger_0
         self.stranger_service.get_cached_stranger = Mock()
         self.stranger_service.get_cached_stranger.return_value = 'cached_stranger'
         self.assertEqual(
@@ -150,9 +147,9 @@ class TestStrangerService(asynctest.TestCase):
     @patch('randtalkbot.stranger_service.Stranger', create_autospec(Stranger))
     @asynctest.ignore_loop
     def test_get_or_create_stranger__database_error(self):
-        from randtalkbot.stranger_service import Stranger
+        from randtalkbot.stranger_service import Stranger as stranger_cls_mock
         self.stranger_service.get_cached_stranger = Mock()
-        Stranger.get.side_effect = DatabaseError()
+        stranger_cls_mock.get.side_effect = DatabaseError()
         with self.assertRaises(StrangerServiceError):
             self.stranger_service.get_or_create_stranger(31416)
 
@@ -702,39 +699,39 @@ class TestStrangerService(asynctest.TestCase):
         self.stranger_service.get_cached_stranger.assert_not_called()
 
     async def test_match_partner__ok(self):
-        stranger = CoroutineMock()
+        stranger_mock = CoroutineMock()
         partner = CoroutineMock()
         partner.id = 31416
         self.stranger_service._match_partner = Mock(return_value=partner)
         self.stranger_service._locked_strangers_ids = Mock()
-        await self.stranger_service.match_partner(stranger)
+        await self.stranger_service.match_partner(stranger_mock)
         self.stranger_service._locked_strangers_ids.discard. \
             assert_called_once_with(31416)
-        stranger.notify_partner_found.assert_called_once_with(partner)
-        partner.notify_partner_found.assert_called_once_with(stranger)
-        stranger.set_partner.assert_called_once_with(partner)
+        stranger_mock.notify_partner_found.assert_called_once_with(partner)
+        partner.notify_partner_found.assert_called_once_with(stranger_mock)
+        stranger_mock.set_partner.assert_called_once_with(partner)
 
     async def test_match_partner__stranger_error(self):
-        stranger = CoroutineMock()
+        stranger_mock = CoroutineMock()
         partner = CoroutineMock()
         partner.id = 31416
         self.stranger_service._match_partner = Mock(return_value=partner)
         self.stranger_service._locked_strangers_ids = Mock()
-        stranger.notify_partner_found.side_effect = StrangerError()
+        stranger_mock.notify_partner_found.side_effect = StrangerError()
         with self.assertRaises(StrangerServiceError):
-            await self.stranger_service.match_partner(stranger)
+            await self.stranger_service.match_partner(stranger_mock)
         self.stranger_service._locked_strangers_ids.discard. \
             assert_called_once_with(31416)
-        stranger.set_partner.assert_not_called()
+        stranger_mock.set_partner.assert_not_called()
 
     async def test_match_partner__first_partner_has_blocked_the_bot(self):
-        stranger = CoroutineMock()
+        stranger_mock = CoroutineMock()
         partner = CoroutineMock()
         partner.id = 31416
         self.stranger_service._match_partner = Mock(return_value=partner)
         self.stranger_service._locked_strangers_ids = Mock()
         partner.notify_partner_found.side_effect = [StrangerError(), None]
-        await self.stranger_service.match_partner(stranger)
+        await self.stranger_service.match_partner(stranger_mock)
         self.assertEqual(
             self.stranger_service._locked_strangers_ids.discard.call_args_list,
             [
@@ -745,17 +742,16 @@ class TestStrangerService(asynctest.TestCase):
         self.assertEqual(
             partner.notify_partner_found.call_args_list,
             [
-                call(stranger),
-                call(stranger),
+                call(stranger_mock),
+                call(stranger_mock),
                 ],
             )
-        stranger.notify_partner_found.assert_called_once_with(partner)
+        stranger_mock.notify_partner_found.assert_called_once_with(partner)
 
     async def test_match_partner__partner_obtaining_error(self):
-        from randtalkbot.stranger_service import PartnerObtainingError
-        stranger = CoroutineMock()
+        stranger_mock = CoroutineMock()
         self.stranger_service._match_partner = Mock(
             side_effect=PartnerObtainingError,
             )
         with self.assertRaises(PartnerObtainingError):
-            await self.stranger_service.match_partner(stranger)
+            await self.stranger_service.match_partner(stranger_mock)

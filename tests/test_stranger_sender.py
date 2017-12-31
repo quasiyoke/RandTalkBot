@@ -4,11 +4,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import asynctest
+from asynctest.mock import call, patch, Mock, CoroutineMock
 from randtalkbot.errors import StrangerSenderError
 from randtalkbot.stranger_sender import StrangerSender
-from asynctest.mock import call, patch, Mock, CoroutineMock
 
 class TestStrangerSender(asynctest.TestCase):
     @patch('randtalkbot.stranger_sender.get_translation', Mock())
@@ -28,7 +27,7 @@ class TestStrangerSender(asynctest.TestCase):
     @asynctest.ignore_loop
     def test_init(self):
         self.get_translation.reset_mock()
-        sender = StrangerSender(Mock(), Mock())
+        StrangerSender(Mock(), Mock())
         StrangerSender.update_translation.assert_called_once_with()
 
     async def test_answer_inline_query(self):
@@ -92,8 +91,8 @@ class TestStrangerSender(asynctest.TestCase):
             'foo\\\\` `bar baz\\\\boo foo``',
             )
         self.sender.sendMessage.assert_called_once_with(
-            '*Rand Talk:* \\*foo\\* \\_bar\\_ \\[baz](http://boo.com) '
-                'foo\\\\\\` \\`bar baz\\\\boo foo\\`\\`',
+            '*Rand Talk:* \\*foo\\* \\_bar\\_ \\[baz](http://boo.com)'
+            ' foo\\\\\\` \\`bar baz\\\\boo foo\\`\\`',
             disable_notification=None,
             disable_web_page_preview=None,
             parse_mode='Markdown',

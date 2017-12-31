@@ -168,8 +168,9 @@ Launch some specific test.
 
     $ python -m unittest tests.test_stranger.TestStranger
 
-If you went into trouble with codestyle (``test_codestyle`` test suite), look at the specific codestyle issues you've got:
+Codestyle
+^^^^^^^^^
 
 ::
 
-    $ pylint randtalkbot setup tests
+    $ python setup.py lint

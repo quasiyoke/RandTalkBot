@@ -4,6 +4,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
 from setuptools import setup, Command
 from setuptools.command.test import test as SetuptoolsTestCommand
 from randtalkbot.utils import __version__
@@ -27,6 +29,13 @@ class CoverageCommand(Command):
         from coveralls import cli
         cli.main(self.coveralls_args)
 
+def lint(*options):
+    from pylint.lint import Run
+    run = Run(options, exit=False)
+
+    if run.linter.msg_status != os.EX_OK:
+        sys.exit(run.linter.msg_status)
+
 class LintCommand(Command):
     user_options = []
 
@@ -39,8 +48,20 @@ class LintCommand(Command):
 
     def run(self):
         self.distribution.fetch_build_eggs(self.distribution.tests_require)
-        from pylint import epylint as lint
-        lint.py_run('randtalkbot setup')
+        lint(
+            'randtalkbot',
+            'setup',
+            )
+        lint(
+            '''--disable=
+                invalid-name,
+                no-member,
+                protected-access,
+                redefined-variable-type,
+                reimported,
+            ''',
+            'tests',
+            )
 
 class TestCommand(SetuptoolsTestCommand):
     def finalize_options(self):
@@ -51,7 +72,6 @@ class TestCommand(SetuptoolsTestCommand):
 
     def run_tests(self):
         import coverage.cmdline
-        import sys
         sys.exit(coverage.cmdline.main(argv=['run', '--source=randtalkbot', '-m', 'unittest']))
 
 setup(

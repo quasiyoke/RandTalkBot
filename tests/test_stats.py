@@ -5,9 +5,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from peewee import *
 from randtalkbot.stats import Stats
-from unittest.mock import create_autospec, patch, Mock
 
 class TestStats(unittest.TestCase):
     def setUp(self):

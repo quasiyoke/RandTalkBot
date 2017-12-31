@@ -4,18 +4,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
-import asynctest
 import datetime
 import json
 import types
-import unittest
+import asynctest
 from asynctest.mock import patch, Mock, CoroutineMock
-from peewee import *
+from peewee import SqliteDatabase
 from randtalkbot import stats
 from randtalkbot.stats_service import StatsService
 from randtalkbot.stats import Stats
 
+# pylint: disable=line-too-long
 ENDED_TALKS = (
     {'begin': 315535576, 'end': 315539910, 'partner2_sent': 195, 'searched_since': 315525609, 'partner1_sent': 110},
     {'begin': 315540982, 'end': 315549266, 'partner2_sent': 89, 'searched_since': 315532407, 'partner1_sent': 72},
@@ -376,7 +375,7 @@ class TestStatsService(asynctest.TestCase):
 
     @asynctest.ignore_loop
     def test_init__some_stats_in_db_1(self):
-        stats1 = Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
+        Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
         stats2 = Stats.create(data_json='', created=datetime.datetime(1990, 1, 1))
         stats_service = StatsService()
         self.assertEqual(stats_service._stats, stats2)
@@ -384,7 +383,7 @@ class TestStatsService(asynctest.TestCase):
     @asynctest.ignore_loop
     def test_init__some_stats_in_db_2(self):
         stats1 = Stats.create(data_json='', created=datetime.datetime(1990, 1, 1))
-        stats2 = Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
+        Stats.create(data_json='', created=datetime.datetime(1980, 1, 1))
         stats_service = StatsService()
         self.assertEqual(stats_service._stats, stats1)
 
@@ -405,18 +404,18 @@ class TestStatsService(asynctest.TestCase):
     @patch('randtalkbot.stats_service.asyncio', CoroutineMock())
     @patch('randtalkbot.stats_service.datetime', Mock())
     async def test_run__ok(self):
-        from randtalkbot.stats_service import asyncio
+        from randtalkbot.stats_service import asyncio as asyncio_mock
         from randtalkbot.stats_service import datetime as datetime_mock
         self.stats_service._update_stats.reset_mock()
         datetime_mock.datetime.utcnow.side_effect = [datetime.datetime(1990, 1, 1, 3), RuntimeError]
         with self.assertRaises(RuntimeError):
             await self.stats_service.run()
-        asyncio.sleep.assert_called_once_with(3600)
+        asyncio_mock.sleep.assert_called_once_with(3600)
         self.stats_service._update_stats.assert_called_once_with()
 
     @patch('randtalkbot.stats_service.asyncio')
     @patch('randtalkbot.stats_service.datetime', Mock())
-    async def test_run__too_late(self, asyncio):
+    async def test_run__too_late(self, asyncio_mock):
         from randtalkbot.stats_service import datetime as datetime_mock
         self.stats_service._update_stats.reset_mock()
         datetime_mock.datetime.utcnow.side_effect = [
@@ -425,7 +424,7 @@ class TestStatsService(asynctest.TestCase):
             ]
         with self.assertRaises(RuntimeError):
             await self.stats_service.run()
-        asyncio.sleep.assert_not_called()
+        asyncio_mock.sleep.assert_not_called()
         self.stats_service._update_stats.assert_called_once_with()
 
     @asynctest.ignore_loop
@@ -441,11 +440,13 @@ class TestStatsService(asynctest.TestCase):
         Talk.get_ended_talks.return_value = get_talks(ENDED_TALKS)
         self.stats_service._update_stats = types.MethodType(self.update_stats, self.stats_service)
         self.stats_service._stats = None
+        # pylint: disable=not-callable
         self.stats_service._update_stats()
         Talk.get_not_ended_talks.assert_called_once_with(after=None)
         Talk.get_ended_talks.assert_called_once_with(after=None)
         Talk.delete_old.assert_not_called()
         actual = json.loads(self.stats_service._stats.data_json)
+        # pylint: disable=bad-continuation
         expected = {
             'languages_count_distribution': [[1, 88], [2, 13]],
              'languages_popularity': [['en', 67], ['it', 34], ['ru', 12]],
@@ -511,6 +512,7 @@ class TestStatsService(asynctest.TestCase):
         Talk.get_ended_talks.return_value = get_talks(ENDED_TALKS)
         self.stats_service._update_stats = types.MethodType(self.update_stats, self.stats_service)
         # self.stats_service._stats is not None now.
+        # pylint: disable=not-callable
         self.stats_service._update_stats()
         Talk.get_not_ended_talks.assert_called_once_with(after=datetime.datetime(1990, 1, 1))
         Talk.get_ended_talks.assert_called_once_with(after=datetime.datetime(1990, 1, 1))
@@ -531,6 +533,7 @@ class TestStatsService(asynctest.TestCase):
         Talk.get_ended_talks.return_value = []
         self.stats_service._update_stats = types.MethodType(self.update_stats, self.stats_service)
         # self.stats_service._stats is not None now.
+        # pylint: disable=not-callable
         self.stats_service._update_stats()
         self.assertEqual(
             json.loads(self.stats_service._stats.data_json),
