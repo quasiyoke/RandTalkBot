@@ -19,7 +19,7 @@ from telepot.exception import TelegramError
 from unittest.mock import create_autospec
 
 database = SqliteDatabase(':memory:')
-stranger.database_proxy.initialize(database)
+stranger.DATABASE_PROXY.initialize(database)
 
 
 class TestStranger(asynctest.TestCase):

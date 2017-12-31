@@ -16,15 +16,18 @@ class ConfigurationObtainingError(Exception):
 class Configuration:
     def __init__(self, path):
         reader = codecs.getreader('utf-8')
+
         try:
-            with open(path, 'rb') as f:
-                configuration_json = json.load(reader(f))
-        except OSError as e:
-            LOGGER.error('Troubles with opening \"%s\": %s', path, e)
-            raise ConfigurationObtainingError('Troubles with opening \"{0}\"'.format(path))
-        except ValueError as e:
-            LOGGER.error('Troubles with parsing \"%s\": %s', path, e)
-            raise ConfigurationObtainingError('Troubles with parsing \"{0}\"'.format(path))
+            with open(path, 'rb') as file_descriptor:
+                configuration_json = json.load(reader(file_descriptor))
+        except OSError as err:
+            reason = f'Troubles with opening \"{path}\"'
+            LOGGER.exception(reason)
+            raise ConfigurationObtainingError(reason) from err
+        except ValueError as err:
+            reason = f'Troubles with parsing \"{path}\"'
+            LOGGER.exception(reason)
+            raise ConfigurationObtainingError(reason) from err
 
         try:
             self.database_host = configuration_json['database']['host']
@@ -33,7 +36,9 @@ class Configuration:
             self.database_password = configuration_json['database']['password']
             self.logging = configuration_json['logging']
             self.token = configuration_json['token']
-        except KeyError as e:
-            LOGGER.error('Troubles with obtaining parameters: %s', e)
-            raise ConfigurationObtainingError('Troubles with obtaining parameters \"{0}\"'.format(e))
+        except (KeyError, TypeError) as err:
+            reason = 'Troubles with obtaining parameters'
+            LOGGER.exception(reason)
+            raise ConfigurationObtainingError(reason) from err
+
         self.admins_telegram_ids = configuration_json.get('admins', [])

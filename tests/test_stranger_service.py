@@ -25,7 +25,7 @@ class TestStrangerService(asynctest.TestCase):
 
     def setUp(self):
         self.stranger_service = StrangerService()
-        stranger.database_proxy.initialize(self.database)
+        stranger.DATABASE_PROXY.initialize(self.database)
         self.database.create_tables([Stranger])
         self.stranger_0 = Stranger.create(
             invitation='foo',

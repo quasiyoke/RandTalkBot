@@ -4,7 +4,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import logging
 import re
 import telepot
@@ -33,15 +32,15 @@ class StrangerSender(telepot.helper.Sender):
         self.update_translation()
 
     @classmethod
-    def _escape_markdown(cls, s):
-        '''
-        Escapes string to prevent injecting Markdown into notifications.
+    def _escape_markdown(cls, string_instance):
+        """Escapes string to prevent injecting Markdown into notifications.
         @see https://core.telegram.org/bots/api#using-markdown
-        '''
-        if s is not str:
-            s = str(s)
-        s = cls.MARKDOWN_RE.sub(r'\\\1', s)
-        return s
+        """
+        if string_instance is not str:
+            string_instance = str(string_instance)
+
+        string_instance = cls.MARKDOWN_RE.sub(r'\\\1', string_instance)
+        return string_instance
 
     async def answer_inline_query(self, query_id, answers):
         def translate(item):
@@ -55,10 +54,10 @@ class StrangerSender(telepot.helper.Sender):
         await self._bot.answerInlineQuery(query_id, answers, is_personal=True)
 
     async def send(self, message):
-        '''
-        @raises StrangerSenderError if message's content type is not supported.
-        @raises TelegramError if stranger has blocked the bot.
-        '''
+        """Raises:
+            StrangerSenderError: If message's content type is not supported.
+            TelegramError: If stranger has blocked the bot.
+        """
         if message.is_reply:
             raise StrangerSenderError('Reply can\'t be sent.')
         try:
@@ -68,13 +67,20 @@ class StrangerSender(telepot.helper.Sender):
         else:
             await getattr(self, method_name)(**message.sending_kwargs)
 
-    async def send_notification(self, message, *args, disable_notification=None, disable_web_page_preview=None,
-        reply_markup=None):
-        '''
-        @raise TelegramError if stranger has blocked the bot.
-        '''
+    async def send_notification(
+            self,
+            message,
+            *args,
+            disable_notification=None,
+            disable_web_page_preview=None,
+            reply_markup=None,
+        ):
+        """Raises:
+            TelegramError: If stranger has blocked the bot.
+        """
         args = [StrangerSender._escape_markdown(arg) for arg in args]
         message = self._(message).format(*args)
+
         if reply_markup and 'keyboard' in reply_markup:
             reply_markup = {
                 'keyboard': [
@@ -83,6 +89,8 @@ class StrangerSender(telepot.helper.Sender):
                     ],
                 'one_time_keyboard': True,
                 }
+
+        # pylint: disable=no-member
         await self.sendMessage(
             '*Rand Talk:* {}'.format(message),
             disable_notification=disable_notification,

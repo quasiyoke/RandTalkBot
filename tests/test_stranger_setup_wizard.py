@@ -8,6 +8,7 @@ import asyncio
 import asynctest
 from asynctest.mock import patch, Mock, CoroutineMock
 from randtalkbot.errors import *
+from randtalkbot.i18n import LanguageNotFoundError
 from randtalkbot.stranger_handler import *
 from randtalkbot.stranger_sender_service import *
 from randtalkbot.stranger_service import StrangerServiceError
@@ -118,7 +119,6 @@ class TestStrangerSetupWizard(asynctest.TestCase):
     @patch('randtalkbot.stranger_setup_wizard.get_languages_codes', Mock())
     async def test_handle__languages_language_not_found(self):
         from randtalkbot.stranger_setup_wizard import get_languages_codes
-        from randtalkbot.i18n import LanguageNotFoundError
         self.stranger.wizard = 'setup'
         self.stranger.wizard_step = 'languages'
         get_languages_codes.side_effect = LanguageNotFoundError('foo_lang')

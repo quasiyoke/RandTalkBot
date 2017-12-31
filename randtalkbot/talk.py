@@ -6,16 +6,18 @@
 
 import datetime
 import logging
+from peewee import DateTimeField, DoesNotExist, ForeignKeyField, IntegerField, Model, Proxy
 from .errors import WrongStrangerError
 from .stranger import Stranger
 from .stranger_service import StrangerService
-from peewee import *
 
 LOGGER = logging.getLogger('randtalkbot.talk')
+DATABASE_PROXY = Proxy()
 
-def _(s): return s
 
-database_proxy = Proxy()
+def _(string_instance):
+    return string_instance
+
 
 class Talk(Model):
     partner1 = ForeignKeyField(Stranger, related_name='talks_as_partner1')
@@ -27,7 +29,7 @@ class Talk(Model):
     end = DateTimeField(index=True, null=True)
 
     class Meta:
-        database = database_proxy
+        database = DATABASE_PROXY
 
     @classmethod
     def delete_old(cls, before):
@@ -50,7 +52,8 @@ class Talk(Model):
 
     @classmethod
     def get_not_ended_talks(cls, after=None):
-        talks = cls.select().where(Talk.end == None)
+        # pylint: disable=singleton-comparison
+        talks = cls.select().where(cls.end == None)
         if after is not None:
             talks = talks.where(Talk.begin >= after)
         return talks
@@ -58,7 +61,10 @@ class Talk(Model):
     @classmethod
     def get_talk(cls, stranger):
         try:
-            talk = cls.get(((cls.partner1 == stranger) | (cls.partner2 == stranger)) & (cls.end == None))
+            # pylint: disable=singleton-comparison
+            talk = cls.get(
+                ((cls.partner1 == stranger) | (cls.partner2 == stranger)) & (cls.end == None),
+                )
         except DoesNotExist:
             return None
         else:
@@ -68,9 +74,12 @@ class Talk(Model):
             return talk
 
     def get_partner(self, stranger):
-        '''
-        @raise WrongStrangerError
-        '''
+        """Raises:
+            WrongStrangerError
+
+        Returns:
+            Stranger
+        """
         return Stranger.get(id=self.get_partner_id(stranger))
 
     def get_partner_id(self, stranger):

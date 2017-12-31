@@ -355,7 +355,7 @@ class TestStatsService(asynctest.TestCase):
         self.database = SqliteDatabase(':memory:')
 
     def setUp(self):
-        stats.database_proxy.initialize(self.database)
+        stats.DATABASE_PROXY.initialize(self.database)
         self.database.create_tables([Stats])
         self.update_stats = StatsService._update_stats
         StatsService._update_stats = Mock()
@@ -445,9 +445,9 @@ class TestStatsService(asynctest.TestCase):
         Talk.get_not_ended_talks.assert_called_once_with(after=None)
         Talk.get_ended_talks.assert_called_once_with(after=None)
         Talk.delete_old.assert_not_called()
-        self.assertEqual(
-            json.loads(self.stats_service._stats.data_json),
-            {'languages_count_distribution': [[1, 88], [2, 13]],
+        actual = json.loads(self.stats_service._stats.data_json)
+        expected = {
+            'languages_count_distribution': [[1, 88], [2, 13]],
              'languages_popularity': [['en', 67], ['it', 34], ['ru', 12]],
              'languages_to_orientation': [['en',
                                            {'female female': 6,
@@ -492,8 +492,9 @@ class TestStatsService(asynctest.TestCase):
                                                 '60': 0,
                                                 '10': 0,
                                                 'more': 21}},
-             'total_count': 101},
-            )
+             'total_count': 101,
+            }
+        self.assertEqual(actual, expected)
 
     @asynctest.ignore_loop
     @patch('randtalkbot.stranger_service.StrangerService', Mock())

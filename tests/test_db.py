@@ -41,9 +41,9 @@ class TestDB(unittest.TestCase):
             user='foo_user',
             password='foo_password',
             )
-        self.stats_module_mock.database_proxy.initialize.assert_called_once_with(self.database)
-        self.stranger_module_mock.database_proxy.initialize.assert_called_once_with(self.database)
-        self.talk_module_mock.database_proxy.initialize.assert_called_once_with(self.database)
+        self.stats_module_mock.DATABASE_PROXY.initialize.assert_called_once_with(self.database)
+        self.stranger_module_mock.DATABASE_PROXY.initialize.assert_called_once_with(self.database)
+        self.talk_module_mock.DATABASE_PROXY.initialize.assert_called_once_with(self.database)
 
     def test_init__database_troubles(self):
         self.RetryingDB.return_value.connect.side_effect = DatabaseError()

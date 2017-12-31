@@ -15,8 +15,8 @@ from randtalkbot.stranger import Stranger
 from unittest.mock import create_autospec, patch, Mock
 
 database = SqliteDatabase(':memory:')
-stranger.database_proxy.initialize(database)
-talk.database_proxy.initialize(database)
+stranger.DATABASE_PROXY.initialize(database)
+talk.DATABASE_PROXY.initialize(database)
 
 class TestTalk(unittest.TestCase):
     def setUp(self):
