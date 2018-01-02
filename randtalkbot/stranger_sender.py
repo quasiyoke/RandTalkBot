@@ -60,6 +60,7 @@ class StrangerSender(telepot.helper.Sender):
         """
         if message.is_reply:
             raise StrangerSenderError('Reply can\'t be sent.')
+
         try:
             method_name = StrangerSender.MESSAGE_TYPE_TO_METHOD_NAME[message.type]
         except KeyError:

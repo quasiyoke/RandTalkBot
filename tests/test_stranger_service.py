@@ -100,6 +100,7 @@ class TestStrangerService(asynctest.TestCase):
     def test_get_cached_stranger__not_cached(self):
         stranger_mock = Mock()
         stranger_mock.id = 31416
+        stranger_mock.invited_by = None
         self.assertEqual(self.stranger_service.get_cached_stranger(stranger_mock), stranger_mock)
         self.assertEqual(self.stranger_service._strangers_cache[31416], stranger_mock)
 

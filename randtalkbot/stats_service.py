@@ -179,13 +179,13 @@ class StatsService:
         self._stats = stats
         LOGGER.info('Stats were updated')
         LOGGER.debug(
-            'StrangerService cache size: %dictionary',
+            'StrangerService cache size: %d',
             StrangerService.get_instance().get_cache_size(),
             )
 
         try:
             LOGGER.debug(
-                'StrangerSenderService cache size: %dictionary',
+                'StrangerSenderService cache size: %d',
                 StrangerSenderService.get_instance().get_cache_size(),
                 )
         except StrangerSenderServiceError:

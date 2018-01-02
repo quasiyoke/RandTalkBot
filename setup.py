@@ -51,6 +51,7 @@ class LintCommand(Command):
         lint(
             'randtalkbot',
             'setup',
+            'telepot_testing',
             )
         lint(
             '''--disable=

@@ -39,6 +39,17 @@ class StrangerService:
             return self._strangers_cache[stranger.id]
         except KeyError:
             self._strangers_cache[stranger.id] = stranger
+
+            if stranger.invited_by is not None:
+                if stranger.invited_by.invited_by_id == stranger.id:
+                    LOGGER.error(
+                        'Circular reference between invited strangers %d and %d',
+                        stranger.id,
+                        stranger.invited_by_id,
+                        )
+                else:
+                    stranger.invited_by = self.get_cached_stranger(stranger.invited_by)
+
             return stranger
 
     def get_cache_size(self):

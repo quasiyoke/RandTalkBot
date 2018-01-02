@@ -34,14 +34,16 @@ class StrangerHandler(telepot.aio.helper.UserHandler):
         super(StrangerHandler, self).__init__(seed_tuple, *args, **kwargs)
         bot, initial_msg, unused_seed = seed_tuple
         self._from_id = initial_msg['from']['id']
+
         try:
             self._stranger = StrangerService.get_instance() \
                 .get_or_create_stranger(self._from_id)
         except StrangerServiceError as err:
             LOGGER.exception('Problems with StrangerHandler construction')
-            sys.exit('Problems with StrangerHandler construction: %s' % err)
-        self._sender = StrangerSenderService.get_instance(bot). \
-            get_or_create_stranger_sender(self._stranger)
+            sys.exit(f'Problems with StrangerHandler construction. {err}')
+
+        self._sender = StrangerSenderService.get_instance(bot) \
+            .get_or_create_stranger_sender(self._stranger)
         self._stranger_setup_wizard = StrangerSetupWizard(self._stranger)
         self._deferred_advertising = None
 

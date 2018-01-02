@@ -74,7 +74,7 @@ class TestStranger(asynctest.TestCase):
         self.assertEqual(self.stranger.bonus_count, 1001)
         self.stranger._notify_about_bonuses.assert_not_called()
 
-    @patch('randtalkbot.stranger.asyncio', CoroutineMock())
+    @patch('randtalkbot.stranger.asyncio.sleep', CoroutineMock())
     @patch('randtalkbot.stranger.StatsService')
     async def test_advertise__people_are_searching_chat_lacks_males(self, stats_service_mock):
         from randtalkbot.stranger import asyncio as asyncio_mock
@@ -1005,6 +1005,10 @@ class TestStranger(asynctest.TestCase):
     @patch('randtalkbot.stranger.StatsService', Mock())
     async def test_reward_inviter__chat_lacks_such_user(self):
         from randtalkbot.stranger import StatsService
+        talk = Mock()
+        talk.partner1_sent = 1
+        talk.partner2_sent = 1
+        self.stranger.get_talk = Mock(return_value=talk)
         StatsService.get_instance \
             .return_value \
             .get_stats \
@@ -1029,6 +1033,11 @@ class TestStranger(asynctest.TestCase):
     @patch('randtalkbot.stranger.StatsService', Mock())
     async def test_reward_inviter__chat_doesnt_lack_such_user(self):
         from randtalkbot.stranger import StatsService
+        from randtalkbot.stranger import StatsService
+        talk = Mock()
+        talk.partner1_sent = 1
+        talk.partner2_sent = 1
+        self.stranger.get_talk = Mock(return_value=talk)
         StatsService.get_instance \
             .return_value \
             .get_stats \

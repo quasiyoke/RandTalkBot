@@ -198,6 +198,11 @@ class StrangerSetupWizard(Wizard):
                         ' at special keyboard.'
                         )
 
+                LOGGER.debug(
+                    'Sending languages setup notification `%s`. Keyboard: %s',
+                    prompt,
+                    keyboard,
+                    )
                 await self._sender.send_notification(
                     prompt,
                     languages_enumeration,

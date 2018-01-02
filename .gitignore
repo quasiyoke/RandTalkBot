@@ -62,3 +62,6 @@ bin/
 share/
 lib64
 pip-selfcheck.json
+
+# IDEs
+.idea/

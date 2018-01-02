@@ -171,6 +171,8 @@ Launch some specific test.
 Codestyle
 ^^^^^^^^^
 
+Please notice that tests' source code is also covered with codestyle checks but requirements for it are softer.
+
 ::
 
     $ python setup.py lint

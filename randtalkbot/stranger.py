@@ -24,7 +24,6 @@ INVITATION_LENGTH = 10
 LANGUAGES_MAX_LENGTH = 40
 LOGGER = logging.getLogger('randtalkbot.stranger')
 
-
 def _(string_instance):
     return string_instance
 
@@ -110,6 +109,7 @@ class Stranger(Model):
         self.bonus_count += bonuses_delta
         self.save()
         bonuses_notifications_muted = getattr(self, '_bonuses_notifications_muted', False)
+
         if not bonuses_notifications_muted:
             await self._notify_about_bonuses(bonuses_delta)
 
@@ -121,47 +121,52 @@ class Stranger(Model):
             .where(Stranger.looking_for_partner_from != None) \
             .count()
 
-        if searching_for_partner_count > 1:
-            if StatsService.get_instance().get_stats().get_sex_ratio() >= 1:
-                message = _(
-                    'The search is going on. {0} users are looking for partner -- change'
-                    ' your preferences (languages, partner\'s sex) using /setup command to talk'
-                    ' with them.\n'
-                    'Chat *lacks females!* Send the link to your friends and earn {1} bonuses'
-                    ' for every invited female and {2} bonus for each male (the more bonuses'
-                    ' you have -- the faster partner\'s search will be):',
-                    )
-            else:
-                message = _(
-                    'The search is going on. {0} users are looking for partner -- change your'
-                    ' preferences (languages, partner\'s sex) using /setup command to talk'
-                    ' with them.\n'
-                    'Chat *lacks males!* Send the link to your friends and earn {1} bonuses'
-                    ' for every invited male and {2} bonus for each female (the more bonuses'
-                    ' you have -- the faster partner\'s search will be):',
-                    )
-            sender = self.get_sender()
-            try:
-                await sender.send_notification(
-                    message,
-                    searching_for_partner_count,
-                    type(self).REWARD_BIG,
-                    type(self).REWARD_SMALL,
-                    disable_notification=True,
-                    )
-                await sender.send_notification(
-                    _(
-                        'Do you want to talk with somebody, practice in foreign languages or you'
-                        ' just want to have some fun? Rand Talk will help you!'
-                        ' It\'s a bot matching you with a random stranger of desired sex'
-                        ' speaking on your language. {0}',
-                        ),
-                    self.get_invitation_link(),
-                    disable_notification=True,
-                    disable_web_page_preview=True,
-                    )
-            except TelegramError as err:
-                LOGGER.warning('Advertise. Can\'t notify the stranger. %s', err)
+        if searching_for_partner_count <= 1:
+            # Let's not advertise if there's nobody to talk with.
+            return
+
+        if StatsService.get_instance().get_stats().get_sex_ratio() >= 1:
+            message = _(
+                'The search is going on. {0} users are looking for partner -- change'
+                ' your preferences (languages, partner\'s sex) using /setup command to talk'
+                ' with them.\n'
+                'Chat *lacks females!* Send the link to your friends and earn {1} bonuses'
+                ' for every invited female and {2} bonus for each male (the more bonuses'
+                ' you have -- the faster partner\'s search will be):',
+                )
+        else:
+            message = _(
+                'The search is going on. {0} users are looking for partner -- change your'
+                ' preferences (languages, partner\'s sex) using /setup command to talk'
+                ' with them.\n'
+                'Chat *lacks males!* Send the link to your friends and earn {1} bonuses'
+                ' for every invited male and {2} bonus for each female (the more bonuses'
+                ' you have -- the faster partner\'s search will be):',
+                )
+
+        sender = self.get_sender()
+
+        try:
+            await sender.send_notification(
+                message,
+                searching_for_partner_count,
+                type(self).REWARD_BIG,
+                type(self).REWARD_SMALL,
+                disable_notification=True,
+                )
+            await sender.send_notification(
+                _(
+                    'Do you want to talk with somebody, practice in foreign languages or you'
+                    ' just want to have some fun? Rand Talk will help you!'
+                    ' It\'s a bot matching you with a random stranger of desired sex'
+                    ' speaking on your language. {0}',
+                    ),
+                self.get_invitation_link(),
+                disable_notification=True,
+                disable_web_page_preview=True,
+                )
+        except TelegramError as err:
+            LOGGER.warning('Advertise. Can\'t notify the stranger. %s', err)
 
     def advertise_later(self):
         # pylint: disable=attribute-defined-outside-init
@@ -190,7 +195,8 @@ class Stranger(Model):
         return [language for language in self.get_languages() if language in partner_languages]
 
     def get_invitation_link(self):
-        return 'https://telegram.me/RandTalkBot?start=' + self.get_start_args()
+        start_args = self.get_start_args()
+        return f'https://telegram.me/RandTalkBot?start={start_args}'
 
     def get_languages(self):
         try:
@@ -256,6 +262,7 @@ class Stranger(Model):
         # pylint: disable=attribute-defined-outside-init
         self._bonuses_notifications_muted = True
         asyncio.get_event_loop().create_task(self._unmute_bonuses_notifications(self.bonus_count))
+        LOGGER.debug('Bonuses notifications were muted for %d', self.id)
 
     async def _unmute_bonuses_notifications(self, last_bonuses_count):
         await asyncio.sleep(type(self).UNMUTE_BONUSES_NOTIFICATIONS_DELAY)
@@ -424,6 +431,17 @@ class Stranger(Model):
         self._deferred_advertising = None
 
     async def _reward_inviter(self):
+        if self.was_invited_as is not None or self.invited_by_id is None:
+            return
+
+        talk = self.get_talk()
+        threshold_messages_count = 1
+
+        if talk is None or talk.partner1_sent != threshold_messages_count or \
+                talk.partner2_sent != threshold_messages_count:
+            return
+
+        LOGGER.debug('Rewarding inviter of %d', self.id)
         self.was_invited_as = self.sex
         self.save()
         sex_ratio = StatsService.get_instance().get_stats().get_sex_ratio()
@@ -458,12 +476,14 @@ class Stranger(Model):
 
         if partner is None:
             raise MissingPartnerError()
+
         try:
             await partner.send(message)
         except:
             raise
         else:
             self.get_talk().increment_sent(self)
+            await self._reward_inviter()
 
     def set_languages(self, languages):
         """Raises:
