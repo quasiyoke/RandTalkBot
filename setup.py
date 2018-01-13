@@ -10,7 +10,7 @@ from setuptools import setup, Command
 from setuptools.command.test import test as SetuptoolsTestCommand
 from randtalkbot.utils import __version__
 
-with open('README.rst', 'rb') as file_descriptor:
+with open('README.md', 'rb') as file_descriptor:
     LONG_DESCRIPTION = file_descriptor.read() \
         .decode('utf-8')
 
@@ -33,7 +33,7 @@ def lint(*options):
     from pylint.lint import Run
     run = Run(options, exit=False)
 
-    if run.linter.msg_status != os.EX_OK:
+    if run.linter.msg_status != getattr(os, 'EX_OK', 0):
         sys.exit(run.linter.msg_status)
 
 class LintCommand(Command):

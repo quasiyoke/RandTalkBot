@@ -9,6 +9,7 @@
 import asyncio
 import logging
 import logging.config
+import os
 import sys
 from docopt import docopt
 from .bot import Bot
@@ -44,7 +45,8 @@ def main():
     try:
         db = DB(configuration)
     except DBError as err:
-        sys.exit(f'Can\'t construct DB. {err}')
+        LOGGER.exception('Can\'t construct DB')
+        sys.exit(getattr(os, 'EX_CONFIG', 78))
 
     if arguments['install']:
         LOGGER.info('Installing RandTalkBot')
