@@ -4,13 +4,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import logging
 import telepot
-from .admin_handler import AdminHandler
-from .stranger_handler import StrangerHandler
 from telepot.delegate import per_from_id_in, per_from_id_except
 from telepot.aio.delegate import create_open, pave_event_space
+from .admin_handler import AdminHandler
+from .stranger_handler import StrangerHandler
 
 LOGGER = logging.getLogger('randtalkbot.bot')
 

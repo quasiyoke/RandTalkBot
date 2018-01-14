@@ -23,11 +23,11 @@ class StrangerSenderService:
         if cls._instance is None:
             if bot is None:
                 raise StrangerSenderServiceError(
-                    'Instance wasn\'t initialized. Provide arguments to '
-                    'construct one.',
+                    'Instance wasn\'t initialized. Provide arguments to construct one.',
                     )
             else:
                 cls._instance = cls(bot)
+
         return cls._instance
 
     def get_cache_size(self):

@@ -5,18 +5,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
-from randtalkbot.utils import __version__
+import sys
 from setuptools import setup, Command
 from setuptools.command.test import test as SetuptoolsTestCommand
+from randtalkbot.utils import __version__
 
-with open('README.rst', 'rb') as f:
-    long_description = f.read().decode('utf-8')
+with open('README.md', 'rb') as file_descriptor:
+    LONG_DESCRIPTION = file_descriptor.read() \
+        .decode('utf-8')
 
 class CoverageCommand(Command):
     user_options = []
 
     def initialize_options(self):
+        # pylint: disable=attribute-defined-outside-init
         self.coveralls_args = []
 
     def finalize_options(self):
@@ -27,21 +29,58 @@ class CoverageCommand(Command):
         from coveralls import cli
         cli.main(self.coveralls_args)
 
+def lint(*options):
+    from pylint.lint import Run
+    run = Run(options, exit=False)
+
+    if run.linter.msg_status != getattr(os, 'EX_OK', 0):
+        sys.exit(run.linter.msg_status)
+
+class LintCommand(Command):
+    user_options = []
+
+    def initialize_options(self):
+        # pylint: disable=attribute-defined-outside-init
+        self.coveralls_args = []
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        self.distribution.fetch_build_eggs(self.distribution.tests_require)
+        lint(
+            'randtalkbot',
+            'setup',
+            'telepot_testing',
+            )
+        lint(
+            '''--disable=
+                invalid-name,
+                no-member,
+                protected-access,
+                redefined-variable-type,
+                reimported,
+            ''',
+            'tests',
+            )
+
 class TestCommand(SetuptoolsTestCommand):
     def finalize_options(self):
         super(TestCommand, self).finalize_options()
         self.test_args = []
+        # pylint: disable=attribute-defined-outside-init
         self.test_suite = True
 
     def run_tests(self):
-        import sys, coverage.cmdline
+        import coverage.cmdline
         sys.exit(coverage.cmdline.main(argv=['run', '--source=randtalkbot', '-m', 'unittest']))
 
 setup(
     name='RandTalkBot',
     version=__version__,
-    description='Telegram bot matching you with a random person of desired sex speaking on your language(s).',
-    long_description=long_description,
+    description='Telegram bot matching you with a random person of desired sex speaking on your'
+    ' language(s).',
+    long_description=LONG_DESCRIPTION,
     keywords=['telegram', 'bot', 'anonymous', 'chat'],
     license='AGPLv3+',
     author='Pyotr Ermishkin',
@@ -56,6 +95,7 @@ setup(
         },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
+        'Framework :: Telepot',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
@@ -71,10 +111,12 @@ setup(
         ],
     tests_require=[
         'asynctest>=0.6,<0.7',
-        'coveralls>=1.1,<2.0',
+        'coveralls>=1.2.0,<1.3',
+        'pylint>=1.8.1,<1.9',
         ],
     cmdclass={
         'coverage': CoverageCommand,
+        'lint': LintCommand,
         'test': TestCommand,
         },
     )

@@ -4,21 +4,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''randtalkbot.randtalkbot: provides entry point main().'''
+"""randtalkbot.randtalkbot: provides entry point main()."""
 
 import asyncio
 import logging
 import logging.config
+import os
 import sys
+from docopt import docopt
 from .bot import Bot
 from .configuration import Configuration, ConfigurationObtainingError
 from .db import DB
 from .errors import DBError
 from .stats_service import StatsService
-from .stranger_sender_service import StrangerSenderService
 from .utils import __version__
-from docopt import docopt
-from randtalkbot import stranger, stranger_service
 
 DOC = '''RandTalkBot
 
@@ -38,22 +37,24 @@ def main():
 
     try:
         configuration = Configuration(arguments['CONFIGURATION'])
-    except ConfigurationObtainingError as e:
-        sys.exit('Can\'t obtain configuration. {}'.format(e))
+    except ConfigurationObtainingError as err:
+        sys.exit(f'Can\'t obtain configuration. {err}')
 
     logging.config.dictConfig(configuration.logging)
 
     try:
         db = DB(configuration)
-    except DBError as e:
-        sys.exit('Can\'t construct DB. {}'.format(e))
+    except DBError as err:
+        LOGGER.exception('Can\'t construct DB')
+        sys.exit(getattr(os, 'EX_CONFIG', 78))
 
     if arguments['install']:
         LOGGER.info('Installing RandTalkBot')
+
         try:
             db.install()
-        except DBError as e:
-            sys.exit('Can\'t install databases. {}'.format(e))
+        except DBError as err:
+            sys.exit(f'Can\'t install databases. {err}')
     else:
         LOGGER.info('Executing RandTalkBot')
         loop = asyncio.get_event_loop()

@@ -5,8 +5,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from unittest.mock import patch, Mock
 from randtalkbot.message import Message, UnsupportedContentError
-from unittest.mock import create_autospec, patch, Mock
 
 class TestMessage(unittest.TestCase):
     def setUp(self):

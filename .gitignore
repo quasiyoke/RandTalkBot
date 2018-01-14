@@ -60,5 +60,12 @@ conf*.json
 # Virtualenv
 bin/
 share/
+include/
 lib64
 pip-selfcheck.json
+
+# IDEs
+.idea/
+
+configuration/
+db/

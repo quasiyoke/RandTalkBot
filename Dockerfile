@@ -1,14 +1,8 @@
 FROM python:3.6
-MAINTAINER Pyotr Ermishkin <quasiyoke@gmail.com>
+MAINTAINER Petr Ermishkin <quasiyoke@gmail.com>
 
-COPY randtalkbot /randtalkbot/
-COPY docker-entrypoint.sh /
-COPY randtalkbot-runner.py /
-COPY README.rst /
-COPY setup.py /
-
-VOLUME /configuration
+COPY randtalkbot/ /randtalkbot/
+COPY docker-entrypoint.sh randtalkbot-runner.py README.md setup.py /
 
 RUN python /setup.py install
-
 CMD ["/docker-entrypoint.sh"]

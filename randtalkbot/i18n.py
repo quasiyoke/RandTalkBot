@@ -4,14 +4,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import gettext
 import logging
 import os
 import pycountry
-import re
 from .utils import LOCALE_DIR
-from collections import OrderedDict
-from os import path
 
 LOGGER = logging.getLogger('randtalkbot.i18n')
 QUOTES = '\"\'“”«»'
@@ -21,69 +19,84 @@ class LanguageNotFoundError(Exception):
         super(LanguageNotFoundError, self).__init__('Language \"{0}\" wasn\'t found.'.format(name))
         self.name = name
 
-def _get_deduplicated(a):
-    '''
-    Removes duplicates keeping list order.
+def _get_deduplicated(list_instance):
+    """Removes duplicates keeping list order.
 
     >>> _get_deduplicated(['ru', 'en', 'ru', ])
     ['ru', 'en', ]
-    '''
-    return list(OrderedDict.fromkeys(a))
+    """
+    return list(OrderedDict.fromkeys(list_instance))
 
 def _get_language_code(name):
-    '''
-    @throws LanguageNotFoundError
-    '''
+    """Raises:
+        LanguageNotFoundError: If unable to recognize the language.
+
+    Returns:
+        str: Language code.
+    """
     try:
         return LANGUAGES_NAMES_TO_CODES[name.lower()]
     except KeyError:
         raise LanguageNotFoundError(name)
 
 def _get_language_name(code):
-    '''
-    @throws LanguageNotFoundError
-    '''
+    """Raises:
+        LanguageNotFoundError: If unable to recognize the language.
+
+    Returns:
+        str: Language name.
+    """
     try:
         return LANGUAGES_CODES_TO_NAMES[code]
     except KeyError:
         raise LanguageNotFoundError(code)
 
 def get_languages_names(codes):
-    '''
-    @throws LanguageNotFoundError
-    '''
+    """Raises:
+        LanguageNotFoundError: If unable to recognize some language.
+
+    Returns:
+        str: Comma-separated list of languages' names.
+    """
     names = map(_get_language_name, codes)
     return ', '.join(names)
 
 def get_languages_codes(names):
-    '''
-    @throws LanguageNotFoundError
-    '''
+    """Raises:
+        LanguageNotFoundError: If unable to recognize some language.
+
+    Returns:
+        list<str>: Deduplicated list of languages' codes.
+    """
     names = ''.join([c for c in names if c not in QUOTES])
+
     if names.strip().lower() in SAME_LANGUAGE_NAMES:
         return ['same']
+
     names = [name.strip() for name in names.split(',')]
-    names = filter(bool, names)
-    names = map(_get_language_code, names)
-    names = _get_deduplicated(names)
-    return names
+    compact_names = filter(bool, names)
+    languages_codes = map(_get_language_code, compact_names)
+    unique_languages_codes = _get_deduplicated(languages_codes)
+    return unique_languages_codes
 
 def get_translation(languages):
     if not languages:
         languages = ['en']
+
     try:
-        translation = gettext.translation(
+        translation_instance = gettext.translation(
             'randtalkbot',
             localedir=LOCALE_DIR,
             languages=languages,
             )
-    except (IOError, OSError):
-        translation = gettext.translation(
+    except OSError:
+        translation_instance = gettext.translation(
             'randtalkbot',
             localedir=LOCALE_DIR,
             languages=['en'],
             )
-    return translation.gettext
+
+    return translation_instance.gettext
 
 def get_translations():
     for filename in os.listdir(LOCALE_DIR):

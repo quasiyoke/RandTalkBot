@@ -6,21 +6,20 @@
 
 import datetime
 import unittest
-from peewee import *
-from playhouse.test_utils import test_database
+from unittest.mock import patch, Mock
+from peewee import SqliteDatabase
 from randtalkbot import talk, stranger
 from randtalkbot.errors import WrongStrangerError
 from randtalkbot.talk import Talk
 from randtalkbot.stranger import Stranger
-from unittest.mock import create_autospec, patch, Mock
 
-database = SqliteDatabase(':memory:')
-stranger.database_proxy.initialize(database)
-talk.database_proxy.initialize(database)
+DATABASE = SqliteDatabase(':memory:')
+stranger.DATABASE_PROXY.initialize(DATABASE)
+talk.DATABASE_PROXY.initialize(DATABASE)
 
 class TestTalk(unittest.TestCase):
     def setUp(self):
-        database.create_tables([Stranger, Talk])
+        DATABASE.create_tables([Stranger, Talk])
         self.stranger_0 = Stranger.create(
             invitation='foo',
             telegram_id=31416,
@@ -78,7 +77,7 @@ class TestTalk(unittest.TestCase):
             )
 
     def tearDown(self):
-        database.drop_tables([Talk, Stranger])
+        DATABASE.drop_tables([Talk, Stranger])
 
     def test_delete_old__0(self):
         Talk.delete_old(datetime.datetime(2010, 1, 2, 12))
@@ -163,12 +162,13 @@ class TestTalk(unittest.TestCase):
     @patch('randtalkbot.talk.StrangerService', Mock())
     def test_get_talk__0(self):
         from randtalkbot.talk import StrangerService
+        # pylint: disable=no-member
         stranger_service = StrangerService.get_instance.return_value
         stranger_service.get_cached_stranger.side_effect = [self.stranger_2, self.stranger_3, ]
-        talk = Talk.get_talk(self.stranger_0)
-        self.assertEqual(talk, self.talk_0)
-        self.assertEqual(talk.partner1, self.stranger_2)
-        self.assertEqual(talk.partner2, self.stranger_3)
+        talk_instance = Talk.get_talk(self.stranger_0)
+        self.assertEqual(talk_instance, self.talk_0)
+        self.assertEqual(talk_instance.partner1, self.stranger_2)
+        self.assertEqual(talk_instance.partner2, self.stranger_3)
 
     @patch('randtalkbot.talk.StrangerService', Mock())
     def test_get_talk__1(self):

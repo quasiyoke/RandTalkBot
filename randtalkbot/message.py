@@ -5,7 +5,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import base64
-import binascii
 import logging
 import json
 import re
@@ -15,11 +14,11 @@ from .errors import UnsupportedContentError
 LOGGER = logging.getLogger('randtalkbot.message')
 
 class Message:
-    COMMAND_RE_PATTERN = re.compile('^/([a-z_]+)\\b\s*(.*)$')
+    COMMAND_RE_PATTERN = re.compile(r'^/([a-z_]+)\b\s*(.*)$')
 
     def __init__(self, message_json):
         try:
-            content_type, chat_type, chat_id = telepot.glance(message_json)
+            content_type, unused_chat_type, unused_chat_id = telepot.glance(message_json)
         except KeyError:
             raise UnsupportedContentError()
         if 'forward_from' in message_json:
@@ -29,25 +28,28 @@ class Message:
         self.type = content_type
         self.command = None
         self.command_args = None
+        self.sending_kwargs = {}
+
         try:
             init_method = getattr(self, '_init_' + content_type)
         except AttributeError:
             raise UnsupportedContentError()
+
         init_method(message_json)
 
     def decode_command_args(self):
         try:
             command_args = base64.urlsafe_b64decode(self.command_args)
-        except (TypeError, ValueError, binascii.Error) as e:
-            raise UnsupportedContentError('Can\'t decode base 64: {0}'.format(e))
+        except (TypeError, ValueError) as err:
+            raise UnsupportedContentError('Can\'t decode base 64') from err
         try:
             command_args = command_args.decode('utf-8')
-        except UnicodeDecodeError as e:
-            raise UnsupportedContentError('Can\'t decode UTF-8: {0}'.format(e))
+        except UnicodeDecodeError as err:
+            raise UnsupportedContentError('Can\'t decode UTF-8') from err
         try:
             command_args = json.loads(command_args)
-        except (TypeError, ValueError) as e:
-            raise UnsupportedContentError('Can\'t decode JSON: {0}'.format(e))
+        except (TypeError, ValueError) as err:
+            raise UnsupportedContentError('Can\'t decode JSON') from err
         return command_args
 
     def _init_audio(self, message_json):
@@ -97,7 +99,7 @@ class Message:
         except (KeyError, TypeError):
             raise UnsupportedContentError()
 
-    def _init_text(self, message_json):
+    def _init_text(self, unused_message_json):
         self.sending_kwargs = {
             'text': self.text,
             }

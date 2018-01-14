@@ -5,9 +5,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from unittest.mock import call, patch
 from randtalkbot.i18n import get_languages_names, get_languages_codes, get_translation, \
     LanguageNotFoundError
-from unittest.mock import call, patch, Mock
 
 class TestI18n(unittest.TestCase):
     def test_get_languages_names__supported(self):

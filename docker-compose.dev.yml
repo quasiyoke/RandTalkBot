@@ -1,0 +1,35 @@
+version: '3.3'
+services:
+  bot:
+    build: .
+    image: quasiyoke/randtalkbot
+    command: /docker-entrypoint.sh
+    volumes:
+      - ./configuration/:/configuration/
+      - ./randtalkbot/:/randtalkbot/
+    secrets:
+      - source: bot_token
+        target: token
+      - db_password
+    depends_on:
+      - db
+  db:
+    image: mariadb:10.3
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: randtalkbot
+      MYSQL_USER: randtalkbot
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    restart: always
+    secrets:
+      - db_root_password
+      - db_password
+    volumes:
+      - ./db/:/var/lib/mysql/
+secrets:
+  bot_token:
+    file: ./configuration/bot_token
+  db_root_password:
+    file: ./configuration/db_root_password
+  db_password:
+    file: ./configuration/db_password
