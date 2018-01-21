@@ -46,28 +46,27 @@ class DB:
             DBError: If there're some troubles during connection to the DB.
 
         """
-        attempts_count = 10
-        attempt_index = 0
+        delay = .25
+        attempts_count = 20
+        attempt_index = 1
 
         while True:
             try:
                 self._db.connect()
             except DatabaseError as err:
-                if attempt_index < attempts_count:
-                    delay = 2
-                    LOGGER.debug(
-                        'Attempt #%d to connect to DB was unsuccessful. Will sleep %f sec. %s',
-                        attempt_index,
-                        delay,
-                        err,
-                        )
-                    time.sleep(delay)
-                else:
+                if attempt_index > attempts_count:
                     raise DBError('DatabaseError during connecting to database') from err
             else:
                 self._db.close()
                 break
 
+            LOGGER.debug(
+                'Attempt #%d to connect to DB was unsuccessful. Will sleep %f sec. %s',
+                attempt_index,
+                delay,
+                err,
+                )
+            time.sleep(delay)
             attempt_index += 1
 
     def install(self):

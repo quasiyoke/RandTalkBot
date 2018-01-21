@@ -16,27 +16,27 @@ class StrangerSenderService:
 
     def __init__(self, bot):
         self._bot = bot
-        self._stranger_senders = {}
 
     @classmethod
-    def get_instance(cls, bot=None):
+    def get_instance(cls):
+        """Raises:
+            StrangerSenderServiceError: If the instance wasn't initialized.
+
+        Returns:
+            StrangerSenderService
+
+        """
         if cls._instance is None:
-            if bot is None:
-                raise StrangerSenderServiceError(
-                    'Instance wasn\'t initialized. Provide arguments to construct one.',
-                    )
-            else:
-                cls._instance = cls(bot)
+            raise StrangerSenderServiceError('Instance wasn\'t initialized')
 
         return cls._instance
 
-    def get_cache_size(self):
-        return len(self._stranger_senders)
+    @classmethod
+    def initialize(cls, bot):
+        if cls._instance is not None:
+            return
 
-    def get_or_create_stranger_sender(self, stranger):
-        try:
-            return self._stranger_senders[stranger.telegram_id]
-        except KeyError:
-            stranger_sender = StrangerSender(self._bot, stranger)
-            self._stranger_senders[stranger.telegram_id] = stranger_sender
-            return stranger_sender
+        cls._instance = cls(bot)
+
+    def get_stranger_sender(self, stranger_id):
+        return StrangerSender(self._bot, stranger_id)

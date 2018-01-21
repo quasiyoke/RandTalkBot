@@ -6,6 +6,7 @@
 
 import datetime
 import logging
+import re
 import asynctest
 from asynctest.mock import patch, CoroutineMock
 from telepot_testing import assert_sent_message, receive_message
@@ -60,7 +61,254 @@ TALK3 = {
     'partner1_sent': 0,
     'partner2_id': STRANGER3_2['id'],
     'partner2_sent': 1,
-    'searched_since': datetime.datetime(1970, 1, 1)
+    'searched_since': datetime.datetime(1970, 1, 1),
+    }
+STRANGER4_1 = {
+    'id': 41,
+    'invitation': '41_invitation',
+    'languages': '["en"]',
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 410,
+    }
+STRANGER4_WAITED_LONG = {
+    'id': 42,
+    'invitation': '42_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(1990, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 420,
+    }
+STRANGER4_WAITED_LONGEST = {
+    'id': 43,
+    'invitation': '43_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(1970, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 430,
+    }
+STRANGER4_WAITED_LONGER = {
+    'id': 44,
+    'invitation': '44_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(1980, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 440,
+    }
+TALK4_1 = {
+    'id': 1,
+    'partner1_id': STRANGER4_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER4_WAITED_LONGER['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER4_WAITED_LONGER['looking_for_partner_from'],
+    }
+TALK4_2 = {
+    'id': 1,
+    'partner1_id': STRANGER4_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER4_WAITED_LONGEST['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER4_WAITED_LONGEST['looking_for_partner_from'],
+    }
+STRANGER5_1 = {
+    'id': 51,
+    'invitation': '51_invitation',
+    'languages': '["en"]',
+    'sex': 'female',
+    'partner_sex': 'male',
+    'telegram_id': 510,
+    }
+STRANGER5_FEMALE_1 = {
+    'id': 52,
+    'invitation': '52_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 520,
+    }
+STRANGER5_MALE = {
+    'id': 53,
+    'invitation': '53_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'male',
+    'partner_sex': 'female',
+    'telegram_id': 530,
+    }
+STRANGER5_FEMALE_2 = {
+    'id': 54,
+    'invitation': '54_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 540,
+    }
+TALK5 = {
+    'id': 1,
+    'partner1_id': STRANGER5_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER5_MALE['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER5_MALE['looking_for_partner_from'],
+    }
+STRANGER6_1 = {
+    'id': 61,
+    'invitation': '61_invitation',
+    'languages': '["en"]',
+    'sex': 'male',
+    'partner_sex': 'not_specified',
+    'telegram_id': 610,
+    }
+STRANGER6_LOOKING_FOR_MALE = {
+    'id': 62,
+    'invitation': '62_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'male',
+    'telegram_id': 620,
+    }
+STRANGER6_LOOKING_FOR_FEMALE = {
+    'id': 63,
+    'invitation': '63_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'female',
+    'telegram_id': 630,
+    }
+STRANGER6_LOOKING_FOR_NOT_SPECIFIED = {
+    'id': 64,
+    'invitation': '64_invitation',
+    'languages': '["en"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'male',
+    'partner_sex': 'not_specified',
+    'telegram_id': 640,
+    }
+TALK6_1 = {
+    'id': 1,
+    'partner1_id': STRANGER6_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER6_LOOKING_FOR_MALE['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER6_LOOKING_FOR_MALE['looking_for_partner_from'],
+    }
+TALK6_2 = {
+    'id': 1,
+    'partner1_id': STRANGER6_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER6_LOOKING_FOR_NOT_SPECIFIED['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER6_LOOKING_FOR_NOT_SPECIFIED['looking_for_partner_from'],
+    }
+STRANGER7_1 = {
+    'id': 71,
+    'invitation': '71_invitation',
+    'languages': '["fr", "fa", "ru"]',
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 710,
+    }
+STRANGER7_SPEAKS_FR = {
+    'id': 72,
+    'invitation': '72_invitation',
+    'languages': '["fr"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 720,
+    }
+STRANGER7_SPEAKS_RU = {
+    'id': 73,
+    'invitation': '73_invitation',
+    'languages': '["ru"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 730,
+    }
+STRANGER7_SPEAKS_FA = {
+    'id': 74,
+    'invitation': '74_invitation',
+    'languages': '["fa"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 740,
+    }
+TALK7_1 = {
+    'id': 1,
+    'partner1_id': STRANGER7_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER7_SPEAKS_FR['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER7_SPEAKS_FR['looking_for_partner_from'],
+    }
+TALK7_2 = {
+    'id': 1,
+    'partner1_id': STRANGER7_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER7_SPEAKS_FA['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER7_SPEAKS_FA['looking_for_partner_from'],
+    }
+STRANGER8_1 = {
+    'id': 81,
+    'invitation': '81_invitation',
+    'languages': '["en"]',
+    'sex': 'male',
+    'partner_sex': 'not_specified',
+    'telegram_id': 810,
+    }
+STRANGER8_SPEAKS_FR = {
+    'id': 82,
+    'invitation': '82_invitation',
+    'languages': '["fr"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 820,
+    }
+STRANGER8_SPEAKS_RU = {
+    'id': 83,
+    'invitation': '83_invitation',
+    'languages': '["ru"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 830,
+    }
+STRANGER8_SPEAKS_FA = {
+    'id': 84,
+    'invitation': '84_invitation',
+    'languages': '["fa"]',
+    'looking_for_partner_from': datetime.datetime(2000, 1, 1),
+    'sex': 'female',
+    'partner_sex': 'not_specified',
+    'telegram_id': 840,
+    }
+TALK8_1 = {
+    'id': 1,
+    'partner1_id': STRANGER8_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER8_SPEAKS_FR['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER8_SPEAKS_FR['looking_for_partner_from'],
+    }
+TALK8_2 = {
+    'id': 1,
+    'partner1_id': STRANGER8_1['id'],
+    'partner1_sent': 0,
+    'partner2_id': STRANGER8_SPEAKS_FA['id'],
+    'partner2_sent': 0,
+    'searched_since': STRANGER8_SPEAKS_FA['looking_for_partner_from'],
     }
 
 async def test_unsuccessful_search(ratio, text):
@@ -251,6 +499,178 @@ class TestChatLifecycle(asynctest.TestCase):
         assert_db({
             'strangers': [stranger],
             })
+
+    async def test_successful_search__matches_stranger_looking_for_proper_sex_1(self):
+        setup_db({
+            'strangers': [STRANGER6_1, STRANGER6_LOOKING_FOR_MALE, STRANGER6_LOOKING_FOR_FEMALE],
+            })
+        receive_message(STRANGER6_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK6_1],
+            })
+        await assert_sent_message(
+            STRANGER6_LOOKING_FOR_MALE['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER6_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Your partner\'s been looking for you for'
+                r' \d+ hr\. Say him “Hello” — if he doesn\'t respond to you, launch search again'
+                r' by /begin command\.',
+                ),
+            )
+
+    async def test_successful_search__matches_stranger_looking_for_proper_sex_2(self):
+        setup_db({
+            'strangers': [
+                STRANGER6_1,
+                STRANGER6_LOOKING_FOR_FEMALE,
+                STRANGER6_LOOKING_FOR_NOT_SPECIFIED
+                ],
+            })
+        receive_message(STRANGER6_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK6_1],
+            })
+        await assert_sent_message(
+            STRANGER6_LOOKING_FOR_NOT_SPECIFIED['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER6_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Your partner\'s been looking for you for'
+                r' \d+ hr\. Say him “Hello” — if he doesn\'t respond to you, launch search again'
+                r' by /begin command\.',
+                ),
+            )
+
+    async def test_successful_search__matches_stranger_speaking_on_preferred_language_1(self):
+        setup_db({
+            'strangers': [STRANGER7_1, STRANGER7_SPEAKS_FR, STRANGER7_SPEAKS_RU],
+            })
+        receive_message(STRANGER7_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK7_1],
+            })
+        await assert_sent_message(
+            STRANGER7_SPEAKS_FR['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER7_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Use French please\. Your partner\'s been'
+                r' looking for you for \d+ hr\. Say him “Hello” — if he doesn\'t respond to you,'
+                r' launch search again by /begin command\.',
+                ),
+            )
+
+    async def test_successful_search__matches_stranger_speaking_on_preferred_language_2(self):
+        setup_db({
+            'strangers': [STRANGER7_1, STRANGER7_SPEAKS_RU, STRANGER7_SPEAKS_FA],
+            })
+        receive_message(STRANGER7_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK7_2],
+            })
+        await assert_sent_message(
+            STRANGER7_SPEAKS_FA['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER7_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Use فارسی please\. Your partner\'s been'
+                r' looking for you for \d+ hr\. Say him “Hello” — if he doesn\'t respond to you,'
+                r' launch search again by /begin command\.',
+                ),
+            )
+
+    async def test_successful_search__matches_stranger_with_proper_sex_1(self):
+        setup_db({
+            'strangers': [STRANGER5_1, STRANGER5_FEMALE_1, STRANGER5_MALE],
+            })
+        receive_message(STRANGER5_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK5],
+            })
+        await assert_sent_message(
+            STRANGER5_MALE['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER5_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Your partner\'s been looking for you for'
+                r' \d+ hr\. Say him “Hello” — if he doesn\'t respond to you, launch search again'
+                r' by /begin command\.',
+                ),
+            )
+
+    async def test_successful_search__matches_stranger_with_proper_sex_2(self):
+        setup_db({
+            'strangers': [STRANGER5_1, STRANGER5_MALE, STRANGER5_FEMALE_2],
+            })
+        receive_message(STRANGER5_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK5],
+            })
+        await assert_sent_message(
+            STRANGER5_MALE['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER5_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Your partner\'s been looking for you for'
+                r' \d+ hr\. Say him “Hello” — if he doesn\'t respond to you, launch search again'
+                r' by /begin command\.',
+                ),
+            )
+
+    async def test_successful_search__matches_the_longest_waiting_stranger_1(self):
+        setup_db({
+            'strangers': [STRANGER4_1, STRANGER4_WAITED_LONG, STRANGER4_WAITED_LONGER],
+            })
+        receive_message(STRANGER4_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK4_1],
+            })
+        await assert_sent_message(
+            STRANGER4_WAITED_LONGER['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER4_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Your partner\'s been looking for you for'
+                r' \d+ hr\. Say him “Hello” — if he doesn\'t respond to you, launch search again'
+                r' by /begin command\.',
+                ),
+            )
+
+    async def test_successful_search__matches_the_longest_waiting_stranger_2(self):
+        setup_db({
+            'strangers': [STRANGER4_1, STRANGER4_WAITED_LONGER, STRANGER4_WAITED_LONGEST],
+            })
+        receive_message(STRANGER4_1['telegram_id'], '/begin')
+        assert_db({
+            'talks': [TALK4_2],
+            })
+        await assert_sent_message(
+            STRANGER4_WAITED_LONGEST['telegram_id'],
+            '*Rand Talk:* Your partner is here. Have a nice chat 🤗',
+            )
+        await assert_sent_message(
+            STRANGER4_1['telegram_id'],
+            re.compile(
+                r'\*Rand Talk:\* Your partner is here\. Your partner\'s been looking for you for'
+                r' \d+ hr\. Say him “Hello” — if he doesn\'t respond to you, launch search again'
+                r' by /begin command\.',
+                ),
+            )
 
     async def test_unsuccessful_search__chat_lacks_females(self):
         text = \

@@ -8,7 +8,6 @@ import asyncio
 import datetime
 import logging
 from peewee import DoesNotExist
-from .errors import StrangerSenderServiceError
 from .stats import Stats
 
 COUNT_INTERVALS = (4, 16, 64, 256)
@@ -90,7 +89,6 @@ class StatsService:
 
     def _update_stats(self):
         from .stranger_service import StrangerService
-        from .stranger_sender_service import StrangerSenderService
         from .talk import Talk
         stats = Stats()
         stranger_service = StrangerService.get_instance()
@@ -178,18 +176,3 @@ class StatsService:
         stats.save()
         self._stats = stats
         LOGGER.info('Stats were updated')
-        LOGGER.debug(
-            'StrangerService cache size: %d',
-            StrangerService.get_instance().get_cache_size(),
-            )
-
-        try:
-            LOGGER.debug(
-                'StrangerSenderService cache size: %d',
-                StrangerSenderService.get_instance().get_cache_size(),
-                )
-        except StrangerSenderServiceError:
-            LOGGER.debug(
-                'StrangerSenderService isn\'t initialized and can\'t provide '
-                'its cache size.'
-                )

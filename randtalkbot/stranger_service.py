@@ -17,7 +17,6 @@ class StrangerService:
         # We need to lock strangers for matching to prevent attempts to create
         # second conversation with single partner.
         self._locked_strangers_ids = set()
-        self._strangers_cache = {}
         type(self)._instance = self
 
     @classmethod
@@ -34,27 +33,6 @@ class StrangerService:
             if stranger.is_full():
                 yield stranger
 
-    def get_cached_stranger(self, stranger):
-        try:
-            return self._strangers_cache[stranger.id]
-        except KeyError:
-            self._strangers_cache[stranger.id] = stranger
-
-            if stranger.invited_by is not None:
-                if stranger.invited_by.invited_by_id == stranger.id:
-                    LOGGER.error(
-                        'Circular reference between invited strangers %d and %d',
-                        stranger.id,
-                        stranger.invited_by_id,
-                        )
-                else:
-                    stranger.invited_by = self.get_cached_stranger(stranger.invited_by)
-
-            return stranger
-
-    def get_cache_size(self):
-        return len(self._strangers_cache)
-
     def get_or_create_stranger(self, telegram_id):
         try:
             try:
@@ -67,7 +45,7 @@ class StrangerService:
         except DatabaseError as err:
             raise StrangerServiceError('Database problems during `get_or_create_stranger`') from err
 
-        return self.get_cached_stranger(stranger)
+        return stranger
 
     def get_stranger(self, telegram_id):
         try:
@@ -75,13 +53,14 @@ class StrangerService:
         except (DatabaseError, DoesNotExist) as err:
             raise StrangerServiceError('Database problems during `get_stranger`') from err
 
-        return self.get_cached_stranger(stranger)
+        return stranger
+
+    def get_stranger_by_id(self, stranger_id):
+        return Stranger.get(Stranger.id == stranger_id)
 
     def get_stranger_by_invitation(self, invitation):
-        if len(invitation) != INVITATION_LENGTH:
-            raise StrangerServiceError(
-                'Invitation length is wrong: \"{0}\"'.format(invitation),
-                )
+        if not isinstance(invitation, str) or len(invitation) != INVITATION_LENGTH:
+            raise StrangerServiceError(f'Invitation length is wrong: `{invitation}`')
 
         try:
             stranger = Stranger.get(Stranger.invitation == invitation)
@@ -89,23 +68,30 @@ class StrangerService:
             raise StrangerServiceError('Database problems during `get_stranger_by_invitation`') \
                 from err
 
-        return self.get_cached_stranger(stranger)
+        return stranger
 
-    def _match_partner(self, stranger):
+    def _match_partner(self, stranger_id):
         """Tries to find a partner for obtained stranger.
+
+        Args:
+            stranger_id (int)
 
         Raises:
             PartnerObtainingError: If there's no proper partner.
 
         Returns:
             Stranger
+
         """
         from .talk import Talk
 
-        possible_partners = Stranger.select().where(
-            Stranger.id != stranger.id,
-            Stranger.looking_for_partner_from != None,
-            )
+        possible_partners = Stranger.select() \
+            .where(
+                Stranger.id != stranger_id,
+                Stranger.looking_for_partner_from != None,
+                )
+
+        stranger = self.get_stranger_by_id(stranger_id)
 
         if stranger.sex == 'not_specified':
             possible_partners = possible_partners.where(Stranger.partner_sex == 'not_specified')
@@ -125,47 +111,66 @@ class StrangerService:
             Stranger.looking_for_partner_from,
             )
 
-        last_partners_ids = frozenset(Talk.get_last_partners_ids(stranger))
+        last_partners_ids = frozenset(Talk.get_last_partners_ids(stranger_id))
 
         partner = None
         partner_language_priority = 1000
+
         for possible_partner in possible_partners:
-            if possible_partner.id in last_partners_ids or \
-                    possible_partner.id in self._locked_strangers_ids:
+            if possible_partner.id in last_partners_ids:
+                LOGGER.debug(
+                    'Stranger %d was a partner for %d recently',
+                    possible_partner.id,
+                    stranger_id,
+                    )
                 continue
+
+            if possible_partner.id in self._locked_strangers_ids:
+                LOGGER.debug(
+                    'Stranger %d is locked (so she can\'t be a partner for %d)',
+                    possible_partner.id,
+                    stranger_id,
+                    )
+                continue
+
             for priority, language in enumerate(
                     stranger.get_languages()[:partner_language_priority],
                 ):
                 if possible_partner.speaks_on_language(language):
                     partner = possible_partner
                     partner_language_priority = priority
+
                     if priority == 0:
                         break
             else:
                 continue
+
             break
+
         if partner is None:
             raise PartnerObtainingError()
 
         self._locked_strangers_ids.add(partner.id)
-        return self.get_cached_stranger(partner)
+        return partner
 
-    async def match_partner(self, stranger):
+    async def match_partner(self, stranger_id):
         """Finds partner for the stranger. Does handling of strangers who have blocked the bot.
 
         Raises:
             PartnerObtainingError: If there's no proper partners.
             StrangerServiceError: If the stranger has blocked the bot.
         """
+        stranger = self.get_stranger_by_id(stranger_id)
+
         while True:
-            partner = self._match_partner(stranger)
+            partner = self._match_partner(stranger_id)
 
             try:
-                await partner.notify_partner_found(stranger)
+                await partner.notify_partner_found(stranger_id)
             except StrangerError as err:
                 # Potential partner has blocked the bot. Let's look for next
                 # potential partner.
-                LOGGER.info('Bad potential partner for %d. %s', stranger.id, err)
+                LOGGER.info('Bad potential partner for %d. %s', stranger_id, err)
                 await partner.end_talk()
                 self._locked_strangers_ids.discard(partner.id)
                 continue
@@ -173,12 +178,12 @@ class StrangerService:
             break
 
         try:
-            await stranger.notify_partner_found(partner)
+            await stranger.notify_partner_found(partner.id)
         except StrangerError as err:
             self._locked_strangers_ids.discard(partner.id)
             # Stranger has blocked the bot.
             raise StrangerServiceError('Can\'t notify seeking for partner stranger') from err
 
-        await stranger.set_partner(partner)
+        await stranger.set_partner(partner.id)
         self._locked_strangers_ids.discard(partner.id)
-        LOGGER.debug('Found partner: %d -> %d.', stranger.id, partner.id)
+        LOGGER.debug('Found partner: %d -> %d.', stranger_id, partner.id)

@@ -87,6 +87,19 @@ class DelegatorBot:
         for method in self.coroutines:
             setattr(self, method, CoroutineMock())
 
+    async def answerInlineQuery(
+            self,
+            query_id,
+            response,
+            is_personal=None,
+        ):
+        update = {
+            'query_id': query_id,
+            'is_personal': is_personal,
+            'response': response,
+            }
+        send_update(update)
+
     def create_listener(self):
         queue = Queue()
         self._microphone.add(queue)

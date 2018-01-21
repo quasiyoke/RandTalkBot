@@ -45,10 +45,19 @@ class Talk(Model):
         return talks
 
     @classmethod
-    def get_last_partners_ids(cls, stranger):
-        talks = cls.select().where((cls.partner1 == stranger) | (cls.partner2 == stranger))
+    def get_last_partners_ids(cls, stranger_id):
+        """Args:
+            stranger_id (int)
+
+        Yields:
+            int: IDs of last partners.
+
+        """
+        talks = cls.select() \
+            .where((cls.partner1_id == stranger_id) | (cls.partner2_id == stranger_id))
+
         for talk in talks:
-            yield talk.get_partner_id(stranger)
+            yield talk.get_partner_id(stranger_id)
 
     @classmethod
     def get_not_ended_talks(cls, after=None):
@@ -59,35 +68,28 @@ class Talk(Model):
         return talks
 
     @classmethod
-    def get_talk(cls, stranger):
+    def get_talk_by_partner_id(cls, stranger_id):
         try:
             # pylint: disable=singleton-comparison
             talk = cls.get(
-                ((cls.partner1 == stranger) | (cls.partner2 == stranger)) & (cls.end == None),
+                ((cls.partner1_id == stranger_id) | (cls.partner2_id == stranger_id)) &
+                (cls.end == None),
                 )
         except DoesNotExist:
             return None
         else:
-            stranger_service = StrangerService.get_instance()
-            talk.partner1 = stranger_service.get_cached_stranger(talk.partner1)
-            talk.partner2 = stranger_service.get_cached_stranger(talk.partner2)
             return talk
 
-    def get_partner(self, stranger):
+    def get_partner_id(self, stranger_id):
         """Raises:
-            WrongStrangerError
-
-        Returns:
-            Stranger
+            WrongStrangerError: If given stranger isn't a partner in the talk.
         """
-        return Stranger.get(id=self.get_partner_id(stranger))
-
-    def get_partner_id(self, stranger):
-        if stranger.id == self.partner1_id:
+        if stranger_id == self.partner1_id:
             return self.partner2_id
-        elif stranger.id == self.partner2_id:
+        elif stranger_id == self.partner2_id:
             return self.partner1_id
         else:
+            LOGGER.error('Stranger %s isn\'t a partner in the talk %d', stranger_id, self.id)
             raise WrongStrangerError()
 
     def get_sent(self, stranger):

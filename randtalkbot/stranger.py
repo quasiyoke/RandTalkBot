@@ -17,7 +17,6 @@ from .errors import EmptyLanguagesError, MissingPartnerError, SexError, Stranger
     StrangerSenderError
 from .i18n import get_languages_names, get_translations
 from .stats_service import StatsService
-from .stranger_sender_service import StrangerSenderService
 
 INVITATION_CHARS = string.ascii_letters + string.digits + string.punctuation
 INVITATION_LENGTH = 10
@@ -99,11 +98,22 @@ class Stranger(Model):
 
     @classmethod
     def _get_sex_code(cls, sex_name):
+        """Raises:
+            SexError: If can't recognize the sex name.
+
+        Returns:
+            code (str)
+
+        """
         sex = sex_name.strip().lower()
+
         try:
-            return SEX_NAMES_TO_CODES[sex]
+            code = SEX_NAMES_TO_CODES[sex]
         except KeyError:
             raise SexError(sex_name)
+
+        LOGGER.debug('Sex name `%s` was recognized as `%s` sex code', sex_name, code)
+        return code
 
     async def _add_bonuses(self, bonuses_delta):
         self.bonus_count += bonuses_delta
@@ -144,7 +154,7 @@ class Stranger(Model):
                 ' you have -- the faster partner\'s search will be):',
                 )
 
-        sender = self.get_sender()
+        sender = self._sender
 
         try:
             await sender.send_notification(
@@ -178,10 +188,11 @@ class Stranger(Model):
             self.looking_for_partner_from = None
 
             try:
-                await self.get_sender().send_notification(_('Looking for partner was stopped.'))
+                await self._sender \
+                    .send_notification(_('Looking for partner was stopped.'))
             except TelegramError as err:
                 LOGGER.warning('End chatting. Can\'t notify stranger %d: %s', self.id, err)
-        elif self.get_partner() is not None:
+        elif self._get_partner() is not None:
             # If stranger is chatting now
             try:
                 await self._notify_talk_ended(by_self=True)
@@ -190,7 +201,10 @@ class Stranger(Model):
 
         await self.set_partner(None)
 
-    def get_common_languages(self, partner):
+    def get_common_languages(self, partner_id):
+        from .stranger_service import StrangerService
+        partner = StrangerService.get_instance() \
+            .get_stranger_by_id(partner_id)
         partner_languages = partner.get_languages()
         return [language for language in self.get_languages() if language in partner_languages]
 
@@ -208,17 +222,23 @@ class Stranger(Model):
             # If languages field wasn't set.
             return []
 
-    def get_partner(self):
-        try:
-            return self._partner
-        except AttributeError:
-            talk = self.get_talk()
-            # pylint: disable=attribute-defined-outside-init
-            self._partner = None if talk is None else talk.get_partner(self)
-            return self._partner
+    def _get_partner(self):
+        from .stranger_service import StrangerService
+        partner_id = self.get_partner_id()
 
-    def get_sender(self):
-        return StrangerSenderService.get_instance().get_or_create_stranger_sender(self)
+        if partner_id is None:
+            return None
+
+        return StrangerService.get_instance() \
+            .get_stranger_by_id(partner_id)
+
+    def get_partner_id(self):
+        talk = self._get_talk()
+
+        if talk is None:
+            return None
+
+        return talk.get_partner_id(self.id)
 
     def get_start_args(self):
         args = {
@@ -227,15 +247,6 @@ class Stranger(Model):
         serialized_args = json.dumps(args, separators=(',', ':'))
         serialized_args = base64.urlsafe_b64encode(serialized_args.encode('utf-8'))
         return serialized_args.decode('utf-8')
-
-    def get_talk(self):
-        try:
-            return self._talk
-        except AttributeError:
-            from .talk import Talk
-            # pylint: disable=attribute-defined-outside-init
-            self._talk = Talk.get_talk(self)
-            return self._talk
 
     def is_novice(self):
         return self.languages is None and \
@@ -253,10 +264,6 @@ class Stranger(Model):
         except StrangerError as err:
             LOGGER.warning('Kick. Can\'t notify stranger %d: %s', self.id, err)
         self._pay_for_talk()
-        # pylint: disable=attribute-defined-outside-init
-        self._talk = None
-        # pylint: disable=attribute-defined-outside-init
-        self._partner = None
 
     def mute_bonuses_notifications(self):
         # pylint: disable=attribute-defined-outside-init
@@ -271,7 +278,8 @@ class Stranger(Model):
         self._bonuses_notifications_muted = False
 
     async def _notify_about_bonuses(self, bonuses_delta):
-        sender = self.get_sender()
+        sender = self._sender
+
         try:
             if bonuses_delta == 1:
                 await sender.send_notification(
@@ -301,7 +309,7 @@ class Stranger(Model):
         """Raises:
             StrangerError: If stranger we're changing has blocked the bot.
         """
-        sender = self.get_sender()
+        sender = self._sender
         _ = sender._
         sentences = []
 
@@ -310,8 +318,9 @@ class Stranger(Model):
         else:
             sentences.append(_('Your partner has left chat.'))
 
-        talk = self.get_talk()
-        if talk is not None and talk.is_successful() and self == talk.partner1 and \
+        talk = self._get_talk()
+
+        if talk is not None and talk.is_successful() and self.id == talk.partner1_id and \
                 self.bonus_count >= 1:
             if self.bonus_count - 1:
                 bonuses_notification = _('You\'ve used one bonus. {0} bonus(es) left.').format(
@@ -319,6 +328,7 @@ class Stranger(Model):
                     )
             else:
                 bonuses_notification = _('You\'ve used your last bonus.')
+
             sentences.append(bonuses_notification)
 
         sentences.append(_('Feel free to /begin a new talk.'))
@@ -328,19 +338,22 @@ class Stranger(Model):
         except TelegramError as err:
             raise StrangerError() from err
 
-    async def notify_partner_found(self, partner):
-        """Raises:
+    async def notify_partner_found(self, partner_id):
+        """Args:
+            partner_id (int)
+
+        Raises:
             StrangerError: If stranger we're changing has blocked the bot.
         """
         self.prevent_advertising()
-        sender = self.get_sender()
+        sender = self._sender
         _ = sender._
         sentences = []
 
-        common_languages = self.get_common_languages(partner)
+        common_languages = self.get_common_languages(partner_id)
         if len(self.get_languages()) > len(common_languages):
             # To make the bot speak on common language.
-            sender.update_translation(partner)
+            sender.update_translation(partner_id)
             _ = sender._
             # If the stranger knows any language which another partner doesn't, we should notify him
             # especial way.
@@ -355,22 +368,29 @@ class Stranger(Model):
         else:
             languages_limitations = None
 
-        if self.get_partner() is None:
+        if self._get_partner() is None:
             sentences.append(_('Your partner is here.'))
         else:
-            talk = self.get_talk()
-            if talk.is_successful() and self == talk.partner1 and self.bonus_count >= 1:
+            talk = self._get_talk()
+
+            if talk.is_successful() and self.id == talk.partner1_id and self.bonus_count >= 1:
                 if self.bonus_count - 1:
                     bonuses_notification = _(
                         'You\'ve used one bonus with previous partner. {0} bonus(es) left.'
                         ).format(self.bonus_count - 1)
                 else:
                     bonuses_notification = _('You\'ve used your last bonus with previous partner.')
+
                 sentences.append(bonuses_notification)
+
             sentences.append(_('Here\'s another stranger.'))
 
         if languages_limitations:
             sentences.append(languages_limitations)
+
+        from .stranger_service import StrangerService
+        partner = StrangerService.get_instance() \
+            .get_stranger_by_id(partner_id)
 
         if partner.looking_for_partner_from:
             looked_for_partner_for = datetime.datetime.utcnow() - partner.looking_for_partner_from
@@ -402,7 +422,8 @@ class Stranger(Model):
     async def pay(self, delta, gratitude):
         self.bonus_count += delta
         self.save()
-        sender = self.get_sender()
+        sender = self._sender
+
         try:
             await sender.send_notification(
                 'You\'ve earned {0} bonuses. Total bonus amount: {1}. {2}',
@@ -414,8 +435,9 @@ class Stranger(Model):
             LOGGER.info('Pay. Can\'t notify stranger %d: %s', self.id, err)
 
     def _pay_for_talk(self):
-        talk = self.get_talk()
-        if talk is not None and talk.is_successful() and self == talk.partner1 and \
+        talk = self._get_talk()
+
+        if talk is not None and talk.is_successful() and self.id == talk.partner1_id and \
                 self.bonus_count >= 1:
             self.bonus_count -= 1
             self.save()
@@ -430,11 +452,17 @@ class Stranger(Model):
         # pylint: disable=attribute-defined-outside-init
         self._deferred_advertising = None
 
+    @property
+    def _sender(self):
+        from .stranger_sender_service import StrangerSenderService
+        return StrangerSenderService.get_instance() \
+            .get_stranger_sender(self.id)
+
     async def _reward_inviter(self):
         if self.was_invited_as is not None or self.invited_by_id is None:
             return
 
-        talk = self.get_talk()
+        talk = self._get_talk()
         threshold_messages_count = 1
 
         if talk is None or talk.partner1_sent != threshold_messages_count or \
@@ -459,7 +487,7 @@ class Stranger(Model):
             StrangerError: If can't send message because of unknown content type.
             TelegramError: If stranger has blocked the bot.
         """
-        sender = self.get_sender()
+        sender = self._sender
 
         try:
             await sender.send(message)
@@ -472,7 +500,7 @@ class Stranger(Model):
             StrangerError: If can't send content.
             TelegramError: If the partner has blocked the bot.
         """
-        partner = self.get_partner()
+        partner = self._get_partner()
 
         if partner is None:
             raise MissingPartnerError()
@@ -482,7 +510,7 @@ class Stranger(Model):
         except:
             raise
         else:
-            self.get_talk().increment_sent(self)
+            self._get_talk().increment_sent(self)
             await self._reward_inviter()
 
     def set_languages(self, languages):
@@ -510,7 +538,7 @@ class Stranger(Model):
             self.looking_for_partner_from = datetime.datetime.utcnow()
 
         try:
-            await self.get_sender().send_notification(
+            await self._sender.send_notification(
                 _('Looking for a stranger for you.'),
                 )
         except TelegramError as err:
@@ -522,47 +550,49 @@ class Stranger(Model):
 
         await self.set_partner(None)
 
-    async def set_partner(self, partner):
-        if self.get_partner() == partner:
+    async def set_partner(self, partner_id):
+        """Args:
+            partner_id (int|None)
+
+        """
+        current_partner_id = self.get_partner_id()
+
+        if current_partner_id == partner_id:
             self.save()
             return
 
-        if self._partner is not None:
-            if self._partner.get_partner() == self:
+        if current_partner_id is not None:
+            current_partner = self._get_partner()
+
+            # pylint: disable=protected-access
+            if current_partner.get_partner_id() == self.id:
                 # If partner isn't talking with the stranger because of some
                 # error, we shouldn't kick him.
-                await self._partner.kick()
+                await current_partner.kick()
 
             self._pay_for_talk()
+            current_talk = self._get_talk()
 
-            if self._talk is not None:
-                self._talk.end = datetime.datetime.utcnow()
-                self._talk.save()
+            if current_talk is not None:
+                current_talk.end = datetime.datetime.utcnow()
+                current_talk.save()
 
-        if partner is None:
-            # pylint: disable=attribute-defined-outside-init
-            self._talk = None
-            # pylint: disable=attribute-defined-outside-init
-            self._partner = None
-        else:
+        if partner_id is not None:
+            from .stranger_service import StrangerService
+            partner = StrangerService.get_instance() \
+                .get_stranger_by_id(partner_id)
             from .talk import Talk
             # pylint: disable=attribute-defined-outside-init
-            self._talk = Talk.create(
+            Talk.create(
                 partner1=self,
-                partner2=partner,
+                partner2_id=partner_id,
                 searched_since=partner.looking_for_partner_from,
                 )
-            # pylint: disable=attribute-defined-outside-init
-            self._partner = partner
 
             if self.looking_for_partner_from is not None:
                 self.looking_for_partner_from = None
                 self.save()
 
-            # pylint: disable=protected-access
-            partner._talk = self._talk
-            # pylint: disable=protected-access
-            partner._partner = self
             partner.looking_for_partner_from = None
             partner.save()
 
@@ -580,3 +610,7 @@ class Stranger(Model):
 
     def speaks_on_language(self, language):
         return language in self.get_languages()
+
+    def _get_talk(self):
+        from .talk import Talk
+        return Talk.get_talk_by_partner_id(self.id)

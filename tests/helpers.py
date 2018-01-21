@@ -51,8 +51,7 @@ def assert_db(db_dict):
                 stranger_instance = Stranger.get(id=stranger_dict['id'])
                 assert_model(stranger_instance, stranger_dict)
         elif model_name == 'talks':
-            for talk_dict in models_dicts:
-                talk_instance = Talk.get(id=talk_dict['id'])
+            for talk_dict, talk_instance in zip(models_dicts, Talk.select()):
                 assert_model(talk_instance, talk_dict)
         else:
             raise AssertionError(f'Unknown model name: `{model_name}`')
@@ -82,9 +81,6 @@ def run(ctx):
     ctx.database.create_tables([Stats, Stranger, Talk])
 
     StatsService()
-    StrangerService.get_instance() \
-        ._strangers_cache \
-        .clear()
 
 def finalize(ctx):
     ctx.database.drop_tables([Stranger, Talk])
@@ -108,14 +104,12 @@ def patch_telepot(function):
     return result
 
 def setup_db(db_dict):
-    strangers_dicts = db_dict.get('strangers')
-
-    if strangers_dicts:
-        for stranger_dict in strangers_dicts:
-            Stranger.create(**stranger_dict)
-
-    talks_dicts = db_dict.get('talks')
-
-    if talks_dicts:
-        for talk_dict in talks_dicts:
-            Talk.create(**talk_dict)
+    for model_name, model_dicts in db_dict.items():
+        if model_name == 'strangers':
+            for stranger_dict in model_dicts:
+                Stranger.create(**stranger_dict)
+        elif model_name == 'talks':
+            for talk_dict in model_dicts:
+                Talk.create(**talk_dict)
+        else:
+            raise AssertionError(f'Unknown model name: `{model_name}`')

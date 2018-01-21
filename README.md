@@ -140,7 +140,7 @@ verboselib-manage.py compile -d randtalkbot/locale
 To comfortably inject source code changes to the Docker container use another Docker Compose file:
 
 ```sh
-docker-compose --file docker-compose.dev.yml up
+docker-compose --file docker-compose.dev.yml up --abort-on-container-exit
 ```
 
 ### Tests

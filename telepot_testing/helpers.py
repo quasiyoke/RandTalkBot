@@ -7,13 +7,18 @@
 import asyncio
 import logging
 from pprint import pformat
+from telepot.exception import TelegramError
 
 LOGGER = logging.getLogger('telepot_testing')
 # pylint: disable=invalid-name
 message_id_counter = 0
+BOT_BLOCKERS_IDS = set()
 SENT_FUTURES = []
 UPDATES_FUTURES = []
 UPDATES_TIMEOUT = 1
+
+def add_bot_blockers_ids(*blockers_ids):
+    BOT_BLOCKERS_IDS.update(blockers_ids)
 
 async def assert_sent_message(chat_id, text, disable_notification=None, reply_markup=None):
     expected_update = {
@@ -28,6 +33,19 @@ async def assert_sent_message(chat_id, text, disable_notification=None, reply_ma
 
     if reply_markup is not None:
         expected_update['reply_markup'] = reply_markup
+
+    await assert_sent_update(expected_update)
+
+async def assert_sent_inline_query_response(
+        query_id,
+        response,
+        is_personal=None,
+    ):
+    expected_update = {
+        'query_id': query_id,
+        'is_personal': is_personal,
+        'response': response,
+        }
 
     await assert_sent_update(expected_update)
 
@@ -62,11 +80,26 @@ async def assert_sent_update(expected_update):
             SENT_FUTURES.remove(future)
             return future.result()
 
+    def equals(actual, expected):
+        if hasattr(expected, 'match'):
+            return bool(expected.match(actual))
+        elif isinstance(expected, dict):
+            if not isinstance(actual, dict) or list(actual.keys()) != list(expected.keys()):
+                return False
+
+            for key, value in expected.items():
+                if not equals(actual[key], value):
+                    return False
+
+            return True
+        else:
+            return actual == expected
+
+    expected_update_repr = pformat(expected_update)
     actual_update = await get_sent_update()
     actual_update_repr = pformat(actual_update)
-    expected_update_repr = pformat(expected_update)
 
-    if actual_update != expected_update:
+    if not equals(actual_update, expected_update):
         reason = f'Expected sent update `{actual_update_repr}`' \
             f'\nto be equal `{expected_update_repr}`'
         LOGGER.error(reason)
@@ -74,6 +107,7 @@ async def assert_sent_update(expected_update):
 
 async def finalize():
     LOGGER.debug('Finalizing')
+    BOT_BLOCKERS_IDS.clear()
 
     try:
         if UPDATES_FUTURES:
@@ -124,11 +158,11 @@ async def get_update():
 def receive_update(update):
     get_first_not_done_future(UPDATES_FUTURES).set_result(update)
 
-def receive_message(chat_id, text):
+def receive_message(chat_id, text, is_edit=False, reply_to_message=None):
     # pylint: disable=global-statement
     global message_id_counter
     message_id_counter += 1
-    receive_update({
+    update = {
         'message_id': message_id_counter,
         'chat': {
             'id': chat_id,
@@ -138,12 +172,46 @@ def receive_message(chat_id, text):
             'id': chat_id,
             },
         'text': text,
+        }
+
+    if is_edit:
+        update['edit_date'] = 1517068580
+
+    if reply_to_message is not None:
+        update['reply_to_message'] = reply_to_message
+
+    receive_update(update)
+
+def receive_inline_query(chat_id, query_id, text):
+    receive_update({
+        'id': query_id,
+        'chat': {
+            'id': chat_id,
+            'type': 'private',
+            },
+        'from': {
+            'id': chat_id,
+            },
+        'query': text,
         })
 
 def send_update(update):
+    """Raises:
+        TelegramError: If user has blocked the bot.
+
+    """
+    telegram_id = update['chat']['id']
+
+    if telegram_id in BOT_BLOCKERS_IDS:
+        reason = f'User with Telegram ID {telegram_id} has blocked the bot'
+        LOGGER.info(reason)
+        bot_was_blocked_code = 403
+        raise TelegramError(reason, bot_was_blocked_code, {'reason': reason})
+
     LOGGER.debug(
         'Futures count: %d. Sending update to some (probably new) future: %s',
         len(SENT_FUTURES),
         update,
         )
-    get_first_not_done_future(SENT_FUTURES).set_result(update)
+    get_first_not_done_future(SENT_FUTURES) \
+        .set_result(update)

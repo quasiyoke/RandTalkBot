@@ -23,6 +23,8 @@ class Message:
             raise UnsupportedContentError()
         if 'forward_from' in message_json:
             raise UnsupportedContentError()
+
+        self.is_edit = 'edit_date' in message_json
         self.is_reply = 'reply_to_message' in message_json
         self.text = message_json.get('text')
         self.type = content_type

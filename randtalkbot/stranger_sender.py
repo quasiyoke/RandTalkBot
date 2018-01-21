@@ -9,6 +9,7 @@ import re
 import telepot
 from .errors import StrangerSenderError
 from .i18n import get_translation
+from .stranger_service import StrangerService
 
 LOGGER = logging.getLogger('randtalkbot.stranger_sender')
 
@@ -25,10 +26,10 @@ class StrangerSender(telepot.helper.Sender):
         }
     MARKDOWN_RE = re.compile(r'([\[\*_`])')
 
-    def __init__(self, bot, stranger):
-        super(StrangerSender, self).__init__(bot, stranger.telegram_id)
+    def __init__(self, bot, stranger_id):
+        self._stranger_id = stranger_id
+        super(StrangerSender, self).__init__(bot, self._get_stranger().telegram_id)
         self._bot = bot
-        self._stranger = stranger
         self.update_translation()
 
     @classmethod
@@ -51,7 +52,12 @@ class StrangerSender(telepot.helper.Sender):
                 answer['title'] = translate(answer['title'])
                 answer['description'] = translate(answer['description'])
                 answer['message_text'] = translate(answer['message_text'])
+
         await self._bot.answerInlineQuery(query_id, answers, is_personal=True)
+
+    def _get_stranger(self):
+        return StrangerService.get_instance() \
+            .get_stranger_by_id(self._stranger_id)
 
     async def send(self, message):
         """Raises:
@@ -100,9 +106,16 @@ class StrangerSender(telepot.helper.Sender):
             reply_markup=reply_markup,
             )
 
-    def update_translation(self, partner=None):
-        if partner:
-            languages = self._stranger.get_common_languages(partner)
+    def update_translation(self, partner_id=None):
+        """Args:
+            partner_id (int|None)
+
+        """
+        if partner_id is None:
+            languages = self._get_stranger() \
+                .get_languages()
         else:
-            languages = self._stranger.get_languages()
+            languages = self._get_stranger() \
+                .get_common_languages(partner_id)
+
         self._ = get_translation(languages)
